@@ -31,13 +31,7 @@ function Header() {
           Home
         </a>
         <a href='/health-record' className='text-gray-900 hover:text-blue-500 transition-colors'>
-          Health Record
-        </a>
-        <a href='/send-medicine' className='text-gray-900 hover:text-blue-500 transition-colors'>
-          Send Medicine
-        </a>
-        <a href='/private-consultation' className='text-gray-900 hover:text-blue-500 transition-colors'>
-          Private Consultation
+          About Me
         </a>
         <a href='#' className='text-gray-900 hover:text-blue-500 transition-colors'>
           Blog

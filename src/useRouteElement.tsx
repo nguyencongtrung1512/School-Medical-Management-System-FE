@@ -25,11 +25,14 @@ import StudentHierarchy from './pages/admin/studentManagement/StudentHierarchy'
 import StudentList from './pages/admin/studentManagement/StudentList'
 import GradeList from './pages/admin/gradeManagement/GradeList'
 import ClassList from './pages/admin/classroomManagement/Classlist'
+import ParentLayout from './layouts/ParentLayout/ParentLayout'
+import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
+import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
 
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
-    // PARENT routes
+    // MAIN routes
     {
       path: '',
       element: <MainLayout />,
@@ -41,7 +44,14 @@ export default function useRouteElements() {
         {
           path: path.login,
           element: <Login />
-        },
+        }
+      ]
+    },
+    // PARENT routes
+    {
+      path: '',
+      element: <ParentLayout />,
+      children: [
         {
           path: path.healthRecord,
           element: <HealthRecord />
@@ -53,6 +63,14 @@ export default function useRouteElements() {
         {
           path: path.privateConsultation,
           element: <PrivateConsultation />
+        },
+        {
+          path: path.vaccinationSchedule,
+          element: <VaccinationSchedule />
+        },
+        {
+          path: path.medicalEvent,
+          element: <MedicalEventParent />
         },
         {
           path: path.profile,

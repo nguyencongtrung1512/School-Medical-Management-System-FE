@@ -31,7 +31,7 @@ const Login: React.FC = () => {
           </svg>
         </div>
         <h1 className='text-5xl font-bold mb-4'>EduCare</h1>
-        <p className='text-xl text-center max-w-xs'>Nền tảng y tế trực tuyến yêu thích của bạn!</p>
+        <p className='text-xl text-center max-w-xs'>Nền tảng y tế trực tuyến bảo vệ sức khỏe của con bạn!</p>
       </div>
       {/* Bên phải: Form đăng nhập */}
       <div className='flex-1 flex items-center justify-center'>
