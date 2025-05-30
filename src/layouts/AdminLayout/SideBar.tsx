@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
       label: 'Quản lí User'
     },
     {
-      key: path.STUDENT_MANAGEMENT,
+      key: path.GRADE_MANAGEMENT,
       icon: <FileSearchOutlined className='text-lg' />,
       label: 'Quản lí Student'
     }

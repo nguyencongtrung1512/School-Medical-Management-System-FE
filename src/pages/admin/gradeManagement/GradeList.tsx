@@ -1,14 +1,13 @@
-import React from 'react'
-import { Card, Table, Button, Tag, Space, Typography } from 'antd'
-import { EyeOutlined } from '@ant-design/icons'
-import { useNavigate, useParams } from 'react-router-dom'
-import { grades, levels } from '../studentManagement/fakedata.ts'
+import React, { useState } from 'react'
+import { Card, Table, Button, Tag, Space, Typography, Modal, Form, Input, Select, Row, Col, Statistic } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 
 const { Title } = Typography
+const { Option } = Select
 
 interface Grade {
   id: string
-  levelId: string
   name: string
   description: string
   totalClasses: number
@@ -16,17 +15,99 @@ interface Grade {
   status: string
 }
 
+const mockData: Grade[] = [
+  {
+    id: '1',
+    name: 'Khối 1',
+    description: 'Khối lớp 1 - Năm học 2023-2024',
+    totalClasses: 4,
+    totalStudents: 120,
+    status: 'active'
+  },
+  {
+    id: '2',
+    name: 'Khối 2',
+    description: 'Khối lớp 2 - Năm học 2023-2024',
+    totalClasses: 4,
+    totalStudents: 115,
+    status: 'active'
+  },
+  {
+    id: '3',
+    name: 'Khối 3',
+    description: 'Khối lớp 3 - Năm học 2023-2024',
+    totalClasses: 4,
+    totalStudents: 120,
+    status: 'active'
+  },
+  {
+    id: '4',
+    name: 'Khối 4',
+    description: 'Khối lớp 4 - Năm học 2023-2024',
+    totalClasses: 4,
+    totalStudents: 118,
+    status: 'active'
+  },
+  {
+    id: '5',
+    name: 'Khối 5',
+    description: 'Khối lớp 5 - Năm học 2023-2024',
+    totalClasses: 4,
+    totalStudents: 122,
+    status: 'active'
+  }
+]
+
 const GradeList: React.FC = () => {
   const navigate = useNavigate()
-  const { levelId } = useParams()
-  const currentLevel = levels.find((level) => level.id === levelId)
-  const gradeList = grades.filter((grade) => grade.levelId === levelId)
+  const [form] = Form.useForm()
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
 
   const handleViewClasses = (grade: Grade) => {
-    navigate(`/admin/student-management/level/${levelId}/grade/${grade.id}/classes`)
+    navigate(`/admin/student-management/grades/${grade.id}/classes`)
   }
 
-  const gradeColumns = [
+  const handleAddGrade = () => {
+    setEditingGrade(null)
+    form.resetFields()
+    setIsModalVisible(true)
+  }
+
+  const handleEditGrade = (grade: Grade) => {
+    setEditingGrade(grade)
+    form.setFieldsValue(grade)
+    setIsModalVisible(true)
+  }
+
+  const handleDeleteGrade = (grade: Grade) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: `Bạn có chắc chắn muốn xóa khối ${grade.name}?`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: () => {
+        // Xử lý xóa khối
+        console.log('Xóa khối:', grade)
+      }
+    })
+  }
+
+  const handleModalOk = () => {
+    form.validateFields().then((values) => {
+      if (editingGrade) {
+        // Xử lý cập nhật khối
+        console.log('Cập nhật khối:', { ...editingGrade, ...values })
+      } else {
+        // Xử lý thêm khối mới
+        console.log('Thêm khối mới:', values)
+      }
+      setIsModalVisible(false)
+    })
+  }
+
+  const columns = [
     {
       title: 'Tên khối',
       dataIndex: 'name',
@@ -48,37 +129,94 @@ const GradeList: React.FC = () => {
       key: 'totalStudents'
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>{status === 'active' ? 'Hoạt động' : 'Không hoạt động'}</Tag>
-      )
-    },
-    {
       title: 'Thao tác',
       key: 'action',
       render: (_: unknown, record: Grade) => (
-        <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
-          Xem lớp
-        </Button>
+        <Space>
+          <Button color='cyan' variant='outlined' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
+            Xem lớp
+          </Button>
+          <Button color='purple' variant='outlined' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
+            Sửa
+          </Button>
+          <Button color='danger' variant='outlined' icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
+            Xóa
+          </Button>
+        </Space>
       )
     }
   ]
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction='vertical' size='large' style={{ width: '100%' }}>
-          <Space>
-            <Button onClick={() => navigate(`/admin/student-management`)}>Quay lại</Button>
-            <Title level={2} style={{ margin: 0 }}>
-              Danh sách khối - {currentLevel?.name}
-            </Title>
-          </Space>
-          <Table columns={gradeColumns} dataSource={gradeList} rowKey='id' pagination={false} />
-        </Space>
-      </Card>
+    <div className='p-6 space-y-6'>
+      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
+        <div className='flex justify-between items-center mb-6'>
+          <Title level={3}>Quản lý khối</Title>
+          <Button color='cyan' variant='outlined' icon={<PlusOutlined />} onClick={handleAddGrade}>
+            Thêm khối mới
+          </Button>
+        </div>
+
+        <Row gutter={[16, 16]} className='mb-6'>
+          <Col span={8}>
+            <Card className='bg-blue-50'>
+              <Statistic title='Tổng số khối' value={mockData.length} valueStyle={{ color: '#1890ff' }} />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card className='bg-green-50'>
+              <Statistic
+                title='Tổng số lớp'
+                value={mockData.reduce((sum, grade) => sum + grade.totalClasses, 0)}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card className='bg-purple-50'>
+              <Statistic
+                title='Tổng số học sinh'
+                value={mockData.reduce((sum, grade) => sum + grade.totalStudents, 0)}
+                valueStyle={{ color: '#722ed1' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card className='shadow-md'>
+          <Table columns={columns} dataSource={mockData} rowKey='id' pagination={false} />
+        </Card>
+      </div>
+
+      <Modal
+        title={editingGrade ? 'Sửa khối' : 'Thêm khối mới'}
+        open={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={() => setIsModalVisible(false)}
+        width={600}
+      >
+        <Form form={form} layout='vertical' initialValues={{ status: 'active' }}>
+          <Form.Item name='name' label='Tên khối' rules={[{ required: true, message: 'Vui lòng nhập tên khối!' }]}>
+            <Input placeholder='Nhập tên khối' />
+          </Form.Item>
+
+          <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
+            <Input.TextArea rows={4} placeholder='Nhập mô tả khối' />
+          </Form.Item>
+
+          <Form.Item name='totalClasses' label='Số lớp' rules={[{ required: true, message: 'Vui lòng nhập số lớp!' }]}>
+            <Input type='number' min={1} placeholder='Nhập số lớp' />
+          </Form.Item>
+
+          <Form.Item
+            name='totalStudents'
+            label='Tổng học sinh'
+            rules={[{ required: true, message: 'Vui lòng nhập tổng số học sinh!' }]}
+          >
+            <Input type='number' min={0} placeholder='Nhập tổng số học sinh' />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

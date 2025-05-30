@@ -148,10 +148,6 @@ export default function useRouteElements() {
           element: <UserList />
         },
         {
-          path: path.STUDENT_MANAGEMENT,
-          element: <StudentHierarchy />
-        },
-        {
           path: path.GRADE_MANAGEMENT,
           element: <GradeList />
         },

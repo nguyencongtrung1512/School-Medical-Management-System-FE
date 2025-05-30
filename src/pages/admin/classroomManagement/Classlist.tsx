@@ -1,12 +1,13 @@
-import React from 'react'
-import { Card, Table, Button, Tag, Space, Typography } from 'antd'
-import { EyeOutlined } from '@ant-design/icons'
+import React, { useState, useEffect } from 'react'
+import { Card, Table, Button, Tag, Space, Typography, Modal, Form, Input, Select, Row, Col, Statistic } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
-import { classrooms, grades, levels } from '../studentManagement/fakedata.ts'
+import { classrooms, grades } from '../studentManagement/fakedata'
 
 const { Title } = Typography
+const { Option } = Select
 
-interface Classroom {
+interface Classes {
   id: string
   gradeId: string
   name: string
@@ -18,35 +19,79 @@ interface Classroom {
 }
 
 const ClassList: React.FC = () => {
+  const { gradeId } = useParams<{ gradeId: string }>()
   const navigate = useNavigate()
-  const { levelId, gradeId } = useParams()
-  const currentLevel = levels.find((level) => level.id === levelId)
-  const currentGrade = grades.find((grade) => grade.id === gradeId)
-  const classList = classrooms.filter((classroom) => classroom.gradeId === gradeId)
+  const [form] = Form.useForm()
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [editingClass, setEditingClass] = useState<Classes | null>(null)
+  const [currentGrade, setCurrentGrade] = useState<any>(null)
+  const [classList, setClassList] = useState<Classes[]>([])
 
-  const handleViewStudents = (classroom: Classroom) => {
-    navigate(`/admin/student-management/level/${levelId}/grade/${gradeId}/class/${classroom.id}/students`)
+  useEffect(() => {
+    // Lấy thông tin khối hiện tại
+    const grade = grades.find((g) => g.id === gradeId)
+    if (grade) {
+      setCurrentGrade(grade)
+    }
+
+    // Lấy danh sách lớp của khối
+    const classes = classrooms.filter((c) => c.gradeId === gradeId)
+    setClassList(classes)
+  }, [gradeId])
+
+  const handleAddClass = () => {
+    setEditingClass(null)
+    form.resetFields()
+    setIsModalVisible(true)
   }
 
-  const classColumns = [
+  const handleEditClass = (classes: Classes) => {
+    setEditingClass(classes)
+    form.setFieldsValue(classes)
+    setIsModalVisible(true)
+  }
+
+  const handleDeleteClass = (classes: Classes) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: `Bạn có chắc chắn muốn xóa lớp ${classes.name}?`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: () => {
+        // Xử lý xóa lớp
+        console.log('Xóa lớp:', classes)
+      }
+    })
+  }
+
+  const handleViewStudents = (classes: Classes) => {
+    navigate(`/admin/student-management/classrooms/${classes.id}/students`)
+  }
+
+  const handleModalOk = () => {
+    form.validateFields().then((values) => {
+      if (editingClass) {
+        // Xử lý cập nhật lớp
+        console.log('Cập nhật lớp:', { ...editingClass, ...values })
+      } else {
+        // Xử lý thêm lớp mới
+        console.log('Thêm lớp mới:', { ...values, gradeId })
+      }
+      setIsModalVisible(false)
+    })
+  }
+
+  const columns = [
     {
       title: 'Tên lớp',
       dataIndex: 'name',
       key: 'name'
     },
     {
-      title: 'Giáo viên chủ nhiệm',
-      dataIndex: 'teacher',
-      key: 'teacher'
-    },
-    {
       title: 'Số học sinh',
-      key: 'students',
-      render: (record: Classroom) => (
-        <Tag color={record.totalStudents >= record.capacity ? 'red' : 'green'}>
-          {record.totalStudents}/{record.capacity}
-        </Tag>
-      )
+      dataIndex: 'totalStudents',
+      key: 'totalStudents'
     },
     {
       title: 'Mô tả',
@@ -54,37 +99,103 @@ const ClassList: React.FC = () => {
       key: 'description'
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>{status === 'active' ? 'Hoạt động' : 'Không hoạt động'}</Tag>
-      )
-    },
-    {
       title: 'Thao tác',
       key: 'action',
-      render: (_: any, record: Classroom) => (
-        <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}>
-          Xem học sinh
-        </Button>
+      render: (_: unknown, record: Classes) => (
+        <Space>
+          <Button color='cyan' variant='outlined' icon={<UserOutlined />} onClick={() => handleViewStudents(record)}>
+            Xem học sinh
+          </Button>
+          <Button color='purple' variant='outlined' icon={<EditOutlined />} onClick={() => handleEditClass(record)}>
+            Sửa
+          </Button>
+          <Button color='danger' variant='outlined' icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}>
+            Xóa
+          </Button>
+        </Space>
       )
     }
   ]
 
+  if (!currentGrade) {
+    return <div>Không tìm thấy thông tin khối</div>
+  }
+
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction='vertical' size='large' style={{ width: '100%' }}>
-          <Space>
-            <Button onClick={() => navigate(`/admin/student-management/level/${levelId}/grades`)}>Quay lại</Button>
-            <Title level={2} style={{ margin: 0 }}>
-              Danh sách lớp - {currentGrade?.name} - {currentLevel?.name}
-            </Title>
-          </Space>
-          <Table columns={classColumns} dataSource={classList} rowKey='id' pagination={false} />
-        </Space>
-      </Card>
+    <div className='p-6 space-y-6'>
+      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
+        <div className='flex justify-between items-center mb-6'>
+          <div>
+            <Title level={3}>Danh sách lớp - {currentGrade.name}</Title>
+            <p className='text-gray-600'>{currentGrade.description}</p>
+          </div>
+          <Button color='cyan' variant='outlined' icon={<PlusOutlined />} onClick={handleAddClass}>
+            Thêm lớp mới
+          </Button>
+        </div>
+
+        <Row gutter={[16, 16]} className='mb-6'>
+          <Col span={8}>
+            <Card className='bg-blue-50'>
+              <Statistic title='Tổng số lớp' value={classList.length} valueStyle={{ color: '#1890ff' }} />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card className='bg-green-50'>
+              <Statistic
+                title='Tổng số học sinh'
+                value={classList.reduce((sum, classes) => sum + classes.totalStudents, 0)}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card className='shadow-md'>
+          <Table columns={columns} dataSource={classList} rowKey='id' pagination={false} />
+        </Card>
+      </div>
+
+      <Modal
+        title={editingClass ? 'Sửa lớp' : 'Thêm lớp mới'}
+        open={isModalVisible}
+        onOk={handleModalOk}
+        onCancel={() => setIsModalVisible(false)}
+        width={600}
+      >
+        <Form form={form} layout='vertical' initialValues={{ status: 'active' }}>
+          <Form.Item name='name' label='Tên lớp' rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}>
+            <Input placeholder='Nhập tên lớp' />
+          </Form.Item>
+
+          <Form.Item
+            name='teacher'
+            label='Giáo viên chủ nhiệm'
+            rules={[{ required: true, message: 'Vui lòng nhập tên giáo viên!' }]}
+          >
+            <Input placeholder='Nhập tên giáo viên chủ nhiệm' />
+          </Form.Item>
+
+          <Form.Item name='capacity' label='Sức chứa' rules={[{ required: true, message: 'Vui lòng nhập sức chứa!' }]}>
+            <Input type='number' min={1} placeholder='Nhập sức chứa lớp' />
+          </Form.Item>
+
+          <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
+            <Input.TextArea rows={4} placeholder='Nhập mô tả lớp' />
+          </Form.Item>
+
+          <Form.Item
+            name='status'
+            label='Trạng thái'
+            rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
+          >
+            <Select placeholder='Chọn trạng thái'>
+              <Option value='active'>Hoạt động</Option>
+              <Option value='inactive'>Không hoạt động</Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
