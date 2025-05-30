@@ -25,9 +25,9 @@ import StudentHierarchy from './pages/admin/studentManagement/StudentHierarchy'
 import StudentList from './pages/admin/studentManagement/StudentList'
 import GradeList from './pages/admin/gradeManagement/GradeList'
 import ClassList from './pages/admin/classroomManagement/Classlist'
-import ParentLayout from './layouts/ParentLayout/ParentLayout'
 import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
 import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
+import Blog, { BlogPost } from './pages/parent/blog'
 
 
 export default function useRouteElements() {
@@ -37,10 +37,7 @@ export default function useRouteElements() {
       path: '',
       element: <MainLayout />,
       children: [
-        {
-          path: path.home,
-          element: <Home />
-        },
+
         {
           path: path.login,
           element: <Login />
@@ -50,8 +47,20 @@ export default function useRouteElements() {
     // PARENT routes
     {
       path: '',
-      element: <ParentLayout />,
+      element: <MainLayout />,
       children: [
+        {
+          path: path.home,
+          element: <Home />
+        },
+        {
+          path: path.blog,
+          element: <Blog />
+        },
+        {
+          path: path.blogDetail,
+          element: <BlogPost />
+        },
         {
           path: path.healthRecord,
           element: <HealthRecord />
@@ -73,7 +82,7 @@ export default function useRouteElements() {
           element: <MedicalEventParent />
         },
         {
-          path: path.profile,
+          path: path.profileParent,
           element: <ProfileParent />
         }
       ]
