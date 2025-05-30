@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Space, Typography, Modal, Form, Input, Select, Row, Col, Statistic } from 'antd'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { classrooms, grades } from '../studentManagement/fakedata'
+import CreateClass from './Create'
+import UpdateClass from './Update'
+import DeleteClass from './Delete'
 
 const { Title } = Typography
-const { Option } = Select
 
 interface Classes {
   id: string
@@ -18,13 +20,37 @@ interface Classes {
   status: string
 }
 
+interface Grade {
+  id: string
+  name: string
+  description: string
+}
+
+interface CreateClassForm {
+  name: string
+  teacher: string
+  capacity: number
+  description: string
+  status: string
+}
+
+interface UpdateClassForm {
+  name: string
+  teacher: string
+  capacity: number
+  description: string
+  status: string
+}
+
 const ClassList: React.FC = () => {
   const { gradeId } = useParams<{ gradeId: string }>()
   const navigate = useNavigate()
-  const [form] = Form.useForm()
-  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false)
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false)
   const [editingClass, setEditingClass] = useState<Classes | null>(null)
-  const [currentGrade, setCurrentGrade] = useState<any>(null)
+  const [deletingClass, setDeletingClass] = useState<Classes | null>(null)
+  const [currentGrade, setCurrentGrade] = useState<Grade | null>(null)
   const [classList, setClassList] = useState<Classes[]>([])
 
   useEffect(() => {
@@ -40,46 +66,39 @@ const ClassList: React.FC = () => {
   }, [gradeId])
 
   const handleAddClass = () => {
-    setEditingClass(null)
-    form.resetFields()
-    setIsModalVisible(true)
+    setIsCreateModalVisible(true)
   }
 
   const handleEditClass = (classes: Classes) => {
     setEditingClass(classes)
-    form.setFieldsValue(classes)
-    setIsModalVisible(true)
+    setIsUpdateModalVisible(true)
   }
 
   const handleDeleteClass = (classes: Classes) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc chắn muốn xóa lớp ${classes.name}?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // Xử lý xóa lớp
-        console.log('Xóa lớp:', classes)
-      }
-    })
+    setDeletingClass(classes)
+    setIsDeleteModalVisible(true)
   }
 
   const handleViewStudents = (classes: Classes) => {
-    navigate(`/admin/student-management/classrooms/${classes.id}/students`)
+    navigate(`/admin/student-management/classes/${classes.id}/students`)
   }
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      if (editingClass) {
-        // Xử lý cập nhật lớp
-        console.log('Cập nhật lớp:', { ...editingClass, ...values })
-      } else {
-        // Xử lý thêm lớp mới
-        console.log('Thêm lớp mới:', { ...values, gradeId })
-      }
-      setIsModalVisible(false)
-    })
+  const handleCreateOk = (values: CreateClassForm) => {
+    // Xử lý thêm lớp mới
+    console.log('Thêm lớp mới:', { ...values, gradeId })
+    setIsCreateModalVisible(false)
+  }
+
+  const handleUpdateOk = (values: UpdateClassForm) => {
+    // Xử lý cập nhật lớp
+    console.log('Cập nhật lớp:', values)
+    setIsUpdateModalVisible(false)
+  }
+
+  const handleDeleteOk = () => {
+    // Xử lý xóa lớp
+    console.log('Xóa lớp:', deletingClass)
+    setIsDeleteModalVisible(false)
   }
 
   const columns = [
@@ -156,46 +175,25 @@ const ClassList: React.FC = () => {
         </Card>
       </div>
 
-      <Modal
-        title={editingClass ? 'Sửa lớp' : 'Thêm lớp mới'}
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-      >
-        <Form form={form} layout='vertical' initialValues={{ status: 'active' }}>
-          <Form.Item name='name' label='Tên lớp' rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}>
-            <Input placeholder='Nhập tên lớp' />
-          </Form.Item>
+      <CreateClass
+        isModalVisible={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        onOk={handleCreateOk}
+      />
 
-          <Form.Item
-            name='teacher'
-            label='Giáo viên chủ nhiệm'
-            rules={[{ required: true, message: 'Vui lòng nhập tên giáo viên!' }]}
-          >
-            <Input placeholder='Nhập tên giáo viên chủ nhiệm' />
-          </Form.Item>
+      <UpdateClass
+        isModalVisible={isUpdateModalVisible}
+        onCancel={() => setIsUpdateModalVisible(false)}
+        onOk={handleUpdateOk}
+        editingClass={editingClass}
+      />
 
-          <Form.Item name='capacity' label='Sức chứa' rules={[{ required: true, message: 'Vui lòng nhập sức chứa!' }]}>
-            <Input type='number' min={1} placeholder='Nhập sức chứa lớp' />
-          </Form.Item>
-
-          <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
-            <Input.TextArea rows={4} placeholder='Nhập mô tả lớp' />
-          </Form.Item>
-
-          <Form.Item
-            name='status'
-            label='Trạng thái'
-            rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
-          >
-            <Select placeholder='Chọn trạng thái'>
-              <Option value='active'>Hoạt động</Option>
-              <Option value='inactive'>Không hoạt động</Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <DeleteClass
+        isModalVisible={isDeleteModalVisible}
+        onCancel={() => setIsDeleteModalVisible(false)}
+        onOk={handleDeleteOk}
+        deletingClass={deletingClass}
+      />
     </div>
   )
 }

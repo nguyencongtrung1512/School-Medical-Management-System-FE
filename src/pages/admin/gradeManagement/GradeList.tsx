@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { Card, Table, Button, Tag, Space, Typography, Modal, Form, Input, Select, Row, Col, Statistic } from 'antd'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import CreateGrade from './Create'
+import UpdateGrade from './Update'
+import DeleteGrade from './Delete'
 
 const { Title } = Typography
-const { Option } = Select
 
 interface Grade {
   id: string
@@ -60,51 +62,45 @@ const mockData: Grade[] = [
 
 const GradeList: React.FC = () => {
   const navigate = useNavigate()
-  const [form] = Form.useForm()
-  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false)
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
+  const [deletingGrade, setDeletingGrade] = useState<Grade | null>(null)
 
   const handleViewClasses = (grade: Grade) => {
     navigate(`/admin/student-management/grades/${grade.id}/classes`)
   }
 
   const handleAddGrade = () => {
-    setEditingGrade(null)
-    form.resetFields()
-    setIsModalVisible(true)
+    setIsCreateModalVisible(true)
   }
 
   const handleEditGrade = (grade: Grade) => {
     setEditingGrade(grade)
-    form.setFieldsValue(grade)
-    setIsModalVisible(true)
+    setIsUpdateModalVisible(true)
   }
 
   const handleDeleteGrade = (grade: Grade) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc chắn muốn xóa khối ${grade.name}?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // Xử lý xóa khối
-        console.log('Xóa khối:', grade)
-      }
-    })
+    setDeletingGrade(grade)
   }
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      if (editingGrade) {
-        // Xử lý cập nhật khối
-        console.log('Cập nhật khối:', { ...editingGrade, ...values })
-      } else {
-        // Xử lý thêm khối mới
-        console.log('Thêm khối mới:', values)
-      }
-      setIsModalVisible(false)
-    })
+  const handleCreateOk = (values: any) => {
+    // Xử lý thêm khối mới
+    console.log('Thêm khối mới:', values)
+    setIsCreateModalVisible(false)
+  }
+
+  const handleUpdateOk = (values: any) => {
+    // Xử lý cập nhật khối
+    console.log('Cập nhật khối:', values)
+    setIsUpdateModalVisible(false)
+    setEditingGrade(null)
+  }
+
+  const handleDeleteOk = () => {
+    // Xử lý xóa khối
+    console.log('Xóa khối:', deletingGrade)
+    setDeletingGrade(null)
   }
 
   const columns = [
@@ -133,13 +129,13 @@ const GradeList: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Grade) => (
         <Space>
-          <Button color='cyan' variant='outlined' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
+          <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
             Xem lớp
           </Button>
-          <Button color='purple' variant='outlined' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
+          <Button type='primary' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
             Sửa
           </Button>
-          <Button color='danger' variant='outlined' icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
+          <Button type='primary' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
             Xóa
           </Button>
         </Space>
@@ -152,7 +148,7 @@ const GradeList: React.FC = () => {
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
           <Title level={3}>Quản lý khối</Title>
-          <Button color='cyan' variant='outlined' icon={<PlusOutlined />} onClick={handleAddGrade}>
+          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddGrade}>
             Thêm khối mới
           </Button>
         </div>
@@ -188,35 +184,27 @@ const GradeList: React.FC = () => {
         </Card>
       </div>
 
-      <Modal
-        title={editingGrade ? 'Sửa khối' : 'Thêm khối mới'}
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-      >
-        <Form form={form} layout='vertical' initialValues={{ status: 'active' }}>
-          <Form.Item name='name' label='Tên khối' rules={[{ required: true, message: 'Vui lòng nhập tên khối!' }]}>
-            <Input placeholder='Nhập tên khối' />
-          </Form.Item>
+      <CreateGrade
+        isModalVisible={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        onOk={handleCreateOk}
+      />
 
-          <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
-            <Input.TextArea rows={4} placeholder='Nhập mô tả khối' />
-          </Form.Item>
+      <UpdateGrade
+        isModalVisible={isUpdateModalVisible}
+        onCancel={() => {
+          setIsUpdateModalVisible(false)
+          setEditingGrade(null)
+        }}
+        onOk={handleUpdateOk}
+        editingGrade={editingGrade}
+      />
 
-          <Form.Item name='totalClasses' label='Số lớp' rules={[{ required: true, message: 'Vui lòng nhập số lớp!' }]}>
-            <Input type='number' min={1} placeholder='Nhập số lớp' />
-          </Form.Item>
-
-          <Form.Item
-            name='totalStudents'
-            label='Tổng học sinh'
-            rules={[{ required: true, message: 'Vui lòng nhập tổng số học sinh!' }]}
-          >
-            <Input type='number' min={0} placeholder='Nhập tổng số học sinh' />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <DeleteGrade
+        grade={deletingGrade}
+        onOk={handleDeleteOk}
+        onCancel={() => setDeletingGrade(null)}
+      />
     </div>
   )
 }
