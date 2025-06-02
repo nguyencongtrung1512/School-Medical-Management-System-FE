@@ -1,35 +1,62 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Modal, Form, Input } from 'antd'
+import { updateGradeAPI } from '../../../api/grade.api'
+import { toast } from 'react-toastify'
 
 interface Grade {
-  id: string
+  _id: string
   name: string
-  description: string
-  totalClasses: number
-  totalStudents: number
+  positionOrder: string
 }
 
 interface UpdateGradeProps {
   isModalVisible: boolean
   onCancel: () => void
-  onOk: (values: any) => void
+  onOk: () => void
   editingGrade: Grade | null
 }
 
-const UpdateGrade: React.FC<UpdateGradeProps> = ({ isModalVisible, onCancel, onOk, editingGrade }) => {
+type CombinedGrade = {
+  _id: string
+  name: string
+  positionOrder: string | number
+}
+const UpdateGrade: React.FC<UpdateGradeProps> = ({
+  isModalVisible,
+  onCancel,
+  onOk,
+  editingGrade
+}: UpdateGradeProps & { editingGrade: CombinedGrade | null }) => {
   const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (editingGrade) {
-      form.setFieldsValue(editingGrade)
+      form.setFieldsValue({
+        ...editingGrade,
+        positionOrder: editingGrade.positionOrder
+      })
     }
   }, [editingGrade, form])
 
-  const handleOk = () => {
-    form.validateFields().then((values) => {
-      onOk({ ...editingGrade, ...values })
-      form.resetFields()
-    })
+  const handleOk = async () => {
+    try {
+      setLoading(true)
+      const values = await form.validateFields()
+      if (editingGrade) {
+        await updateGradeAPI(editingGrade._id, {
+          name: values.name,
+          positionOrder: values.positionOrder
+        })
+        toast.success('Cập nhật khối thành công!')
+        form.resetFields()
+        onOk()
+      }
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi cập nhật khối!')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -37,6 +64,7 @@ const UpdateGrade: React.FC<UpdateGradeProps> = ({ isModalVisible, onCancel, onO
       title='Sửa khối'
       open={isModalVisible}
       onOk={handleOk}
+      confirmLoading={loading}
       onCancel={() => {
         form.resetFields()
         onCancel()
@@ -44,24 +72,15 @@ const UpdateGrade: React.FC<UpdateGradeProps> = ({ isModalVisible, onCancel, onO
       width={600}
     >
       <Form form={form} layout='vertical'>
-        <Form.Item name='name' label='Tên khối' rules={[{ required: true, message: 'Vui lòng nhập tên khối!' }]}>
+        <Form.Item name='name' label='Tên khối' rules={[{ required: true, message: 'Vui chỉ nhập tên khối!' }]}>
           <Input placeholder='Nhập tên khối' />
         </Form.Item>
-
-        <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
-          <Input.TextArea rows={4} placeholder='Nhập mô tả khối' />
-        </Form.Item>
-
-        <Form.Item name='totalClasses' label='Số lớp' rules={[{ required: true, message: 'Vui lòng nhập số lớp!' }]}>
-          <Input type='number' min={1} placeholder='Nhập số lớp' />
-        </Form.Item>
-
         <Form.Item
-          name='totalStudents'
-          label='Tổng học sinh'
-          rules={[{ required: true, message: 'Vui lòng nhập tổng số học sinh!' }]}
+          name='positionOrder'
+          label='Thuật tờ'
+          rules={[{ required: true, message: 'Vui chỉ nhập thuật tờ!' }]}
         >
-          <Input type='number' min={0} placeholder='Nhập tổng số học sinh' />
+          <Input placeholder='Nhập thuật tờ' />
         </Form.Item>
       </Form>
     </Modal>

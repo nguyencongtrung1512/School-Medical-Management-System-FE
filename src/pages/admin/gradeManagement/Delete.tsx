@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Modal } from 'antd'
+import { deleteGradeAPI } from '../../../api/grade.api'
+import { toast } from 'react-toastify'
 
 interface Grade {
-  id: string
+  _id: string
   name: string
 }
 
@@ -13,23 +15,45 @@ interface DeleteGradeProps {
 }
 
 const DeleteGrade: React.FC<DeleteGradeProps> = ({ grade, onOk, onCancel }) => {
-  const handleDelete = () => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc chắn muốn xóa khối ${grade?.name}?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: () => {
+  const [loading, setLoading] = useState(false)
+
+  const handleDelete = async () => {
+    if (!grade) return
+    try {
+      setLoading(true)
+      const response = await deleteGradeAPI(grade._id)
+      console.log('Delete response:', response) // Add this to debug
+      if (response && response.status === 200) {
+        toast.success('Xóa khối thành công!')
         onOk()
-      },
-      onCancel: () => {
-        onCancel()
+      } else {
+        throw new Error('Delete operation failed')
       }
-    })
+    } catch (error: any) {
+      console.error('Delete error:', error)
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa khối!')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  return null
+  return (
+    <Modal
+      title='Xác nhận xóa'
+      open={!!grade}
+      confirmLoading={loading}
+      onOk={handleDelete}
+      onCancel={onCancel}
+      okText='Xóa'
+      cancelText='Hủy'
+    >
+      {grade && (
+        <>
+          Bạn có chắc chắn muốn xóa khối <strong>{grade.name}</strong>?
+        </>
+      )}
+    </Modal>
+  )
 }
 
 export default DeleteGrade

@@ -1,18 +1,55 @@
 import React, { useState } from 'react'
-import { Form, Input, Button, message } from 'antd'
+import { Form, Input, Button } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { loginAPI, decodeToken } from '../../api/auth.api'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import path from '../../constants/path'
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const onFinish = async (values: { phone: string; password: string }) => {
+  const onFinish = async (values: { email: string; password: string }) => {
     try {
       setLoading(true)
-      // TODO: Implement login logic here
-      console.log('Login values:', values)
-      message.success('Đăng nhập thành công!')
-    } catch (error) {
-      message.error('Đăng nhập thất bại!')
+      const response = await loginAPI(values)
+      const loginResponse = response.success
+
+      if (loginResponse) {
+        // Lưu token vào localStorage
+        localStorage.setItem('token', response.data)
+
+        // Decode token để lấy thông tin user
+        const decodedToken = decodeToken(response.data)
+        if (decodedToken) {
+          localStorage.setItem(
+            'user',
+            JSON.stringify({
+              id: decodedToken.userId,
+              email: decodedToken.email,
+              role: decodedToken.role
+            })
+          )
+          console.log('decodedToken', decodedToken)
+          toast.success('Đăng nhập thành công!')
+
+          // Chuyển hướng dựa vào role
+          switch (decodedToken.role.toUpperCase()) {
+            case 'ADMIN':
+              navigate(path.DASHBOARD_ADMIN)
+              break
+            case 'NURSE':
+              navigate(path.BASE_NURSE)
+              break
+            default:
+              navigate(path.BASE_NURSE)
+              break
+          }
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Đăng nhập thất bại!')
     } finally {
       setLoading(false)
     }
@@ -51,13 +88,13 @@ const Login: React.FC = () => {
           </div>
           <Form name='login' onFinish={onFinish} layout='vertical'>
             <Form.Item
-              name='phone'
+              name='email'
               rules={[
-                { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ!' }
+                { required: true, message: 'Vui lòng nhập email!' },
+                { type: 'email', message: 'Email không hợp lệ!' }
               ]}
             >
-              <Input prefix={<UserOutlined />} placeholder='Số điện thoại' size='large' />
+              <Input prefix={<UserOutlined />} placeholder='Email' size='large' />
             </Form.Item>
             <Form.Item name='password' rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}>
               <Input.Password prefix={<LockOutlined />} placeholder='Mật khẩu' size='large' />

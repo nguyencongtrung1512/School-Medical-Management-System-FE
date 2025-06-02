@@ -2,23 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { Card, Table, Button, Tag, Space, Typography, Modal, Row, Col, Statistic, Descriptions, Avatar } from 'antd'
 import { UserOutlined, PhoneOutlined, EnvironmentOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
-import { students, classrooms } from './fakedata'
 
 const { Title } = Typography
 
 interface Student {
-  id: string
-  studentCode: string
+  _id: string
   fullName: string
-  dateOfBirth: string
+  studentCode: string
   gender: string
-  gradeId: string
-  classroomId: string
-  parentName: string
-  parentPhone: string
-  address: string
-  status: string
-  healthStatus: string
+  dob: string // hoặc dateOfBirth: string
+  classId: string
+  avatar: string
+  position: number
 }
 
 interface Classroom {
@@ -27,29 +22,15 @@ interface Classroom {
   name: string
   teacher: string
   totalStudents: number
-  capacity: number
-  description: string
-  status: string
 }
 
 const StudentList: React.FC = () => {
-  const { classroomId } = useParams<{ classroomId: string }>()
+  const { classId } = useParams<{ classId: string }>()
   const [studentList, setStudentList] = useState<Student[]>([])
   const [currentClassroom, setCurrentClassroom] = useState<Classroom | null>(null)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
 
-  useEffect(() => {
-    // Lấy thông tin lớp hiện tại
-    const classroom = classrooms.find((c) => c.id === classroomId)
-    if (classroom) {
-      setCurrentClassroom(classroom)
-    }
-
-    // Lấy danh sách học sinh của lớp
-    const studentsInClass = students.filter((s) => s.classroomId === classroomId)
-    setStudentList(studentsInClass)
-  }, [classroomId])
 
   const handleViewDetail = (student: Student) => {
     setSelectedStudent(student)

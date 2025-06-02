@@ -1,28 +1,40 @@
 import React from 'react'
 import { Modal, Form, Input } from 'antd'
+import { createClassAPI } from '../../../api/classes.api'
+import { useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 interface CreateClassProps {
   isModalVisible: boolean
   onCancel: () => void
-  onOk: (values: CreateClassForm) => void
+  onOk: () => void
 }
-
-interface CreateClassForm {
-  name: string
-  teacher: string
-  capacity: number
-  description: string
-  status: string
-}
-
 const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onOk }) => {
   const [form] = Form.useForm()
+  const { gradeId } = useParams<{ gradeId: string }>()
 
-  const handleOk = () => {
-    form.validateFields().then((values) => {
-      onOk(values)
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields()
+
+      if (!gradeId) {
+        toast.error('Không tìm thấy ID khối')
+        return
+      }
+
+      const data = {
+        name: values.name,
+        gradeId: gradeId
+      }
+
+      await createClassAPI(data)
+      toast.success('Tạo lớp thành công')
       form.resetFields()
-    })
+      onOk()
+    } catch (error) {
+      console.error('Error creating class:', error)
+      toast.error('Không thể tạo lớp mới')
+    }
   }
 
   return (
@@ -36,17 +48,9 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       }}
       width={600}
     >
-      <Form form={form} layout='vertical' initialValues={{ status: 'active' }}>
+      <Form form={form} layout='vertical'>
         <Form.Item name='name' label='Tên lớp' rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}>
           <Input placeholder='Nhập tên lớp' />
-        </Form.Item>
-
-        <Form.Item name='capacity' label='Sức chứa' rules={[{ required: true, message: 'Vui lòng nhập sức chứa!' }]}>
-          <Input type='number' min={1} placeholder='Nhập sức chứa lớp' />
-        </Form.Item>
-
-        <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
-          <Input.TextArea rows={4} placeholder='Nhập mô tả lớp' />
         </Form.Item>
       </Form>
     </Modal>

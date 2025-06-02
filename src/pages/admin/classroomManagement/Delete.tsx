@@ -1,15 +1,11 @@
 import React from 'react'
 import { Modal } from 'antd'
+import { deleteClassAPI } from '../../../api/classes.api'
+import { toast } from 'react-toastify'
 
 interface Class {
-  id: string
-  gradeId: string
+  _id: string
   name: string
-  teacher: string
-  totalStudents: number
-  capacity: number
-  description: string
-  status: string
 }
 
 interface DeleteClassProps {
@@ -20,11 +16,24 @@ interface DeleteClassProps {
 }
 
 const DeleteClass: React.FC<DeleteClassProps> = ({ isModalVisible, onCancel, onOk, deletingClass }) => {
+  const handleDelete = async () => {
+    try {
+      if (!deletingClass) return
+
+      await deleteClassAPI(deletingClass._id)
+      toast.success('Xóa lớp thành công')
+      onOk()
+    } catch (error) {
+      console.error('Error deleting class:', error)
+      toast.error('Không thể xóa lớp')
+    }
+  }
+
   return (
     <Modal
       title='Xác nhận xóa'
       open={isModalVisible}
-      onOk={onOk}
+      onOk={handleDelete}
       onCancel={onCancel}
       okText='Xóa'
       okType='danger'

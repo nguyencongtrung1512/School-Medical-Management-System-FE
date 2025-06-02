@@ -1,64 +1,25 @@
-import React, { useState } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import CreateGrade from './Create'
 import UpdateGrade from './Update'
 import DeleteGrade from './Delete'
+import { getGradesAPI } from '../../../api/grade.api'
 
 const { Title } = Typography
 
 interface Grade {
-  id: string
+  _id: string
   name: string
-  description: string
-  totalClasses: number
-  totalStudents: number
-  status: string
+  positionOrder: number
+  isDeleted: boolean
+  classIds: string[]
+  description?: string
+  totalClasses?: number
+  totalStudents?: number
+  status?: string
 }
-
-const mockData: Grade[] = [
-  {
-    id: '1',
-    name: 'Khối 1',
-    description: 'Khối lớp 1 - Năm học 2023-2024',
-    totalClasses: 4,
-    totalStudents: 120,
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Khối 2',
-    description: 'Khối lớp 2 - Năm học 2023-2024',
-    totalClasses: 4,
-    totalStudents: 115,
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Khối 3',
-    description: 'Khối lớp 3 - Năm học 2023-2024',
-    totalClasses: 4,
-    totalStudents: 120,
-    status: 'active'
-  },
-  {
-    id: '4',
-    name: 'Khối 4',
-    description: 'Khối lớp 4 - Năm học 2023-2024',
-    totalClasses: 4,
-    totalStudents: 118,
-    status: 'active'
-  },
-  {
-    id: '5',
-    name: 'Khối 5',
-    description: 'Khối lớp 5 - Năm học 2023-2024',
-    totalClasses: 4,
-    totalStudents: 122,
-    status: 'active'
-  }
-]
 
 const GradeList: React.FC = () => {
   const navigate = useNavigate()
@@ -66,9 +27,66 @@ const GradeList: React.FC = () => {
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false)
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
   const [deletingGrade, setDeletingGrade] = useState<Grade | null>(null)
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  })
+
+  const fetchGrades = async () => {
+    try {
+      setLoading(true)
+      const response = await getGradesAPI(pagination.pageSize, pagination.current)
+
+      const responseData = response?.pageData || {}
+
+      if (!responseData || !Array.isArray(responseData)) {
+        console.error(
+          'Invalid API response structure: Expected responseData and responseData.pageData to be an array.',
+          responseData
+        )
+        message.error('API response format is invalid')
+        setGrades([])
+        return
+      }
+      const gradesData = responseData
+
+      const transformedGrades = gradesData.map((grade: any) => ({
+        ...grade,
+        totalClasses: grade.classIds ? grade.classIds.length : 0,
+        description: grade.description || `Khối ${grade.name}`,
+        status: grade.isDeleted ? 'Đã xóa' : 'Hoạt động'
+      }))
+
+      setGrades(transformedGrades)
+
+      if (response.pageInfo) {
+        setPagination({
+          current: parseInt(response.pageInfo.pageNum) || 1,
+          pageSize: parseInt(response.pageInfo.pageSize) || 10,
+          total: response.pageInfo.totalItems || transformedGrades.length
+        })
+      } else {
+        console.warn('API response did not contain pageInfo')
+      }
+    } catch (error) {
+      console.error('Error fetching grades:', error)
+      message.error('Không thể tải danh sách khối')
+      setGrades([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchGrades()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.current, pagination.pageSize])
 
   const handleViewClasses = (grade: Grade) => {
-    navigate(`/admin/student-management/grades/${grade.id}/classes`)
+    navigate(`/admin/student-management/grades/${grade._id}/classes`)
   }
 
   const handleAddGrade = () => {
@@ -84,23 +102,28 @@ const GradeList: React.FC = () => {
     setDeletingGrade(grade)
   }
 
-  const handleCreateOk = (values: any) => {
-    // Xử lý thêm khối mới
-    console.log('Thêm khối mới:', values)
+  const handleCreateOk = () => {
+    fetchGrades()
     setIsCreateModalVisible(false)
   }
 
-  const handleUpdateOk = (values: any) => {
-    // Xử lý cập nhật khối
-    console.log('Cập nhật khối:', values)
+  const handleUpdateOk = () => {
+    fetchGrades()
     setIsUpdateModalVisible(false)
     setEditingGrade(null)
   }
 
   const handleDeleteOk = () => {
-    // Xử lý xóa khối
-    console.log('Xóa khối:', deletingGrade)
+    fetchGrades()
     setDeletingGrade(null)
+  }
+
+  const handleTableChange = (pagination: any) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: pagination.current,
+      pageSize: pagination.pageSize
+    }))
   }
 
   const columns = [
@@ -110,9 +133,9 @@ const GradeList: React.FC = () => {
       key: 'name'
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description'
+      title: 'Thứ tự',
+      dataIndex: 'positionOrder',
+      key: 'positionOrder'
     },
     {
       title: 'Số lớp',
@@ -120,22 +143,22 @@ const GradeList: React.FC = () => {
       key: 'totalClasses'
     },
     {
-      title: 'Tổng học sinh',
-      dataIndex: 'totalStudents',
-      key: 'totalStudents'
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status'
     },
     {
       title: 'Thao tác',
       key: 'action',
       render: (_: unknown, record: Grade) => (
         <Space>
-          <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
+          <Button color='cyan' variant='outlined' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
             Xem lớp
           </Button>
-          <Button type='primary' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
+          <Button color='cyan' variant='outlined' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
             Sửa
           </Button>
-          <Button type='primary' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
+          <Button color='red' variant='outlined' icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
             Xóa
           </Button>
         </Space>
@@ -156,14 +179,14 @@ const GradeList: React.FC = () => {
         <Row gutter={[16, 16]} className='mb-6'>
           <Col span={8}>
             <Card className='bg-blue-50'>
-              <Statistic title='Tổng số khối' value={mockData.length} valueStyle={{ color: '#1890ff' }} />
+              <Statistic title='Tổng số khối' value={grades.length} valueStyle={{ color: '#1890ff' }} />
             </Card>
           </Col>
           <Col span={8}>
             <Card className='bg-green-50'>
               <Statistic
                 title='Tổng số lớp'
-                value={mockData.reduce((sum, grade) => sum + grade.totalClasses, 0)}
+                value={grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0)}
                 valueStyle={{ color: '#3f8600' }}
               />
             </Card>
@@ -172,7 +195,7 @@ const GradeList: React.FC = () => {
             <Card className='bg-purple-50'>
               <Statistic
                 title='Tổng số học sinh'
-                value={mockData.reduce((sum, grade) => sum + grade.totalStudents, 0)}
+                value={grades.reduce((sum, grade) => sum + (grade.totalStudents || 0), 0)}
                 valueStyle={{ color: '#722ed1' }}
               />
             </Card>
@@ -180,7 +203,14 @@ const GradeList: React.FC = () => {
         </Row>
 
         <Card className='shadow-md'>
-          <Table columns={columns} dataSource={mockData} rowKey='id' pagination={false} />
+          <Table
+            columns={columns}
+            dataSource={grades}
+            rowKey='_id'
+            loading={loading}
+            pagination={pagination}
+            onChange={handleTableChange}
+          />
         </Card>
       </div>
 
@@ -200,11 +230,7 @@ const GradeList: React.FC = () => {
         editingGrade={editingGrade}
       />
 
-      <DeleteGrade
-        grade={deletingGrade}
-        onOk={handleDeleteOk}
-        onCancel={() => setDeletingGrade(null)}
-      />
+      <DeleteGrade grade={deletingGrade} onOk={handleDeleteOk} onCancel={() => setDeletingGrade(null)} />
     </div>
   )
 }
