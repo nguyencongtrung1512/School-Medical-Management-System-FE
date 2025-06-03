@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Typography, Row, Col, Statistic, Descriptions, Space } from 'antd'
-import { InfoCircleOutlined, PhoneOutlined, PlusOutlined } from '@ant-design/icons'
+import { Card, Table, Button, Tag, Typography, Row, Col } from 'antd'
+import { InfoCircleOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
 import { getClassByIdAPI } from '../../../api/classes.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
@@ -73,25 +73,39 @@ const StudentList: React.FC = () => {
     fetchClassData()
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
   const columns = [
     {
       title: 'Mã học sinh',
       dataIndex: 'studentCode',
-      key: 'studentCode'
+      key: 'studentCode',
+      className: 'text-base'
     },
     {
       title: 'Họ và tên',
       dataIndex: 'fullName',
-      key: 'fullName'
+      key: 'fullName',
+      className: 'text-base'
     },
     {
       title: 'Ngày sinh',
       dataIndex: 'dob',
-      key: 'dob'
+      key: 'dob',
+      className: 'text-base',
+      render: (dob: string) => <span className='text-gray-700'>{formatDate(dob)}</span>
     },
     {
       title: 'Giới tính',
       dataIndex: 'gender',
+      className: 'text-base',
       key: 'gender',
       render: (gender: string) => (
         <Tag color={gender === 'male' ? 'blue' : 'pink'}>{gender === 'male' ? 'Nam' : 'Nữ'}</Tag>
@@ -100,6 +114,7 @@ const StudentList: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'action',
+      className: 'text-base',
       render: (_: unknown, record: Student) => (
         <Button type='primary' icon={<InfoCircleOutlined />} onClick={() => handleViewDetail(record)}>
           Xem chi tiết
@@ -109,31 +124,59 @@ const StudentList: React.FC = () => {
   ]
 
   if (!currentClassroom) {
-    return <div>Không tìm thấy thông tin lớp</div>
+    return (
+      <div className='flex items-center justify-center min-h-[400px]'>
+        <div className='text-xl text-gray-500'>Không tìm thấy thông tin lớp</div>
+      </div>
+    )
   }
 
   return (
     <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
-        <div className='flex justify-between items-center mb-6'>
-          <Title level={3}>Danh sách học sinh - {currentClassroom.name}</Title>
-          <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl shadow-lg'>
+        <div className='flex justify-between items-center mb-8'>
+          <div className='space-y-1'>
+            <Title level={3} className=' text-base !mb-0 text-gray-800'>Danh sách học sinh</Title>
+            <p className='text-gray-500 text-lg'>{currentClassroom.name}</p>
+          </div>
+          <Button
+            type='primary'
+            icon={<PlusOutlined />}
+            onClick={() => setIsCreateModalVisible(true)}
+            className='h-10 px-6 flex items-center text-base hover:scale-105 transition-transform'
+          >
             Thêm học sinh
           </Button>
         </div>
 
-        <Row gutter={[16, 16]} className='mb-6'>
+        <Row gutter={[24, 24]} className='mb-8'>
           <Col span={8}>
-            <Card className='bg-blue-50'>
-              <Statistic title='Tổng số học sinh' value={studentList.length} valueStyle={{ color: '#1890ff' }} />
-            </Card>
+            <div className='bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow border border-blue-100'>
+              <div className='flex items-center space-x-4'>
+                <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
+                  <UserOutlined className='text-2xl text-blue-600' />
+                </div>
+                <div>
+                  <div className='text-gray-500 text-sm font-medium'>Tổng số học sinh</div>
+                  <div className='text-3xl font-bold text-blue-600'>{studentList.length}</div>
+                </div>
+              </div>
+            </div>
           </Col>
         </Row>
 
-        <Card className='shadow-md'>
-          <Table columns={columns} dataSource={studentList} rowKey='_id' pagination={false} />
+        <Card className='shadow-md rounded-xl border-0'>
+          <Table
+            columns={columns}
+            dataSource={studentList}
+            rowKey='_id'
+            pagination={false}
+            className='custom-table'
+            rowClassName='hover:bg-blue-50 transition-colors'
+          />
         </Card>
       </div>
+
       <StudentDetail
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}

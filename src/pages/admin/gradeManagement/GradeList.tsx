@@ -130,35 +130,40 @@ const GradeList: React.FC = () => {
     {
       title: 'Tên khối',
       dataIndex: 'name',
-      key: 'name'
+      key: 'name',
+      className: 'text-base'
     },
     {
       title: 'Thứ tự',
       dataIndex: 'positionOrder',
-      key: 'positionOrder'
+      key: 'positionOrder',
+      className: 'text-base'
     },
     {
       title: 'Số lớp',
+      className: 'text-base',
       dataIndex: 'totalClasses',
       key: 'totalClasses'
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
+      className: 'text-base',
       key: 'status'
     },
     {
       title: 'Thao tác',
+      className: 'text-base',
       key: 'action',
       render: (_: unknown, record: Grade) => (
         <Space>
-          <Button color='cyan' variant='outlined' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
             Xem lớp
           </Button>
-          <Button color='cyan' variant='outlined' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
             Sửa
           </Button>
-          <Button color='red' variant='outlined' icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
+          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
             Xóa
           </Button>
         </Space>
@@ -170,8 +175,8 @@ const GradeList: React.FC = () => {
     <div className='p-6 space-y-6'>
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
-          <Title level={3}>Quản lý khối</Title>
-          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddGrade}>
+          <Title level={3} className='text-2xl'>Quản lý khối</Title>
+          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddGrade} className='text-base h-10 px-6'>
             Thêm khối mới
           </Button>
         </div>
@@ -179,24 +184,28 @@ const GradeList: React.FC = () => {
         <Row gutter={[16, 16]} className='mb-6'>
           <Col span={8}>
             <Card className='bg-blue-50'>
-              <Statistic title='Tổng số khối' value={grades.length} valueStyle={{ color: '#1890ff' }} />
+              <Statistic
+                title={<span className='text-base'>Tổng số khối</span>}
+                value={grades.length}
+                valueStyle={{ color: '#1890ff', fontSize: '24px' }}
+              />
             </Card>
           </Col>
           <Col span={8}>
             <Card className='bg-green-50'>
               <Statistic
-                title='Tổng số lớp'
+                title={<span className='text-base'>Tổng số lớp</span>}
                 value={grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0)}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: '#3f8600', fontSize: '24px' }}
               />
             </Card>
           </Col>
           <Col span={8}>
             <Card className='bg-purple-50'>
               <Statistic
-                title='Tổng số học sinh'
+                title={<span className='text-base'>Tổng số học sinh</span>}
                 value={grades.reduce((sum, grade) => sum + (grade.totalStudents || 0), 0)}
-                valueStyle={{ color: '#722ed1' }}
+                valueStyle={{ color: '#722ed1', fontSize: '24px' }}
               />
             </Card>
           </Col>
@@ -208,8 +217,13 @@ const GradeList: React.FC = () => {
             dataSource={grades}
             rowKey='_id'
             loading={loading}
-            pagination={pagination}
+            pagination={{
+              ...pagination,
+              className: 'text-base'
+            }}
             onChange={handleTableChange}
+            className='custom-table'
+            rowClassName='hover:bg-blue-50 transition-colors'
           />
         </Card>
       </div>

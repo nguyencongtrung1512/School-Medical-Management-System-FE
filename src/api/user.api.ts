@@ -11,3 +11,11 @@ export const searchUsersAPI = (pageNum: number = 1, pageSize: number = 10, query
 export const getUserByIdAPI = (id: string) => {
   return axiosInstance.get(`/users/${id}`)
 }
+
+export const deleteUserAPI = (id: string) => {
+  return axiosInstance.delete(`/users/${id}`)
+}
+
+export const updateUserAPI = (id: string, data: { fullName?: string; phone?: string; image?: string }) => {
+  return axiosInstance.put(`/users/${id}`, data)
+}

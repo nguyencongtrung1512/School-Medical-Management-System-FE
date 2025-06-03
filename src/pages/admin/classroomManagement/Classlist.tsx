@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Input } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, EyeOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
 import CreateClass from './Create'
@@ -165,13 +165,13 @@ const ClassList: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Classes) => (
         <Space>
-          <Button type='primary' icon={<UserOutlined />} onClick={() => handleViewStudents(record)}>
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}>
             Xem học sinh
           </Button>
-          <Button type='primary' icon={<EditOutlined />} onClick={() => handleEditClass(record)}>
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)}>
             Sửa
           </Button>
-          <Button type='primary' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}>
+          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}>
             Xóa
           </Button>
         </Space>
@@ -188,10 +188,10 @@ const ClassList: React.FC = () => {
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
           <div>
-            <Title level={3}>Danh sách lớp - {currentGrade?.name || 'Đang tải...'}</Title>
-            {currentGrade?.description && <p className='text-gray-600'>{currentGrade.description}</p>}
+            <Title level={3} className='text-2xl'>Danh sách lớp - {currentGrade?.name || 'Đang tải...'}</Title>
+            {currentGrade?.description && <p className='text-gray-600 text-base'>{currentGrade.description}</p>}
           </div>
-          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass}>
+          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass} className='text-base h-10 px-6'>
             Thêm lớp mới
           </Button>
         </div>
@@ -199,15 +199,19 @@ const ClassList: React.FC = () => {
         <Row gutter={[16, 16]} className='mb-6'>
           <Col span={8}>
             <Card className='bg-blue-50'>
-              <Statistic title='Tổng số lớp' value={classList.length} valueStyle={{ color: '#1890ff' }} />
+              <Statistic
+                title={<span className='text-base'>Tổng số lớp</span>}
+                value={classList.length}
+                valueStyle={{ color: '#1890ff', fontSize: '24px' }}
+              />
             </Card>
           </Col>
           <Col span={8}>
             <Card className='bg-green-50'>
               <Statistic
-                title='Tổng số học sinh'
+                title={<span className='text-base'>Tổng số học sinh</span>}
                 value={classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0)}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: '#3f8600', fontSize: '24px' }}
               />
             </Card>
           </Col>
@@ -219,8 +223,13 @@ const ClassList: React.FC = () => {
             dataSource={classList}
             rowKey='_id'
             loading={loading}
-            pagination={pagination}
+            pagination={{
+              ...pagination,
+              className: 'text-base'
+            }}
             onChange={handleTableChange}
+            className='custom-table'
+            rowClassName='hover:bg-blue-50 transition-colors'
           />
         </Card>
       </div>

@@ -1,28 +1,15 @@
-import React, { useState } from 'react'
-import {
-  Card,
-  Table,
-  Typography,
-  Space,
-  Tag,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Select,
-  message,
-  Popconfirm,
-  Row,
-  Col,
-  Statistic
-} from 'antd'
-import { DeleteOutlined, EditOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
+import React, { useState, useEffect } from 'react'
+import { Card, Table, Typography, Space, Tag, Button, Form, message, Popconfirm, Row, Col, Statistic } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, LockOutlined } from '@ant-design/icons'
+import { getUserByIdAPI, searchUsersAPI, deleteUserAPI } from '../../../api/user.api'
+import Detail from './Detail'
+import { toast } from 'react-toastify'
+import Update from './Update'
 
 const { Title } = Typography
-const { Option } = Select
 
 interface User {
-  id: string
+  _id: string
   username: string
   fullName: string
   email: string
@@ -36,94 +23,93 @@ interface User {
 const UserList: React.FC = () => {
   const [form] = Form.useForm()
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isDetailVisible, setIsDetailVisible] = useState(false)
+  const [userDetail, setUserDetail] = useState<User | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  })
+  const [searchRole, setSearchRole] = useState<string | undefined>(undefined)
+  const [searchKeyword, setSearchKeyword] = useState<string>('')
 
-  // Mock data - sau này sẽ lấy từ API
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      username: 'admin1',
-      fullName: 'Nguyễn Văn A',
-      email: 'admin1@example.com',
-      phone: '0123456789',
-      role: 'admin',
-      status: 'active',
-      createdAt: '2024-03-20 10:00',
-      lastLogin: '2024-03-25 15:30'
-    },
-    {
-      id: '2',
-      username: 'nurse1',
-      fullName: 'Trần Thị B',
-      email: 'nurse1@example.com',
-      phone: '0987654321',
-      role: 'nurse',
-      status: 'active',
-      createdAt: '2024-03-19 14:00'
-    },
-    {
-      id: '3',
-      username: 'parent1',
-      fullName: 'Lê Văn C',
-      email: 'parent1@example.com',
-      phone: '0123456788',
-      role: 'parent',
-      status: 'inactive',
-      createdAt: '2024-03-18 09:00'
+  useEffect(() => {
+    fetchUsers(1, pagination.pageSize)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchRole])
+
+  const fetchUsers = async (pageNum = 1, pageSize = 10) => {
+    setLoading(true)
+    try {
+      const res = await searchUsersAPI(pageNum, pageSize, searchKeyword, searchRole)
+      setUsers(res.pageData || [])
+      setPagination((prev) => ({
+        ...prev,
+        total: res.pageInfo?.totalItems || 0
+      }))
+    } catch (err) {
+      setUsers([])
+      setPagination((prev) => ({ ...prev, total: 0 }))
     }
-  ])
+    setLoading(false)
+  }
 
   const columns = [
     {
-      title: 'Tên đăng nhập',
-      dataIndex: 'username',
-      key: 'username'
-    },
-    {
       title: 'Họ và tên',
       dataIndex: 'fullName',
-      key: 'fullName'
+      key: 'fullName',
+      className: 'text-base'
     },
     {
       title: 'Email',
       dataIndex: 'email',
-      key: 'email'
+      key: 'email',
+      className: 'text-base'
     },
     {
       title: 'Số điện thoại',
       dataIndex: 'phone',
-      key: 'phone'
+      key: 'phone',
+      className: 'text-base'
     },
     {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
+      className: 'text-base',
       render: (role: string) => {
         const roles = {
           admin: { color: 'red', text: 'Quản trị viên' },
           nurse: { color: 'blue', text: 'Y tá' },
           parent: { color: 'green', text: 'Phụ huynh' }
         }
-        const { color, text } = roles[role as keyof typeof roles]
-        return <Tag color={color}>{text}</Tag>
+        const { color, text } = roles[role as keyof typeof roles] || { color: 'gray', text: role }
+        return <Tag color={color} className='text-base px-3 py-1'>{text}</Tag>
       }
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? 'Đang hoạt động' : 'Vô hiệu hóa'}
+      dataIndex: 'isDeleted',
+      key: 'isDeleted',
+      className: 'text-base',
+      render: (isDeleted: boolean) => (
+        <Tag color={isDeleted === false ? 'green' : 'red'} className='text-base px-3 py-1'>
+          {isDeleted === false ? 'Hoạt động' : 'Ngưng hoạt động'}
         </Tag>
       )
     },
     {
       title: 'Thao tác',
       key: 'action',
+      className: 'text-base',
       render: (record: User) => (
-        <Space>
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditUser(record)}>
+        <Space size="middle">
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditUser(record)} className='text-base'>
             Sửa
           </Button>
           <Popconfirm
@@ -133,17 +119,12 @@ const UserList: React.FC = () => {
             okText='Xóa'
             cancelText='Hủy'
           >
-            <Button type='link' danger icon={<DeleteOutlined />}>
+            <Button type='link' danger icon={<DeleteOutlined />} className='text-base'>
               Xóa
             </Button>
           </Popconfirm>
-          <Button
-            type='link'
-            icon={record.status === 'active' ? <LockOutlined /> : <UnlockOutlined />}
-            onClick={() => handleToggleStatus(record)}
-            style={{ color: record.status === 'active' ? 'red' : 'green' }}
-          >
-            {record.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} className='text-base'>
+            Xem chi tiết
           </Button>
         </Space>
       )
@@ -153,141 +134,126 @@ const UserList: React.FC = () => {
   const handleEditUser = (user: User) => {
     setSelectedUser(user)
     form.setFieldsValue({
-      username: user.username,
       fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role
+      phone: user.phone
     })
     setIsModalVisible(true)
   }
 
-  const handleDeleteUser = (user: User) => {
-    // Gọi API xóa người dùng
-    setUsers(users.filter((u) => u.id !== user.id))
-    message.success('Đã xóa người dùng thành công!')
+  const handleViewDetail = async (user: User) => {
+    setIsDetailVisible(true)
+    setLoadingDetail(true)
+    try {
+      const res = await getUserByIdAPI(user._id)
+      setUserDetail(res.data)
+    } catch {
+      setUserDetail(null)
+    }
+    setLoadingDetail(false)
   }
 
-  const handleToggleStatus = (user: User) => {
-    const newStatus = user.status === 'active' ? 'inactive' : 'active'
-    const updatedUsers = users.map((u) => {
-      if (u.id === user.id) {
-        return { ...u, status: newStatus }
-      }
-      return u
-    })
-    setUsers(updatedUsers)
-    message.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản!`)
-  }
-
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
-      if (selectedUser) {
-        // Cập nhật thông tin người dùng
-        const updatedUsers = users.map((u) => {
-          if (u.id === selectedUser.id) {
-            return {
-              ...u,
-              ...values
-            }
-          }
-          return u
-        })
-        setUsers(updatedUsers)
-        message.success('Cập nhật thông tin người dùng thành công!')
-      }
-      setIsModalVisible(false)
-      form.resetFields()
-    })
+  const handleDeleteUser = async (user: User) => {
+    try {
+      await deleteUserAPI(user._id)
+      toast.success('Đã xóa người dùng thành công!')
+      fetchUsers(pagination.current, pagination.pageSize)
+    } catch {
+      message.error('Xóa người dùng thất bại!')
+    }
   }
 
   const stats = {
-    total: users.length,
+    total: pagination.total,
     active: users.filter((u) => u.status === 'active').length,
     inactive: users.filter((u) => u.status === 'inactive').length
   }
 
+  const handleTableChange = (pag: any) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: pag.current,
+      pageSize: pag.pageSize
+    }))
+    fetchUsers(pag.current, pag.pageSize)
+  }
+
   return (
-    <div style={{ padding: '24px' }}>
+    <div className='p-8'>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        <Card>
-          <Title level={4}>Quản lý người dùng</Title>
-          <Row gutter={16} style={{ marginTop: '24px' }}>
+        <Card className='shadow-md rounded-xl'>
+          <Title level={4} className='text-2xl !mb-6'>Quản lý người dùng</Title>
+          <Row gutter={[24, 24]}>
             <Col span={8}>
-              <Card>
-                <Statistic title='Tổng số người dùng' value={stats.total} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic title='Đang hoạt động' value={stats.active} valueStyle={{ color: '#52c41a' }} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic title='Vô hiệu hóa' value={stats.inactive} valueStyle={{ color: '#ff4d4f' }} />
+              <Card className='shadow-sm hover:shadow-md transition-shadow'>
+                <Statistic
+                  title={<span className='text-lg'>Tổng số người dùng</span>}
+                  value={stats.total}
+                  valueStyle={{ fontSize: '24px' }}
+                />
               </Card>
             </Col>
           </Row>
         </Card>
 
-        <Card title='Danh sách người dùng'>
-          <Table columns={columns} dataSource={users} rowKey='id' pagination={{ pageSize: 10 }} />
+        <Card title={<span className='text-xl'>Danh sách người dùng</span>} className='shadow-md rounded-xl'>
+          <div className='flex flex-wrap gap-4 mb-6'>
+            <select
+              className='border rounded-lg px-4 py-2 text-base min-w-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500'
+              value={searchRole || ''}
+              onChange={(e) => setSearchRole(e.target.value || undefined)}
+            >
+              <option value=''>Tất cả vai trò</option>
+              <option value='admin'>Quản trị viên</option>
+              <option value='nurse'>Y tá</option>
+              <option value='parent'>Phụ huynh</option>
+            </select>
+            <input
+              className='border rounded-lg px-4 py-2 text-base min-w-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500'
+              placeholder='Tìm kiếm tên, email, SĐT...'
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') fetchUsers(1, pagination.pageSize)
+              }}
+            />
+            <Button
+              type='primary'
+              onClick={() => fetchUsers(1, pagination.pageSize)}
+              className='h-10 px-6 text-base'
+            >
+              Tìm kiếm
+            </Button>
+          </div>
+          <Table
+            columns={columns}
+            dataSource={users}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              className: 'text-base'
+            }}
+            onChange={handleTableChange}
+            className='custom-table'
+            rowClassName='hover:bg-blue-50 transition-colors'
+          />
         </Card>
-
-        <Modal
-          title='Cập nhật thông tin người dùng'
-          open={isModalVisible}
-          onCancel={() => {
-            setIsModalVisible(false)
-            form.resetFields()
-          }}
-          onOk={handleSubmit}
-          okText='Cập nhật'
-          cancelText='Hủy'
-        >
-          <Form form={form} layout='vertical'>
-            <Form.Item
-              name='username'
-              label='Tên đăng nhập'
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
-            >
-              <Input disabled />
-            </Form.Item>
-            <Form.Item
-              name='fullName'
-              label='Họ và tên'
-              rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name='email'
-              label='Email'
-              rules={[
-                { required: true, message: 'Vui lòng nhập email!' },
-                { type: 'email', message: 'Email không hợp lệ!' }
-              ]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name='phone'
-              label='Số điện thoại'
-              rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item name='role' label='Vai trò' rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}>
-              <Select>
-                <Option value='admin'>Quản trị viên</Option>
-                <Option value='nurse'>Y tá</Option>
-                <Option value='parent'>Phụ huynh</Option>
-              </Select>
-            </Form.Item>
-          </Form>
-        </Modal>
       </Space>
+      <Detail
+        open={isDetailVisible}
+        onCancel={() => setIsDetailVisible(false)}
+        user={userDetail}
+        loading={loadingDetail}
+      />
+      <Update
+        isModalVisible={isModalVisible}
+        setIsModalVisible={setIsModalVisible}
+        user={selectedUser}
+        onUpdated={() => fetchUsers(pagination.current, pagination.pageSize)}
+      />
     </div>
   )
 }
