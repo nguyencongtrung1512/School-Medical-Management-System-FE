@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { Modal, Descriptions, Avatar, Space, Typography, Spin, Form, Input, Select, DatePicker, Button } from 'antd'
-import { UserOutlined, PhoneOutlined } from '@ant-design/icons'
+import {
+  Modal,
+  Descriptions,
+  Space,
+  Typography,
+  Spin,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Button,
+  Upload,
+  message
+} from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
 import { updateStudentAPI } from '../../../api/student.api'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
+import { formatDate } from '../../../utils/utils'
+import { handleUploadFile } from '../../../utils/upload'
 
 const { Title } = Typography
 
@@ -12,13 +27,45 @@ interface StudentDetailProps {
   onCancel: () => void
   student: any
   loading: boolean
-  onUpdated?: () => void // callback để reload lại danh sách nếu cần
+  onUpdated?: (updatedStudentId: string) => void
 }
 
 const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, loading, onUpdated }) => {
   const [isEdit, setIsEdit] = useState(false)
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setUploading(true)
+      const url = await handleUploadFile(file, 'image')
+      if (url) {
+        form.setFieldsValue({ avatar: url })
+        message.success('Tải ảnh lên thành công!')
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      message.error('Tải ảnh lên thất bại!')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const beforeUpload = (file: File) => {
+    const isImage = file.type.startsWith('image/')
+    if (!isImage) {
+      message.error('Bạn chỉ được upload file ảnh!')
+      return false
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2
+    if (!isLt2M) {
+      message.error('Ảnh phải nhỏ hơn 2MB!')
+      return false
+    }
+    handleAvatarUpload(file)
+    return false
+  }
 
   useEffect(() => {
     if (student && isEdit) {
@@ -33,13 +80,14 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
     try {
       setSaving(true)
       const values = await form.validateFields()
+      console.log('Giá trị gửi lên API:', values)
       await updateStudentAPI(student._id, {
         ...values,
         dob: values.dob ? values.dob.format('YYYY-MM-DD') : undefined
       })
       toast.success('Cập nhật học sinh thành công')
       setIsEdit(false)
-      if (onUpdated) onUpdated()
+      if (onUpdated && student) onUpdated(student._id)
     } catch (err) {
       toast.error('Không thể cập nhật học sinh')
     }
@@ -62,7 +110,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
       ) : student ? (
         <div className='p-4'>
           <div className='flex items-center mb-6'>
-            <Avatar size={64} src={student.avatar} icon={<UserOutlined />} className='mr-4' />
+            <img alt={student.fullName} src={student.avatar} className='mr-4' style={{ width: 74, height: 94 }} />
             <div>
               <Title level={4}>{student.fullName}</Title>
               <p className='text-gray-600'>Mã học sinh: {student.studentCode}</p>
@@ -70,6 +118,13 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
           </div>
           {isEdit ? (
             <Form form={form} layout='vertical'>
+              <Form.Item name='avatar' label='Avatar'>
+                <Upload name='avatar' listType='picture' showUploadList={false} beforeUpload={beforeUpload}>
+                  <Button icon={<UploadOutlined />} loading={uploading}>
+                    Upload Avatar
+                  </Button>
+                </Upload>
+              </Form.Item>
               <Form.Item
                 name='fullName'
                 label='Tên học sinh'
@@ -103,16 +158,12 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
           ) : (
             <>
               <Descriptions bordered column={2}>
-                <Descriptions.Item label='Ngày sinh'>{student.dob}</Descriptions.Item>
+                <Descriptions.Item label='Ngày sinh'>{formatDate(student.dob)}</Descriptions.Item>
                 <Descriptions.Item label='Giới tính'>
                   {student.gender === 'male' ? 'Nam' : student.gender === 'female' ? 'Nữ' : 'Khác'}
                 </Descriptions.Item>
-                <Descriptions.Item label='Phụ huynh'>{student.parentName}</Descriptions.Item>
-                <Descriptions.Item label='Số điện thoại'>
-                  <Space>
-                    <PhoneOutlined />
-                    {student.parentPhone}
-                  </Space>
+                <Descriptions.Item label='Phụ huynh'>
+                  {student.parentName ? student.parentName : 'Chưa cập nhật'}
                 </Descriptions.Item>
               </Descriptions>
               <Button className='mt-4' type='primary' onClick={() => setIsEdit(true)}>

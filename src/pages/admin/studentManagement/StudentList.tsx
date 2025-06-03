@@ -6,6 +6,8 @@ import { getClassByIdAPI } from '../../../api/classes.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import StudentDetail from './Studentdetail'
 import CreateClass from './Create'
+import { formatDate } from '../../../utils/utils'
+import { toast } from 'react-hot-toast'
 
 const { Title } = Typography
 
@@ -68,18 +70,21 @@ const StudentList: React.FC = () => {
     setLoadingDetail(false)
   }
 
+  const handleStudentUpdated = async (updatedStudentId: string) => {
+    setLoadingDetail(true)
+    try {
+      const res = await getStudentByIdAPI(updatedStudentId)
+      setStudentDetail(res.data)
+    } catch {
+      toast.error('Không thể tải lại thông tin học sinh sau cập nhật.')
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
   const handleCreateOk = () => {
     setIsCreateModalVisible(false)
     fetchClassData()
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
   }
 
   const columns = [
@@ -182,7 +187,7 @@ const StudentList: React.FC = () => {
         onCancel={() => setIsDetailModalVisible(false)}
         student={studentDetail}
         loading={loadingDetail}
-        onUpdated={fetchClassData}
+        onUpdated={handleStudentUpdated}
       />
       <CreateClass
         isModalVisible={isCreateModalVisible}
