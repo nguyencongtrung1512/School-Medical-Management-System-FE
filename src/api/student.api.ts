@@ -1,0 +1,47 @@
+import axiosInstance from '../service/axiosInstance'
+
+// Lấy danh sách học sinh có tìm kiếm và phân trang
+export const getStudentsAPI = (pageSize: number = 10, pageNum: number = 1, keyword?: string) => {
+  let url = `/students/search?pageSize=${pageSize}&pageNum=${pageNum}`
+  if (keyword) {
+    url += `&keyword=${encodeURIComponent(keyword)}`
+  }
+  return axiosInstance.get(url)
+}
+
+// Lấy chi tiết học sinh theo id
+export const getStudentByIdAPI = (id: string) => {
+  return axiosInstance.get(`/students/${id}`)
+}
+
+// Tạo học sinh mới
+export const createStudentAPI = (data: {
+  fullName: string
+  gender: 'male' | 'female' | 'other'
+  dob: string
+  parentId: string
+  classId: string
+  avatar?: string
+}) => {
+  return axiosInstance.post('/students/create', data)
+}
+
+// Cập nhật học sinh
+export const updateStudentAPI = (
+  id: string,
+  data: {
+    fullName?: string
+    gender?: 'male' | 'female' | 'other'
+    dob?: string
+    parentId?: string
+    classId?: string
+    avatar?: string
+  }
+) => {
+  return axiosInstance.put(`/students/${id}`, data)
+}
+
+// Xóa học sinh
+export const deleteStudentAPI = (id: string) => {
+  return axiosInstance.delete(`/students/${id}`)
+}

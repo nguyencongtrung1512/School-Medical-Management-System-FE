@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Space, Typography, Modal, Row, Col, Statistic, Descriptions, Avatar } from 'antd'
-import { UserOutlined, PhoneOutlined, EnvironmentOutlined, InfoCircleOutlined } from '@ant-design/icons'
+import { Card, Table, Button, Tag, Typography, Row, Col, Statistic, Descriptions, Space } from 'antd'
+import { InfoCircleOutlined, PhoneOutlined, PlusOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
+import { getClassByIdAPI } from '../../../api/classes.api'
+import { getStudentByIdAPI } from '../../../api/student.api'
+import StudentDetail from './Studentdetail'
+import CreateClass from './Create'
 
 const { Title } = Typography
 
@@ -10,10 +14,12 @@ interface Student {
   fullName: string
   studentCode: string
   gender: string
-  dob: string // hoặc dateOfBirth: string
+  dob: string
   classId: string
   avatar: string
   position: number
+  parentName?: string
+  parentPhone?: string
 }
 
 interface Classroom {
@@ -28,13 +34,43 @@ const StudentList: React.FC = () => {
   const { classId } = useParams<{ classId: string }>()
   const [studentList, setStudentList] = useState<Student[]>([])
   const [currentClassroom, setCurrentClassroom] = useState<Classroom | null>(null)
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [studentDetail, setStudentDetail] = useState<Student | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
 
+  useEffect(() => {
+    fetchClassData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId])
 
-  const handleViewDetail = (student: Student) => {
-    setSelectedStudent(student)
+  const fetchClassData = async () => {
+    if (!classId) return
+    try {
+      const res = await getClassByIdAPI(classId)
+      setCurrentClassroom(res.data)
+      setStudentList(res.data.students || [])
+    } catch {
+      setCurrentClassroom(null)
+      setStudentList([])
+    }
+  }
+
+  const handleViewDetail = async (student: Student) => {
     setIsDetailModalVisible(true)
+    setLoadingDetail(true)
+    try {
+      const res = await getStudentByIdAPI(student._id)
+      setStudentDetail(res.data)
+    } catch {
+      setStudentDetail(null)
+    }
+    setLoadingDetail(false)
+  }
+
+  const handleCreateOk = () => {
+    setIsCreateModalVisible(false)
+    fetchClassData()
   }
 
   const columns = [
@@ -50,8 +86,8 @@ const StudentList: React.FC = () => {
     },
     {
       title: 'Ngày sinh',
-      dataIndex: 'dateOfBirth',
-      key: 'dateOfBirth'
+      dataIndex: 'dob',
+      key: 'dob'
     },
     {
       title: 'Giới tính',
@@ -59,24 +95,6 @@ const StudentList: React.FC = () => {
       key: 'gender',
       render: (gender: string) => (
         <Tag color={gender === 'male' ? 'blue' : 'pink'}>{gender === 'male' ? 'Nam' : 'Nữ'}</Tag>
-      )
-    },
-    {
-      title: 'Phụ huynh',
-      dataIndex: 'parentName',
-      key: 'parentName'
-    },
-    {
-      title: 'Số điện thoại',
-      dataIndex: 'parentPhone',
-      key: 'parentPhone'
-    },
-    {
-      title: 'Tình trạng sức khỏe',
-      dataIndex: 'healthStatus',
-      key: 'healthStatus',
-      render: (status: string) => (
-        <Tag color={status === 'normal' ? 'green' : 'orange'}>{status === 'normal' ? 'Bình thường' : 'Đặc biệt'}</Tag>
       )
     },
     {
@@ -97,9 +115,11 @@ const StudentList: React.FC = () => {
   return (
     <div className='p-6 space-y-6'>
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
-        <div className='mb-6'>
+        <div className='flex justify-between items-center mb-6'>
           <Title level={3}>Danh sách học sinh - {currentClassroom.name}</Title>
-          <p className='text-gray-600'>Giáo viên chủ nhiệm: {currentClassroom.teacher}</p>
+          <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+            Thêm học sinh
+          </Button>
         </div>
 
         <Row gutter={[16, 16]} className='mb-6'>
@@ -108,75 +128,24 @@ const StudentList: React.FC = () => {
               <Statistic title='Tổng số học sinh' value={studentList.length} valueStyle={{ color: '#1890ff' }} />
             </Card>
           </Col>
-          <Col span={8}>
-            <Card className='bg-green-50'>
-              <Statistic title='Sức chứa lớp' value={currentClassroom.capacity} valueStyle={{ color: '#3f8600' }} />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card className='bg-purple-50'>
-              <Statistic
-                title='Còn trống'
-                value={currentClassroom.capacity - studentList.length}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
         </Row>
 
         <Card className='shadow-md'>
-          <Table columns={columns} dataSource={studentList} rowKey='id' pagination={false} />
+          <Table columns={columns} dataSource={studentList} rowKey='_id' pagination={false} />
         </Card>
       </div>
-
-      <Modal
-        title='Thông tin chi tiết học sinh'
+      <StudentDetail
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
-        footer={null}
-        width={800}
-      >
-        {selectedStudent && (
-          <div className='p-4'>
-            <div className='flex items-center mb-6'>
-              <Avatar size={64} icon={<UserOutlined />} className='mr-4' />
-              <div>
-                <Title level={4}>{selectedStudent.fullName}</Title>
-                <p className='text-gray-600'>Mã học sinh: {selectedStudent.studentCode}</p>
-              </div>
-            </div>
-
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label='Ngày sinh' span={2}>
-                {selectedStudent.dateOfBirth}
-              </Descriptions.Item>
-              <Descriptions.Item label='Giới tính'>
-                {selectedStudent.gender === 'male' ? 'Nam' : 'Nữ'}
-              </Descriptions.Item>
-              <Descriptions.Item label='Tình trạng sức khỏe'>
-                <Tag color={selectedStudent.healthStatus === 'normal' ? 'green' : 'orange'}>
-                  {selectedStudent.healthStatus === 'normal' ? 'Bình thường' : 'Đặc biệt'}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label='Phụ huynh' span={2}>
-                {selectedStudent.parentName}
-              </Descriptions.Item>
-              <Descriptions.Item label='Số điện thoại' span={2}>
-                <Space>
-                  <PhoneOutlined />
-                  {selectedStudent.parentPhone}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label='Địa chỉ' span={2}>
-                <Space>
-                  <EnvironmentOutlined />
-                  {selectedStudent.address}
-                </Space>
-              </Descriptions.Item>
-            </Descriptions>
-          </div>
-        )}
-      </Modal>
+        student={studentDetail}
+        loading={loadingDetail}
+        onUpdated={fetchClassData}
+      />
+      <CreateClass
+        isModalVisible={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        onOk={handleCreateOk}
+      />
     </div>
   )
 }

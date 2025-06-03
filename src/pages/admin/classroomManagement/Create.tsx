@@ -16,9 +16,8 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
-
-      if (!gradeId) {
-        toast.error('Không tìm thấy ID khối')
+      if (!gradeId || gradeId === 'undefined' || gradeId === 'null') {
+        toast.error('Không tìm thấy ID khối. Vui lòng chọn khối trước khi tạo lớp!')
         return
       }
 

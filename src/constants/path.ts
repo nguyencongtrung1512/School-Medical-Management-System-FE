@@ -34,6 +34,7 @@ const path = {
   USER_MANAGEMENT: '/admin/user-management',
   GRADE_MANAGEMENT: '/admin/student-management/grades',
   CLASS_MANAGEMENT: '/admin/student-management/grades/:gradeId/classes',
-  STUDENT_LIST: '/admin/student-management/classes/:classId/students'
+  STUDENT_LIST: '/admin/student-management/classes/:classId',
+  STUDENT_DETAIL: '/admin/student-management/classes/:classId/students/:studentId',
 }
 export default path

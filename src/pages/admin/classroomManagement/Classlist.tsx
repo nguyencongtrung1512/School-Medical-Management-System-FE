@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Input } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getClassesAPI } from '../../../api/classes.api'
 import { getGradeByIdAPI } from '../../../api/grade.api'
 import CreateClass from './Create'
 import DeleteClass from './Delete'
@@ -68,27 +67,20 @@ const ClassList: React.FC = () => {
 
     try {
       setLoading(true)
-      const response = await getClassesAPI(pagination.pageSize, pagination.current, gradeId)
-      console.log('Classes response:', response)
-
-      const classesData = response.pageData || []
-      console.log('Classes data:', classesData)
-
+      const response = await getGradeByIdAPI(gradeId)
+      // Lấy danh sách lớp từ classIds
+      const classesData = response.data.classIds || []
       if (Array.isArray(classesData)) {
         const transformedClasses: Classes[] = classesData.map((classItem: any) => ({
           ...classItem,
           totalStudents: classItem.studentIds?.length || 0,
           status: classItem.isDeleted ? 'Đã xóa' : 'Hoạt động'
         }))
-
         setClassList(transformedClasses)
-        if (response.data.pageInfo) {
-          setPagination({
-            current: parseInt(response.data.pageInfo.pageNum) || 1,
-            pageSize: parseInt(response.data.pageInfo.pageSize) || 10,
-            total: response.data.pageInfo.totalItems || transformedClasses.length
-          })
-        }
+        setPagination((prev) => ({
+          ...prev,
+          total: transformedClasses.length
+        }))
       }
     } catch (error) {
       console.error('Error fetching classes:', error)
@@ -125,8 +117,7 @@ const ClassList: React.FC = () => {
   }
 
   const handleViewStudents = (classes: Classes) => {
-    navigate(`/admin/student-management/classes/${classes._id}/students`)
-    //admin/student-management/classes/68367cd64c5534eab407caae/students
+    navigate(`/admin/student-management/classes/${classes._id}`)
   }
 
   const handleTableChange = (pagination: any) => {
@@ -200,19 +191,6 @@ const ClassList: React.FC = () => {
             <Title level={3}>Danh sách lớp - {currentGrade?.name || 'Đang tải...'}</Title>
             {currentGrade?.description && <p className='text-gray-600'>{currentGrade.description}</p>}
           </div>
-          <Input.Search
-            placeholder='Tìm kiếm tên lớp...'
-            allowClear
-            enterButton='Tìm kiếm'
-            style={{ width: 300, marginRight: 16 }}
-            value={searchKeyword}
-            onChange={e => setSearchKeyword(e.target.value)}
-            onSearch={value => {
-              setSearchKeyword(value);
-              setPagination({ ...pagination, current: 1 }); // reset về trang 1 khi tìm kiếm
-              fetchClasses();
-            }}
-          />
           <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass}>
             Thêm lớp mới
           </Button>
