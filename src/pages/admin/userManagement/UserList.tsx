@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Table, Typography, Space, Tag, Button, Form, message, Popconfirm, Row, Col, Statistic } from 'antd'
-import { DeleteOutlined, EditOutlined, EyeOutlined, LockOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
 import { getUserByIdAPI, searchUsersAPI, deleteUserAPI } from '../../../api/user.api'
 import Detail from './Detail'
 import { toast } from 'react-toastify'
 import Update from './Update'
+import { TablePaginationConfig } from 'antd/lib/table/interface'
 
 const { Title } = Typography
 
@@ -14,10 +15,11 @@ interface User {
   fullName: string
   email: string
   phone: string
-  role: 'admin' | 'nurse' | 'parent'
-  status: 'active' | 'inactive'
+  role: 'school-nurse' | 'parent' | 'student'
+  status?: 'active' | 'inactive'
   createdAt: string
   lastLogin?: string
+  isDeleted?: boolean
 }
 
 const UserList: React.FC = () => {
@@ -46,12 +48,15 @@ const UserList: React.FC = () => {
     setLoading(true)
     try {
       const res = await searchUsersAPI(pageNum, pageSize, searchKeyword, searchRole)
-      setUsers(res.pageData || [])
+      const allUsers = res.pageData || []
+      const filteredUsers = allUsers.filter((user: User) => user.role !== 'student')
+      setUsers(filteredUsers)
       setPagination((prev) => ({
         ...prev,
         total: res.pageInfo?.totalItems || 0
       }))
-    } catch (err) {
+    } catch (error) {
+      console.error('Error fetching users:', error)
       setUsers([])
       setPagination((prev) => ({ ...prev, total: 0 }))
     }
@@ -84,12 +89,15 @@ const UserList: React.FC = () => {
       className: 'text-base',
       render: (role: string) => {
         const roles = {
-          admin: { color: 'red', text: 'Quản trị viên' },
-          nurse: { color: 'blue', text: 'Y tá' },
+          'school-nurse': { color: 'blue', text: 'Y tá' },
           parent: { color: 'green', text: 'Phụ huynh' }
         }
-        const { color, text } = roles[role as keyof typeof roles] || { color: 'gray', text: role }
-        return <Tag color={color} className='text-base px-3 py-1'>{text}</Tag>
+        const { color, text } = roles[role as keyof typeof roles] || { color: 'purple', text: role }
+        return (
+          <Tag color={color} className='text-base px-3 py-1'>
+            {text}
+          </Tag>
+        )
       }
     },
     {
@@ -108,7 +116,7 @@ const UserList: React.FC = () => {
       key: 'action',
       className: 'text-base',
       render: (record: User) => (
-        <Space size="middle">
+        <Space size='middle'>
           <Button type='link' icon={<EditOutlined />} onClick={() => handleEditUser(record)} className='text-base'>
             Sửa
           </Button>
@@ -168,11 +176,11 @@ const UserList: React.FC = () => {
     inactive: users.filter((u) => u.status === 'inactive').length
   }
 
-  const handleTableChange = (pag: any) => {
+  const handleTableChange = (pag: TablePaginationConfig) => {
     setPagination((prev) => ({
       ...prev,
-      current: pag.current,
-      pageSize: pag.pageSize
+      current: pag.current || prev.current,
+      pageSize: pag.pageSize || prev.pageSize
     }))
     fetchUsers(pag.current, pag.pageSize)
   }
@@ -181,7 +189,9 @@ const UserList: React.FC = () => {
     <div className='p-8'>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
         <Card className='shadow-md rounded-xl'>
-          <Title level={4} className='text-2xl !mb-6'>Quản lý người dùng</Title>
+          <Title level={4} className='text-2xl !mb-6'>
+            Quản lý người dùng
+          </Title>
           <Row gutter={[24, 24]}>
             <Col span={8}>
               <Card className='shadow-sm hover:shadow-md transition-shadow'>
@@ -203,8 +213,7 @@ const UserList: React.FC = () => {
               onChange={(e) => setSearchRole(e.target.value || undefined)}
             >
               <option value=''>Tất cả vai trò</option>
-              <option value='admin'>Quản trị viên</option>
-              <option value='nurse'>Y tá</option>
+              <option value='school-nurse'>Y tá</option>
               <option value='parent'>Phụ huynh</option>
             </select>
             <input
@@ -216,11 +225,7 @@ const UserList: React.FC = () => {
                 if (e.key === 'Enter') fetchUsers(1, pagination.pageSize)
               }}
             />
-            <Button
-              type='primary'
-              onClick={() => fetchUsers(1, pagination.pageSize)}
-              className='h-10 px-6 text-base'
-            >
+            <Button type='primary' onClick={() => fetchUsers(1, pagination.pageSize)} className='h-10 px-6 text-base'>
               Tìm kiếm
             </Button>
           </div>

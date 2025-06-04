@@ -53,14 +53,17 @@ const GradeList: React.FC = () => {
       }
       const gradesData = responseData
 
-      const transformedGrades = gradesData.map((grade: any) => ({
+      const transformedGrades = gradesData.map((grade: Grade) => ({
         ...grade,
+        positionOrder: typeof grade.positionOrder === 'string' ? parseInt(grade.positionOrder) : grade.positionOrder,
         totalClasses: grade.classIds ? grade.classIds.length : 0,
         description: grade.description || `Khối ${grade.name}`,
-        status: grade.isDeleted ? 'Đã xóa' : 'Hoạt động'
+
       }))
 
-      setGrades(transformedGrades)
+      // Filter out grades where isDeleted is true
+      const activeGrades = transformedGrades.filter(grade => !grade.isDeleted);
+      setGrades(activeGrades);
 
       if (response.pageInfo) {
         setPagination({
@@ -146,12 +149,6 @@ const GradeList: React.FC = () => {
       key: 'totalClasses'
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      className: 'text-base',
-      key: 'status'
-    },
-    {
       title: 'Thao tác',
       className: 'text-base',
       key: 'action',
@@ -183,7 +180,7 @@ const GradeList: React.FC = () => {
 
         <Row gutter={[16, 16]} className='mb-6'>
           <Col span={8}>
-            <Card className='bg-blue-50'>
+            <Card className='bg-blue-100'>
               <Statistic
                 title={<span className='text-base'>Tổng số khối</span>}
                 value={grades.length}
@@ -192,20 +189,11 @@ const GradeList: React.FC = () => {
             </Card>
           </Col>
           <Col span={8}>
-            <Card className='bg-green-50'>
+            <Card className='bg-green-100'>
               <Statistic
                 title={<span className='text-base'>Tổng số lớp</span>}
                 value={grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0)}
                 valueStyle={{ color: '#3f8600', fontSize: '24px' }}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card className='bg-purple-50'>
-              <Statistic
-                title={<span className='text-base'>Tổng số học sinh</span>}
-                value={grades.reduce((sum, grade) => sum + (grade.totalStudents || 0), 0)}
-                valueStyle={{ color: '#722ed1', fontSize: '24px' }}
               />
             </Card>
           </Col>

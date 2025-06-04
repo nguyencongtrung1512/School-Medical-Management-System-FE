@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Input } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, EyeOutlined } from '@ant-design/icons'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
 import CreateClass from './Create'
 import DeleteClass from './Delete'
 import UpdateClass from './Update'
+import { TablePaginationConfig } from 'antd/lib/table/interface'
 
 const { Title } = Typography
 
@@ -17,7 +18,7 @@ interface Classes {
   studentIds: string[]
   createdAt: string
   updatedAt: string
-  students: any[]
+  students: { _id: string; name: string }[]
   grade: {
     name: string
     positionOrder: number
@@ -27,6 +28,15 @@ interface Classes {
   status?: string
 }
 
+interface Grade {
+  _id: string;
+  name: string;
+  positionOrder: number;
+  isDeleted: boolean;
+  classIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 const ClassList: React.FC = () => {
   const { gradeId } = useParams<{ gradeId: string }>()
@@ -44,20 +54,17 @@ const ClassList: React.FC = () => {
     pageSize: 10,
     total: 0
   })
-  const [searchKeyword, setSearchKeyword] = useState('');
 
   const fetchGradeInfo = async () => {
     if (!gradeId) return
 
     try {
       const response = await getGradeByIdAPI(gradeId)
-      console.log('Grade info response:', response)
-
       if (response && response.data) {
         setCurrentGrade(response.data)
       }
-    } catch (error) {
-      console.error('Error fetching grade info:', error)
+    } catch (e) {
+      console.error('Error fetching grade info:', e)
       message.error('Không thể tải thông tin khối')
     }
   }
@@ -68,12 +75,12 @@ const ClassList: React.FC = () => {
     try {
       setLoading(true)
       const response = await getGradeByIdAPI(gradeId)
-      // Lấy danh sách lớp từ classIds
-      const classesData = response.data.classIds || []
+      const classesData = response.data?.classes || []
+      console.log('Danh sách lớp:', classesData)
       if (Array.isArray(classesData)) {
-        const transformedClasses: Classes[] = classesData.map((classItem: any) => ({
+        const transformedClasses: Classes[] = classesData.map((classItem: Classes) => ({
           ...classItem,
-          totalStudents: classItem.studentIds?.length || 0,
+          totalStudents: classItem.totalStudents || 0,
           status: classItem.isDeleted ? 'Đã xóa' : 'Hoạt động'
         }))
         setClassList(transformedClasses)
@@ -98,9 +105,9 @@ const ClassList: React.FC = () => {
   }, [gradeId, pagination.current, pagination.pageSize])
 
   useEffect(() => {
-    fetchClasses(searchKeyword, pagination.current, pagination.pageSize);
+    fetchClasses()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchKeyword, pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize])
 
   const handleAddClass = () => {
     setIsCreateModalVisible(true)
@@ -120,13 +127,13 @@ const ClassList: React.FC = () => {
     navigate(`/admin/student-management/classes/${classes._id}`)
   }
 
-  const handleTableChange = (pagination: any) => {
+  const handleTableChange = (pagination: TablePaginationConfig) => {
     setPagination((prev) => ({
       ...prev,
-      current: pagination.current,
-      pageSize: pagination.pageSize
-    }));
-    fetchClasses();
+      current: pagination.current || prev.current,
+      pageSize: pagination.pageSize || prev.pageSize
+    }))
+    fetchClasses()
   }
 
   const handleCreateOk = () => {
@@ -188,8 +195,9 @@ const ClassList: React.FC = () => {
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
           <div>
-            <Title level={3} className='text-2xl'>Danh sách lớp - {currentGrade?.name || 'Đang tải...'}</Title>
-            {currentGrade?.description && <p className='text-gray-600 text-base'>{currentGrade.description}</p>}
+            <Title level={3} className='text-2xl'>
+              Danh sách lớp - {currentGrade?.name || 'Đang tải...'}
+            </Title>
           </div>
           <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass} className='text-base h-10 px-6'>
             Thêm lớp mới
@@ -224,8 +232,7 @@ const ClassList: React.FC = () => {
             rowKey='_id'
             loading={loading}
             pagination={{
-              ...pagination,
-              className: 'text-base'
+              ...pagination
             }}
             onChange={handleTableChange}
             className='custom-table'

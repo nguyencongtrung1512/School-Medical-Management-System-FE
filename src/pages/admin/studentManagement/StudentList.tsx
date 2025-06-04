@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Typography, Row, Col } from 'antd'
-import { InfoCircleOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
+import { Card, Table, Button, Tag, Typography, Row, Col, Spin, Popconfirm, Space } from 'antd'
+import { InfoCircleOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
 import { getClassByIdAPI } from '../../../api/classes.api'
-import { getStudentByIdAPI } from '../../../api/student.api'
+import { getStudentByIdAPI, deleteStudentAPI } from '../../../api/student.api'
 import StudentDetail from './Studentdetail'
 import CreateClass from './Create'
 import { formatDate } from '../../../utils/utils'
@@ -22,6 +22,7 @@ interface Student {
   position: number
   parentName?: string
   parentPhone?: string
+  isDeleted?: boolean
 }
 
 interface Classroom {
@@ -51,7 +52,8 @@ const StudentList: React.FC = () => {
     try {
       const res = await getClassByIdAPI(classId)
       setCurrentClassroom(res.data)
-      setStudentList(res.data.students || [])
+      const activeStudents = (res.data.students || []).filter((student: Student) => !student.isDeleted)
+      setStudentList(activeStudents)
     } catch {
       setCurrentClassroom(null)
       setStudentList([])
@@ -87,13 +89,18 @@ const StudentList: React.FC = () => {
     fetchClassData()
   }
 
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+      await deleteStudentAPI(studentId)
+      toast.success('Xóa học sinh thành công!')
+      fetchClassData() // Refresh the list
+    } catch (error) {
+      console.error('Error deleting student:', error)
+      toast.error('Không thể xóa học sinh.')
+    }
+  }
+
   const columns = [
-    {
-      title: 'Mã học sinh',
-      dataIndex: 'studentCode',
-      key: 'studentCode',
-      className: 'text-base'
-    },
     {
       title: 'Họ và tên',
       dataIndex: 'fullName',
@@ -121,9 +128,21 @@ const StudentList: React.FC = () => {
       key: 'action',
       className: 'text-base',
       render: (_: unknown, record: Student) => (
-        <Button type='primary' icon={<InfoCircleOutlined />} onClick={() => handleViewDetail(record)}>
-          Xem chi tiết
-        </Button>
+        <Space>
+          <Button type='primary' icon={<InfoCircleOutlined />} onClick={() => handleViewDetail(record)}>
+            Xem chi tiết
+          </Button>
+          <Popconfirm
+            title='Bạn có chắc chắn muốn xóa học sinh này không?'
+            onConfirm={() => handleDeleteStudent(record._id)}
+            okText='Có'
+            cancelText='Không'
+          >
+            <Button type='link' danger icon={<DeleteOutlined />}>
+              Xóa
+            </Button>
+          </Popconfirm>
+        </Space>
       )
     }
   ]
@@ -131,7 +150,7 @@ const StudentList: React.FC = () => {
   if (!currentClassroom) {
     return (
       <div className='flex items-center justify-center min-h-[400px]'>
-        <div className='text-xl text-gray-500'>Không tìm thấy thông tin lớp</div>
+        <Spin tip='Loading...' size='large' />
       </div>
     )
   }
@@ -141,7 +160,9 @@ const StudentList: React.FC = () => {
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl shadow-lg'>
         <div className='flex justify-between items-center mb-8'>
           <div className='space-y-1'>
-            <Title level={3} className=' text-base !mb-0 text-gray-800'>Danh sách học sinh</Title>
+            <Title level={3} className=' text-base !mb-0 text-gray-800'>
+              Danh sách học sinh
+            </Title>
             <p className='text-gray-500 text-lg'>{currentClassroom.name}</p>
           </div>
           <Button

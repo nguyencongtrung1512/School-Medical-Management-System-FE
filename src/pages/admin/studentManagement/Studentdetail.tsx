@@ -113,7 +113,6 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
             <img alt={student.fullName} src={student.avatar} className='mr-4' style={{ width: 74, height: 94 }} />
             <div>
               <Title level={4}>{student.fullName}</Title>
-              <p className='text-gray-600'>Mã học sinh: {student.studentCode}</p>
             </div>
           </div>
           {isEdit ? (
