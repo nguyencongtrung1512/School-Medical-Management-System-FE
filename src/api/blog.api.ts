@@ -44,7 +44,7 @@ export const blogApi = {
   },
 
   // Lấy blog theo ID
-  getByIdBlogApi: (id: string) => {
+  getBlogByIdApi: (id: string) => {
     return axiosInstance.get<Blog>(`/blogs/${id}`)
   },
 

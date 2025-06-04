@@ -37,6 +37,8 @@ const path = {
   STUDENT_LIST: '/admin/student-management/classes/:classId',
   STUDENT_DETAIL: '/admin/student-management/classes/:classId/students/:studentId',
   BLOG_MANAGEMENT: '/admin/blog/:id',
-  CATEGORY_MANAGEMENT: '/admin/category-management'
+  CATEGORY_MANAGEMENT: '/admin/category-management',
+  BLOG_LIST_BY_CATEGORY: '/admin/category/:categoryId/blogs',
+  BLOG_DETAIL: '/admin/blog/:_id'
 }
 export default path

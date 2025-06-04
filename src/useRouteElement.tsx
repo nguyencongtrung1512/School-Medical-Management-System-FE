@@ -28,6 +28,8 @@ import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationS
 import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
 import Blog, { BlogPost } from './pages/parent/blog'
 import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
+import BlogList from './pages/admin/BlogManagement/Bloglist'
+import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 
 
 export default function useRouteElements() {
@@ -162,6 +164,14 @@ export default function useRouteElements() {
         {
           path: path.CATEGORY_MANAGEMENT,
           element: <CategoryManagement />
+        },
+        {
+          path: path.BLOG_LIST_BY_CATEGORY,
+          element: <BlogList />
+        },
+        {
+          path: path.BLOG_DETAIL,
+          element: <BlogDetail />
         }
       ]
     }
