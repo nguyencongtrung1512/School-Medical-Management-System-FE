@@ -22,6 +22,11 @@ const Sidebar: React.FC = () => {
       label: 'Danh sách kiểm duyệt'
     },
     {
+      key: path.CATEGORY_MANAGEMENT,
+      icon: <FileSearchOutlined className='text-xl' />,
+      label: 'Quản lí Blog'
+    },
+    {
       key: path.USER_MANAGEMENT,
       icon: <FileSearchOutlined className='text-xl' />,
       label: 'Quản lí User'

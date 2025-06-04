@@ -27,6 +27,7 @@ import ClassList from './pages/admin/classroomManagement/Classlist'
 import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
 import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
 import Blog, { BlogPost } from './pages/parent/blog'
+import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
 
 
 export default function useRouteElements() {
@@ -157,6 +158,10 @@ export default function useRouteElements() {
         {
           path: path.STUDENT_LIST,
           element: <StudentList />
+        },
+        {
+          path: path.CATEGORY_MANAGEMENT,
+          element: <CategoryManagement />
         }
       ]
     }
