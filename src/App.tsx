@@ -1,13 +1,16 @@
 import { ToastContainer } from 'react-toastify'
 import useRouteElements from './useRouteElement'
+import { AuthProvider } from './contexts/auth.context'
 
 function App() {
   const routeElement = useRouteElements()
 
   return (
     <>
-      {routeElement}
-      <ToastContainer />
+      <AuthProvider>
+        {routeElement}
+        <ToastContainer />
+      </AuthProvider>
     </>
   )
 }

@@ -30,148 +30,163 @@ import Blog, { BlogPost } from './pages/parent/blog'
 import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
 import BlogList from './pages/admin/BlogManagement/Bloglist'
 import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
-
+import ProtectedRoute from './components/ProtectedRoute'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
     // MAIN routes
-    {
-      path: '',
-      element: <MainLayout />,
-      children: [
 
-        {
-          path: path.login,
-          element: <Login />
-        }
-      ]
+    {
+      path: path.login,
+      element: <Login />
     },
+
     // PARENT routes
     {
       path: '',
-      element: <MainLayout />,
+      element: <ProtectedRoute requiredRole='PARENT' />,
       children: [
         {
-          path: path.home,
-          element: <Home />
-        },
-        {
-          path: path.blog,
-          element: <Blog />
-        },
-        {
-          path: path.blogDetail,
-          element: <BlogPost />
-        },
-        {
-          path: path.healthRecord,
-          element: <HealthRecord />
-        },
-        {
-          path: path.sendMedicine,
-          element: <SendMedicine />
-        },
-        {
-          path: path.privateConsultation,
-          element: <PrivateConsultation />
-        },
-        {
-          path: path.vaccinationSchedule,
-          element: <VaccinationSchedule />
-        },
-        {
-          path: path.medicalEvent,
-          element: <MedicalEventParent />
-        },
-        {
-          path: path.profileParent,
-          element: <ProfileParent />
+          path: '',
+          element: <MainLayout />,
+          children: [
+            {
+              path: path.home,
+              element: <Home />
+            },
+            {
+              path: path.blog,
+              element: <Blog />
+            },
+            {
+              path: path.blogDetail,
+              element: <BlogPost />
+            },
+            {
+              path: path.healthRecord,
+              element: <HealthRecord />
+            },
+            {
+              path: path.sendMedicine,
+              element: <SendMedicine />
+            },
+            {
+              path: path.privateConsultation,
+              element: <PrivateConsultation />
+            },
+            {
+              path: path.vaccinationSchedule,
+              element: <VaccinationSchedule />
+            },
+            {
+              path: path.medicalEvent,
+              element: <MedicalEventParent />
+            },
+            {
+              path: path.profileParent,
+              element: <ProfileParent />
+            }
+          ]
         }
       ]
     },
+
     //================ NURSE routes ================
     {
       path: path.BASE_NURSE,
-      element: <NurseLayout />,
+      element: <ProtectedRoute requiredRole='NURSE' />,
       children: [
         {
-          path: path.DASHBOARD_NURSE,
-          element: <DashBoardNurse />
-        },
-        {
-          path: path.HEALTH_RECORD_CENSORSHIP,
-          element: <HealthRecordCensorship />
-        },
-        {
-          path: path.NURSE_PROFILE,
-          element: <NurseProfile />
-        },
-        {
-          path: path.SCHEDULE_VACCINATION,
-          element: <ScheduleVaccination />
-        },
-        {
-          path: path.RESULTS_AFTER_VACCINATION,
-          element: <ResultsAfterVaccination />
-        },
-        {
-          path: path.RECEIVE_MEDICINE,
-          element: <ReceiveMedicine />
-        },
-        {
-          path: path.MEDICAL_REPORT,
-          element: <MedicalReport />
-        },
-        {
-          path: path.MEDICAL_PLAN,
-          element: <MedicalPlan />
-        },
-        {
-          path: path.PRIVATE_CONSULTATION,
-          element: <PrivateConsultation />
+          path: path.BASE_NURSE,
+          element: <NurseLayout />,
+          children: [
+            {
+              path: path.DASHBOARD_NURSE,
+              element: <DashBoardNurse />
+            },
+            {
+              path: path.HEALTH_RECORD_CENSORSHIP,
+              element: <HealthRecordCensorship />
+            },
+            {
+              path: path.NURSE_PROFILE,
+              element: <NurseProfile />
+            },
+            {
+              path: path.SCHEDULE_VACCINATION,
+              element: <ScheduleVaccination />
+            },
+            {
+              path: path.RESULTS_AFTER_VACCINATION,
+              element: <ResultsAfterVaccination />
+            },
+            {
+              path: path.RECEIVE_MEDICINE,
+              element: <ReceiveMedicine />
+            },
+            {
+              path: path.MEDICAL_REPORT,
+              element: <MedicalReport />
+            },
+            {
+              path: path.MEDICAL_PLAN,
+              element: <MedicalPlan />
+            },
+            {
+              path: path.PRIVATE_CONSULTATION,
+              element: <PrivateConsultation />
+            }
+          ]
         }
       ]
     },
+
     //================ ADMIN routes ================
     {
       path: path.BASE_ADMIN,
-      element: <AdminLayout />,
+      element: <ProtectedRoute requiredRole='ADMIN' />,
       children: [
         {
-          path: path.DASHBOARD_ADMIN,
-          element: <DashBoardAdmin />
-        },
-        {
-          path: path.CENSOR_LIST,
-          element: <CensorList />
-        },
-        {
-          path: path.USER_MANAGEMENT,
-          element: <UserList />
-        },
-        {
-          path: path.GRADE_MANAGEMENT,
-          element: <GradeList />
-        },
-        {
-          path: path.CLASS_MANAGEMENT,
-          element: <ClassList />
-        },
-        {
-          path: path.STUDENT_LIST,
-          element: <StudentList />
-        },
-        {
-          path: path.CATEGORY_MANAGEMENT,
-          element: <CategoryManagement />
-        },
-        {
-          path: path.BLOG_LIST_BY_CATEGORY,
-          element: <BlogList />
-        },
-        {
-          path: path.BLOG_DETAIL,
-          element: <BlogDetail />
+          path: path.BASE_ADMIN,
+          element: <AdminLayout />,
+          children: [
+            {
+              path: path.DASHBOARD_ADMIN,
+              element: <DashBoardAdmin />
+            },
+            {
+              path: path.CENSOR_LIST,
+              element: <CensorList />
+            },
+            {
+              path: path.USER_MANAGEMENT,
+              element: <UserList />
+            },
+            {
+              path: path.GRADE_MANAGEMENT,
+              element: <GradeList />
+            },
+            {
+              path: path.CLASS_MANAGEMENT,
+              element: <ClassList />
+            },
+            {
+              path: path.STUDENT_LIST,
+              element: <StudentList />
+            },
+            {
+              path: path.CATEGORY_MANAGEMENT,
+              element: <CategoryManagement />
+            },
+            {
+              path: path.BLOG_LIST_BY_CATEGORY,
+              element: <BlogList />
+            },
+            {
+              path: path.BLOG_DETAIL,
+              element: <BlogDetail />
+            }
+          ]
         }
       ]
     }
