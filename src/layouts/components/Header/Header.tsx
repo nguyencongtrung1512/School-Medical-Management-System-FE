@@ -1,21 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import path from '../../../constants/path'
 import { useAuth } from '../../../contexts/auth.context'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { getCurrentUserAPI } from '../../../api/user.api'
+import { Profile } from '../../../api/user.api'
 
 function Header() {
   const [open, setOpen] = useState(false)
-  const { logout } = useAuth()
+  const { user: authUser, logout } = useAuth()
+  const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const navigate = useNavigate()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await getCurrentUserAPI()
+        setUserProfile(response.data)
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+    fetchUserProfile()
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const handleLogout = () => {
     logout()
     setOpen(false)
+    toast.success('Đăng xuất thành công!', {
+      position: 'top-right',
+      autoClose: 1000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: true
+    })
     navigate(path.login)
-  }
-  // Giả lập thông tin user
-  const user = {
-    name: 'Nguyễn Văn A',
-    avatar: 'https://i.pravatar.cc/150?img=3'
   }
 
   return (
@@ -43,7 +77,7 @@ function Header() {
         <a href={path.vaccinationSchedule} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Lịch tiêm chủng
         </a>
-        <a href={path.sendMedicine} className='text-gray-900 hover:text-blue-500 transition-colors'>
+        <a href={path.medicineSubmissions} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Gửi thuốc
         </a>
         <a href={path.medicalEvent} className='text-gray-900 hover:text-blue-500 transition-colors'>
@@ -57,18 +91,31 @@ function Header() {
         </a>
       </nav>
       {/* Avatar user */}
-      <div className='relative'>
-        <button className='flex items-center space-x-2 focus:outline-none' onClick={() => setOpen(!open)}>
-          <img src={user.avatar} alt='avatar' className='w-10 h-10 rounded-full border-2 border-blue-400' />
-          <span className='font-semibold text-gray-800'>{user.name}</span>
+      <div className='relative' ref={dropdownRef}>
+        <button
+          className='flex items-center space-x-2 focus:outline-none transition-all duration-200 hover:opacity-80'
+          onClick={() => setOpen(!open)}
+        >
+          <img
+            src={userProfile?.image || 'https://i.pravatar.cc/150?img=3'}
+            alt='avatar'
+            className='w-10 h-10 rounded-full border-2 border-blue-400 object-cover'
+          />
+          <span className='font-semibold text-gray-800'>{userProfile?.fullName || 'Loading...'}</span>
         </button>
         {open && (
-          <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50'>
-            <div className='px-4 py-2 text-gray-900 font-bold'>{user.name}</div>
-            <a href={path.profileParent} className='block px-4 py-2 text-gray-700 hover:bg-blue-50'>
+          <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 transform transition-all duration-200 ease-in-out'>
+            <div className='px-4 py-2 text-gray-900 font-bold'>{userProfile?.fullName}</div>
+            <a
+              href={path.profileParent}
+              className='block px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors duration-200'
+            >
               Hồ sơ của tôi
             </a>
-            <button className='w-full text-left px-4 py-2 text-red-500 hover:bg-blue-50' onClick={() => handleLogout}>
+            <button
+              className='w-full text-left px-4 py-2 text-red-500 hover:bg-blue-50 transition-colors duration-200'
+              onClick={handleLogout}
+            >
               Đăng xuất
             </button>
           </div>

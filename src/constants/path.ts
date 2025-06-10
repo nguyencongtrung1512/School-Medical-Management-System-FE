@@ -8,7 +8,7 @@ const path = {
   // ============ Parent ============
   profileParent: '/parent/profile',
   healthRecord: '/parent/health-record', //khai báo sức khỏe của con
-  sendMedicine: '/parent/send-medicine', //gửi thuốc
+  medicineSubmissions: '/parent/medicine-submissions', //gửi thuốc
   vaccinationSchedule: '/parent/vaccination-schedule', //lịch tiêm chủng cho con
   vaccinationScheduleDetail: '/parent/vaccination-schedule-detail', //chi tiết thông báo tiêm chủng cho phụ huynh
   historyVaccination: '/parent/history-vaccination', //lịch sử tiêm chủng

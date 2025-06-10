@@ -42,7 +42,6 @@ const ProfileParent = () => {
     try {
       setLoading(true)
       const response = await getCurrentUserAPI()
-      console.log('User Profile:', response.data)
       setUserProfile(response.data)
 
       if (response.data.studentIds) {

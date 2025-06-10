@@ -2,6 +2,80 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
+interface BlogPost {
+  id: number
+  title: string
+  excerpt: string
+  content: string
+  image: string
+  date: string
+  category: string
+  comments: number
+}
+
+const blogPosts: BlogPost[] = [
+  {
+    id: 1,
+    title: 'Cách chăm sóc sức khỏe cho trẻ trong mùa dịch',
+    excerpt: 'Những biện pháp phòng tránh và chăm sóc sức khỏe cho trẻ trong mùa dịch bệnh...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '20/03/2024',
+    category: 'Sức khỏe',
+    comments: 5
+  },
+  {
+    id: 2,
+    title: 'Dinh dưỡng hợp lý cho trẻ mầm non',
+    excerpt: 'Chế độ dinh dưỡng khoa học giúp trẻ phát triển toàn diện...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '19/03/2024',
+    category: 'Dinh dưỡng',
+    comments: 3
+  },
+  {
+    id: 3,
+    title: 'Phát triển tâm lý cho trẻ mầm non',
+    excerpt: 'Những phương pháp giúp trẻ phát triển tâm lý lành mạnh...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '18/03/2024',
+    category: 'Tâm lý',
+    comments: 7
+  },
+  {
+    id: 4,
+    title: 'Lịch tiêm chủng cho trẻ mầm non',
+    excerpt: 'Thông tin về các mũi tiêm cần thiết cho trẻ trong độ tuổi mầm non...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '17/03/2024',
+    category: 'Tiêm chủng',
+    comments: 4
+  },
+  {
+    id: 5,
+    title: 'Tư vấn dinh dưỡng cho trẻ biếng ăn',
+    excerpt: 'Giải pháp cho trẻ biếng ăn và cách xây dựng thói quen ăn uống lành mạnh...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '16/03/2024',
+    category: 'Tư vấn',
+    comments: 6
+  },
+  {
+    id: 6,
+    title: 'Phòng tránh bệnh mùa đông cho trẻ',
+    excerpt: 'Các biện pháp phòng tránh bệnh mùa đông hiệu quả cho trẻ mầm non...',
+    content: 'Nội dung chi tiết bài viết...',
+    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+    date: '15/03/2024',
+    category: 'Sức khỏe',
+    comments: 8
+  }
+]
+
 const Blog: React.FC = () => {
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
@@ -23,10 +97,10 @@ const Blog: React.FC = () => {
   // Filter posts based on search term
   const filteredPosts = searchTerm
     ? blogPosts.filter(
-        (post) =>
-          post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      (post) =>
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : blogPosts
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage)
@@ -125,9 +199,8 @@ const Blog: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                      currentPage === page ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-600'
-                    }`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full ${currentPage === page ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-600'
+                      }`}
                   >
                     {page}
                   </button>

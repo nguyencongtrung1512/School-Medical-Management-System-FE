@@ -4,7 +4,6 @@ import MainLayout from './layouts/MainLayout/MainLayout'
 import Login from './pages/login/login'
 import Home from './pages/home/home'
 import HealthRecord from './pages/parent/healthRecord/healthRecord'
-import SendMedicine from './pages/parent/sendMedicine/sendMedicine'
 import ProfileParent from './pages/parent/profile/profileParent'
 import NurseLayout from './layouts/NurseLayout/NurseLayout'
 import HealthRecordCensorship from './pages/nurse/healthRecordCensorship/HealthRecordCensorship'
@@ -13,7 +12,6 @@ import ScheduleVaccination from './pages/nurse/scheduleVaccination/ScheduleVacci
 import ResultsAfterVaccination from './pages/nurse/resultsAfterVaccination'
 import ReceiveMedicine from './pages/nurse/receiveMedicine/ReceiveMedicine'
 import MedicalReport from './pages/nurse/medicalReport/MedicalReport'
-
 import DashBoardNurse from './pages/nurse/dashboardNurse/DashBoardNurse'
 import PrivateConsultation from './pages/nurse/privateConsultation/PrivateConsultation'
 import AdminLayout from './layouts/AdminLayout/AdminLayout'
@@ -32,6 +30,7 @@ import BlogList from './pages/admin/BlogManagement/Bloglist'
 import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
+import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -72,8 +71,8 @@ export default function useRouteElements() {
           element: <HealthRecord />
         },
         {
-          path: path.sendMedicine,
-          element: <SendMedicine />
+          path: path.medicineSubmissions,
+          element: <MedicineSubmissions />
         },
         {
           path: path.privateConsultation,
