@@ -15,6 +15,12 @@ export interface Profile {
   studentIds?: string[]
 }
 
+interface UpdateUserResponse {
+  success: boolean
+  message?: string
+  data: Profile
+}
+
 interface LinkStudentRequest {
   studentCodes: string[]
 }
@@ -43,7 +49,10 @@ export const deleteUserAPI = (id: string) => {
   return axiosInstance.delete(`/users/${id}`)
 }
 
-export const updateUserAPI = (id: string, data: { fullName?: string; phone?: string; image?: string }) => {
+export const updateUserAPI = (
+  id: string,
+  data: { fullName?: string; phone?: string; image?: string }
+): Promise<AxiosResponse<UpdateUserResponse>> => {
   return axiosInstance.put(`/users/${id}`, data)
 }
 

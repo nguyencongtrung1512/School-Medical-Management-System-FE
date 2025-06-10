@@ -14,11 +14,13 @@ import { Modal, Form, Input } from 'antd'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import { AxiosResponse } from 'axios'
 import { StudentProfile } from '../../../api/student.api'
+import UpdateProfileModal from './updateProfile'
 
 const ProfileParent = () => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false)
   const [form] = Form.useForm()
   const [linkedChildren, setLinkedChildren] = useState<
     {
@@ -27,37 +29,37 @@ const ProfileParent = () => {
     }[]
   >([])
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        setLoading(true)
-        const response = await getCurrentUserAPI()
-        console.log('User Profile:', response.data)
-        setUserProfile(response.data)
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true)
+      const response = await getCurrentUserAPI()
+      console.log('User Profile:', response.data)
+      setUserProfile(response.data)
 
-        if (response.data.studentIds) {
-          const studentIds = Array.isArray(response.data.studentIds)
-            ? response.data.studentIds
-            : (response.data.studentIds as string)
-              .split(',')
-              .map((id: string) => id.trim())
-              .filter(Boolean)
+      if (response.data.studentIds) {
+        const studentIds = Array.isArray(response.data.studentIds)
+          ? response.data.studentIds
+          : (response.data.studentIds as string)
+            .split(',')
+            .map((id: string) => id.trim())
+            .filter(Boolean)
 
-          if (studentIds.length > 0) {
-            const studentsPromises = studentIds.map((id: string) => getStudentByIdAPI(id))
-            const studentsResponses = await Promise.all(studentsPromises)
-            const fetchedStudents = studentsResponses.map((res: AxiosResponse<StudentProfile>) => res.data)
-            setLinkedChildren(fetchedStudents)
-          }
+        if (studentIds.length > 0) {
+          const studentsPromises = studentIds.map((id: string) => getStudentByIdAPI(id))
+          const studentsResponses = await Promise.all(studentsPromises)
+          const fetchedStudents = studentsResponses.map((res: AxiosResponse<StudentProfile>) => res.data)
+          setLinkedChildren(fetchedStudents)
         }
-      } catch (error) {
-        console.error('Error fetching user profile:', error)
-        toast.error('Không thể tải hồ sơ người dùng.')
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      toast.error('Không thể tải hồ sơ người dùng.')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchUserProfile()
   }, [])
 
@@ -68,6 +70,18 @@ const ProfileParent = () => {
   const handleCancel = () => {
     setIsModalVisible(false)
     form.resetFields()
+  }
+
+  const showUpdateModal = () => {
+    setIsUpdateModalVisible(true)
+  }
+
+  const handleUpdateModalClose = () => {
+    setIsUpdateModalVisible(false)
+  }
+
+  const handleProfileUpdated = () => {
+    fetchUserProfile()
   }
 
   const handleLinkStudent = async (values: { studentCode: string }) => {
@@ -123,7 +137,10 @@ const ProfileParent = () => {
             <div className='space-x-2'>
               <button className='px-4 py-2 bg-gray-100 rounded-full font-medium'>Con của tôi</button>
             </div>
-            <button className='flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50'>
+            <button
+              className='flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50'
+              onClick={showUpdateModal}
+            >
               <EditOutlined /> Chỉnh sửa hồ sơ
             </button>
           </div>
@@ -178,6 +195,15 @@ const ProfileParent = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {userProfile && (
+        <UpdateProfileModal
+          visible={isUpdateModalVisible}
+          onClose={handleUpdateModalClose}
+          userProfile={userProfile}
+          onUpdateSuccess={handleProfileUpdated}
+        />
+      )}
     </div>
   )
 }
