@@ -31,7 +31,7 @@ import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagem
 import BlogList from './pages/admin/BlogManagement/Bloglist'
 import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 import ProtectedRoute from './components/ProtectedRoute'
-import Register from './pages/register/register'
+import Register from './pages/register'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -43,58 +43,58 @@ export default function useRouteElements() {
     },
     {
       path: path.register,
-      element: <Register />
+      element: <Register loading={false} />
     },
 
     // PARENT routes
+    // {
+    //   path: '',
+    //   element: <ProtectedRoute requiredRole='PARENT' />,
+    //   children: [
     {
       path: '',
-      element: <ProtectedRoute requiredRole='PARENT' />,
+      element: <MainLayout />,
       children: [
         {
-          path: '',
-          element: <MainLayout />,
-          children: [
-            {
-              path: path.home,
-              element: <Home />
-            },
-            {
-              path: path.blog,
-              element: <Blog />
-            },
-            {
-              path: path.blogDetail,
-              element: <BlogPost />
-            },
-            {
-              path: path.healthRecord,
-              element: <HealthRecord />
-            },
-            {
-              path: path.sendMedicine,
-              element: <SendMedicine />
-            },
-            {
-              path: path.privateConsultation,
-              element: <PrivateConsultation />
-            },
-            {
-              path: path.vaccinationSchedule,
-              element: <VaccinationSchedule />
-            },
-            {
-              path: path.medicalEvent,
-              element: <MedicalEventParent />
-            },
-            {
-              path: path.profileParent,
-              element: <ProfileParent />
-            }
-          ]
+          path: path.home,
+          element: <Home />
+        },
+        {
+          path: path.blog,
+          element: <Blog />
+        },
+        {
+          path: path.blogDetail,
+          element: <BlogPost />
+        },
+        {
+          path: path.healthRecord,
+          element: <HealthRecord />
+        },
+        {
+          path: path.sendMedicine,
+          element: <SendMedicine />
+        },
+        {
+          path: path.privateConsultation,
+          element: <PrivateConsultation />
+        },
+        {
+          path: path.vaccinationSchedule,
+          element: <VaccinationSchedule />
+        },
+        {
+          path: path.medicalEvent,
+          element: <MedicalEventParent />
+        },
+        {
+          path: path.profileParent,
+          element: <ProfileParent />
         }
       ]
     },
+    // ]
+    // },
 
     //================ NURSE routes ================
     {

@@ -1,13 +1,13 @@
 import axiosInstance from '../service/axiosInstance'
 
-interface LoginRequest {
+export interface LoginRequest {
   email: string
   password: string
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   success: boolean
-  data?: string // JWT token
+  data: string // JWT token
   message?: string // Message, especially for error cases
 }
 

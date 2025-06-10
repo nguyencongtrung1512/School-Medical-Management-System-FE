@@ -1,4 +1,11 @@
 import axiosInstance from '../service/axiosInstance'
+import { AxiosResponse } from 'axios'
+
+export interface StudentProfile {
+  _id: string
+  fullName: string
+  studentCode: string
+}
 
 // Lấy danh sách học sinh có tìm kiếm và phân trang
 export const getStudentsAPI = (pageSize: number = 10, pageNum: number = 1, keyword?: string) => {
@@ -10,7 +17,7 @@ export const getStudentsAPI = (pageSize: number = 10, pageNum: number = 1, keywo
 }
 
 // Lấy chi tiết học sinh theo id
-export const getStudentByIdAPI = (id: string) => {
+export const getStudentByIdAPI = (id: string): Promise<AxiosResponse<StudentProfile>> => {
   return axiosInstance.get(`/students/${id}`)
 }
 

@@ -7,6 +7,8 @@ import { toast } from 'react-toastify'
 import path from '../../constants/path'
 import { useAuth } from '../../contexts/auth.context'
 import { motion } from 'framer-motion'
+import { AxiosError } from 'axios'
+import { LoginResponse } from '../../api/auth.api'
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
@@ -26,10 +28,7 @@ const Login: React.FC = () => {
       setLoading(true)
       const response = await loginAPI(values)
 
-      if (response.data) {
-        // Lưu token vào localStorage
-        localStorage.setItem('token', response.data)
-
+      if (response.success) {
         // Decode token để lấy thông tin user
         const decodedToken = decodeToken(response.data)
         if (decodedToken) {
@@ -41,7 +40,7 @@ const Login: React.FC = () => {
           }
 
           // Lưu user vào context và localStorage
-          login(userData)
+          login(userData, response.data)
 
           toast.success('Đăng nhập thành công!')
 
@@ -62,12 +61,12 @@ const Login: React.FC = () => {
           }
         }
       } else {
-        // Xử lý trường hợp đăng nhập thất bại nếu response.data.success là false
-        toast.error((response.data as any)?.message || 'Đăng nhập thất bại!')
+        toast.error(response.data.message || 'Đăng nhập thất bại!')
       }
-    } catch (error: any) {
-      console.error('Login error:', error)
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại!')
+    } catch (error) {
+      const axiosError = error as AxiosError<LoginResponse>
+      console.error('Login error:', axiosError)
+      toast.error(axiosError.response?.data?.message || 'Đăng nhập thất bại!')
     } finally {
       setLoading(false)
     }

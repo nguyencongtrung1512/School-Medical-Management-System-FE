@@ -1,8 +1,17 @@
 import { useState } from 'react'
 import path from '../../../constants/path'
+import { useAuth } from '../../../contexts/auth.context'
+import { useNavigate } from 'react-router-dom'
 
 function Header() {
   const [open, setOpen] = useState(false)
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const handleLogout = () => {
+    logout()
+    setOpen(false)
+    navigate(path.login)
+  }
   // Giả lập thông tin user
   const user = {
     name: 'Nguyễn Văn A',
@@ -59,10 +68,7 @@ function Header() {
             <a href={path.profileParent} className='block px-4 py-2 text-gray-700 hover:bg-blue-50'>
               Hồ sơ của tôi
             </a>
-            <button
-              className='w-full text-left px-4 py-2 text-red-500 hover:bg-blue-50'
-              onClick={() => alert('Đăng xuất!')}
-            >
+            <button className='w-full text-left px-4 py-2 text-red-500 hover:bg-blue-50' onClick={() => handleLogout}>
               Đăng xuất
             </button>
           </div>

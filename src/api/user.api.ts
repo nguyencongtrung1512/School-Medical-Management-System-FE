@@ -1,6 +1,7 @@
 import axiosInstance from '../service/axiosInstance'
+import { AxiosResponse } from 'axios'
 
-interface Profile {
+export interface Profile {
   _id: string
   email: string
   fullName: string
@@ -11,8 +12,21 @@ interface Profile {
   updatedAt: string
   __v: number
   image: string
+  studentIds?: string[]
 }
 
+interface LinkStudentRequest {
+  studentCodes: string[]
+}
+
+interface LinkStudentResponse {
+  success: boolean
+  data: {
+    fullName: string
+    studentCode: string
+  }[]
+  message?: string
+}
 // Tìm kiếm user có phân trang, lọc theo vai trò (role)
 export const searchUsersAPI = (pageNum: number = 1, pageSize: number = 10, query?: string, role?: string) => {
   let url = `/users/search/${pageNum}/${pageSize}?`
@@ -33,6 +47,10 @@ export const updateUserAPI = (id: string, data: { fullName?: string; phone?: str
   return axiosInstance.put(`/users/${id}`, data)
 }
 
-export const getCurrentUserAPI = (): Promise<Profile> => {
+export const getCurrentUserAPI = (): Promise<AxiosResponse<Profile>> => {
   return axiosInstance.get(`/users`)
+}
+
+export const linkStudentAPI = (data: LinkStudentRequest): Promise<AxiosResponse<LinkStudentResponse>> => {
+  return axiosInstance.post('/users/link-students', data)
 }
