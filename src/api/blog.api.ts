@@ -6,6 +6,7 @@ export interface Blog {
   title: string
   content: string
   description: string
+  image?: string
 }
 
 export interface BlogSearchParams {

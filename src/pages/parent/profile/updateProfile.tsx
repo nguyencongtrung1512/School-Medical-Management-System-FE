@@ -1,48 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { Modal, Form, Input, Button, Upload, message } from 'antd'
-import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons'
+import { Modal, Form, Input, Button, Upload, message, Spin } from 'antd'
+import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Profile, updateUserAPI } from '../../../api/user.api'
 import { RcFile, UploadChangeParam, UploadFile } from 'antd/lib/upload/interface'
 import axios from 'axios'
+import { handleUploadFile } from '../../../utils/upload'
 
-// Hàm nén hình ảnh
-const compressImage = (file: RcFile): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = (event) => {
-      const img = new Image()
-      img.src = event.target?.result as string
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 800
-        const MAX_HEIGHT = 800
-        let width = img.width
-        let height = img.height
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width
-            width = MAX_WIDTH
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height
-            height = MAX_HEIGHT
-          }
-        }
-
-        canvas.width = width
-        canvas.height = height
-        const ctx = canvas.getContext('2d')
-        ctx?.drawImage(img, 0, 0, width, height)
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
-        resolve(dataUrl)
-      }
-      img.onerror = (error) => reject(error)
-    }
-    reader.onerror = (error) => reject(error)
-  })
+interface UpdateUserResponse {
+  success: boolean
+  message?: string
+  data?: Profile
 }
 
 interface UpdateProfileModalProps {
@@ -57,6 +24,7 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
   const [loading, setLoading] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [imageUrl, setImageUrl] = useState<string | undefined>(userProfile?.image)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (visible && userProfile) {
@@ -66,7 +34,7 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
         phone: userProfile.phone
       })
       setImageUrl(userProfile.image)
-      setFileList([]) // Clear file list on modal open
+      setFileList([])
     }
   }, [visible, userProfile, form])
 
@@ -74,27 +42,41 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
     if (!isJpgOrPng) {
       message.error('Bạn chỉ có thể tải lên file JPG/PNG!')
+      return false
     }
-    const isLt2M = file.size / 1024 / 1024 < 2
-    if (!isLt2M) {
-      message.error('Ảnh phải nhỏ hơn 2MB!')
+    const isLt5M = file.size / 1024 / 1024 < 5
+    if (!isLt5M) {
+      message.error('Ảnh phải nhỏ hơn 5MB!')
+      return false
     }
-    return isJpgOrPng && isLt2M
+    return true
   }
 
   const handleFileChange = async (info: UploadChangeParam) => {
-    setFileList(info.fileList.slice(-1)) // Keep only the last uploaded file
+    setFileList(info.fileList.slice(-1))
+
+    if (info.file.status === 'uploading') {
+      setUploading(true)
+      return
+    }
+
     if (info.file.status === 'done') {
-      message.success(`${info.file.name} tải lên thành công`)
       try {
-        const compressedImageUrl = await compressImage(info.file.originFileObj as RcFile)
-        setImageUrl(compressedImageUrl)
+        const file = info.file.originFileObj as RcFile
+        const url = await handleUploadFile(file, 'image')
+        if (url) {
+          setImageUrl(url)
+          message.success('Tải ảnh lên thành công')
+        }
       } catch (error) {
-        console.error('Error compressing image:', error)
-        message.error('Lỗi khi nén hình ảnh.')
+        console.error('Lỗi khi tải ảnh:', error)
+        message.error('Không thể tải ảnh lên. Vui lòng thử lại.')
+      } finally {
+        setUploading(false)
       }
     } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} tải lên thất bại.`)
+      message.error('Tải ảnh lên thất bại')
+      setUploading(false)
     }
   }
 
@@ -106,41 +88,25 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
 
     setLoading(true)
     try {
-      const updatedData: { fullName?: string; email?: string; phone?: string; image?: string } = {
+      const updatedData = {
         fullName: values.fullName,
         email: values.email,
-        phone: values.phone
-      }
-
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        try {
-          updatedData.image = await compressImage(fileList[0].originFileObj as RcFile)
-        } catch (error) {
-          console.error('Error compressing image:', error)
-          message.error('Lỗi khi nén hình ảnh.')
-          setLoading(false)
-          return
-        }
-      } else if (imageUrl && !fileList.length) {
-        updatedData.image = imageUrl
-      } else if (!imageUrl && !fileList.length) {
-        updatedData.image = undefined
+        phone: values.phone,
+        ...(imageUrl && { image: imageUrl })
       }
 
       const response = await updateUserAPI(userProfile._id, updatedData)
       if (response.success) {
         message.success('Cập nhật hồ sơ thành công!')
-        onUpdateSuccess() // Call to re-fetch user profile in parent
+        onUpdateSuccess()
         onClose()
       } else {
         message.error(response.message || 'Cập nhật hồ sơ thất bại!')
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        console.error('Update profile error:', error)
-        message.error(error.response?.message || 'Đã xảy ra lỗi khi cập nhật hồ sơ.')
+        message.error(error.response?.data?.message || 'Đã xảy ra lỗi khi cập nhật hồ sơ.')
       } else {
-        console.error('Update profile error:', error)
         message.error('Đã xảy ra lỗi khi cập nhật hồ sơ.')
       }
     } finally {
@@ -149,13 +115,7 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
   }
 
   return (
-    <Modal
-      title='Chỉnh sửa hồ sơ'
-      open={visible}
-      onCancel={onClose}
-      footer={null}
-      destroyOnClose // Destroy form fields on close to reset state
-    >
+    <Modal title='Chỉnh sửa hồ sơ' open={visible} onCancel={onClose} footer={null} destroyOnClose width={500} centered>
       <Form
         form={form}
         layout='vertical'
@@ -181,36 +141,72 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
         </Form.Item>
 
         <Form.Item label='Ảnh đại diện'>
-          <Upload
-            listType='picture-card'
-            fileList={fileList}
-            beforeUpload={beforeUpload}
-            onChange={handleFileChange}
-            maxCount={1}
-            showUploadList={false} // Hide default list to show custom preview
-          >
-            {imageUrl ? (
-              <img src={imageUrl} alt='avatar' style={{ width: '100%' }} />
-            ) : (
-              <div>
-                <UploadOutlined />
-                <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
-              </div>
-            )}
-          </Upload>
-          {imageUrl && (
-            <Button
-              danger
-              onClick={() => {
-                setImageUrl(undefined)
-                setFileList([])
-                message.info('Ảnh đại diện đã được xóa khỏi bản xem trước. Lưu để áp dụng.')
+          <div style={{ textAlign: 'center' }}>
+            <Upload
+              listType='picture-card'
+              fileList={fileList}
+              beforeUpload={beforeUpload}
+              onChange={handleFileChange}
+              maxCount={1}
+              showUploadList={false}
+              customRequest={({ file, onSuccess }) => {
+                setTimeout(() => {
+                  onSuccess?.('ok')
+                }, 0)
               }}
-              style={{ marginTop: 8 }}
             >
-              Xóa ảnh
-            </Button>
-          )}
+              {imageUrl ? (
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={imageUrl}
+                    alt='avatar'
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  {uploading && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <Spin indicator={<LoadingOutlined style={{ fontSize: 24, color: '#fff' }} spin />} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ padding: '20px 0' }}>
+                  <UploadOutlined style={{ fontSize: 24 }} />
+                  <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                </div>
+              )}
+            </Upload>
+            {imageUrl && (
+              <Button
+                danger
+                onClick={() => {
+                  setImageUrl(undefined)
+                  setFileList([])
+                  message.info('Ảnh đại diện đã được xóa')
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Xóa ảnh
+              </Button>
+            )}
+          </div>
         </Form.Item>
 
         <Form.Item>

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { Form, Input, Button, message, Select } from 'antd'
+import { Form, Input, Button, message, Select, Upload } from 'antd'
+import type { UploadProps } from 'antd'
 import { blogApi } from '../../../api/blog.api'
 import { categoryApi } from '../../../api/category.api'
 import { useNavigate } from 'react-router-dom'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
+import { UploadOutlined } from '@ant-design/icons'
+import { customUploadHandler } from '../../../utils/upload'
 
 interface Category {
   _id: string
@@ -20,12 +23,15 @@ interface BlogFormValues {
   description: string
   content: string
   categoryId: string
+  image: string
 }
 
 function CreateBlog({ onBlogCreated }: CreateBlogProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [imageUrl, setImageUrl] = useState<string>('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -48,6 +54,11 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
     fetchCategories()
   }, [])
 
+  const handleUploadSuccess = (type: 'video' | 'image', url: string) => {
+    setImageUrl(url)
+    form.setFieldValue('image', url)
+  }
+
   const handleSubmit = async (values: BlogFormValues) => {
     try {
       setLoading(true)
@@ -55,8 +66,9 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
         title: values.title,
         description: values.description,
         content: values.content,
-        categoryId: values.categoryId
-      })
+        categoryId: values.categoryId,
+        image: values.image
+      } as unknown as Parameters<typeof blogApi.createBlogApi>[0])
 
       if (response.data) {
         message.success('Tạo blog thành công!')
@@ -74,13 +86,27 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
     }
   }
 
+  const handleUpload: UploadProps['customRequest'] = (options) => {
+    const { file, onSuccess, onError } = options
+    if (file instanceof File) {
+      customUploadHandler(
+        {
+          file,
+          onSuccess: (url: string) => onSuccess?.(url),
+          onError: () => onError?.(new Error('Upload failed'))
+        },
+        'image',
+        setUploading,
+        handleUploadSuccess
+      )
+    } else {
+      onError?.(new Error('Invalid file type'))
+    }
+  }
+
   return (
     <Form form={form} layout='vertical' onFinish={handleSubmit}>
-      <Form.Item
-        name='categoryId'
-        label='Danh mục'
-        rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
-      >
+      <Form.Item name='categoryId' label='Danh mục' rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>
         <Select placeholder='Chọn danh mục'>
           {categories.map((category) => (
             <Select.Option key={category._id} value={category._id}>
@@ -90,27 +116,28 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
         </Select>
       </Form.Item>
 
-      <Form.Item
-        name='title'
-        label='Tiêu đề'
-        rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-      >
+      <Form.Item name='title' label='Tiêu đề' rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}>
         <Input placeholder='Nhập tiêu đề blog' />
       </Form.Item>
 
-      <Form.Item
-        name='description'
-        label='Mô tả'
-        rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-      >
+      <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
         <Input.TextArea rows={4} placeholder='Nhập mô tả blog' />
       </Form.Item>
 
-      <Form.Item
-        name='content'
-        label='Nội dung'
-        rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}
-      >
+      <Form.Item name='image' label='Ảnh bìa' rules={[{ required: true, message: 'Vui lòng tải lên ảnh bìa!' }]}>
+        <Upload customRequest={handleUpload} showUploadList={false} accept='image/*'>
+          <Button icon={<UploadOutlined />} loading={uploading}>
+            Tải lên ảnh bìa
+          </Button>
+        </Upload>
+        {imageUrl && (
+          <div style={{ marginTop: 16 }}>
+            <img src={imageUrl} alt='Ảnh bìa' style={{ maxWidth: '100%', maxHeight: 200 }} />
+          </div>
+        )}
+      </Form.Item>
+
+      <Form.Item name='content' label='Nội dung' rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}>
         <ReactQuill theme='snow' style={{ height: '200px', marginBottom: '50px' }} />
       </Form.Item>
 

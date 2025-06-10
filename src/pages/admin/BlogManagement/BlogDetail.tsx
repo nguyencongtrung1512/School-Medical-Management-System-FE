@@ -102,6 +102,21 @@ function BlogDetail() {
       </Space>
 
       <Card title={blog.title}>
+        {blog.image && (
+          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <img
+              src={blog.image}
+              alt="Ảnh bìa blog"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+          </div>
+        )}
+
         <div style={{ marginBottom: '20px' }}>
           <h3>Mô tả:</h3>
           <p>{blog.description}</p>

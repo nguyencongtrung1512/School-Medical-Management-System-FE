@@ -16,6 +16,15 @@ import { AxiosResponse } from 'axios'
 import { StudentProfile } from '../../../api/student.api'
 import UpdateProfileModal from './updateProfile'
 
+interface LinkStudentResponse {
+  success: boolean
+  data: Array<{
+    fullName: string
+    studentCode: string
+  }>
+  message?: string
+}
+
 const ProfileParent = () => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -115,7 +124,11 @@ const ProfileParent = () => {
         {/* Thông tin phụ huynh bên trái */}
         <div className='bg-white rounded-2xl shadow p-8 w-[350px] flex flex-col items-center'>
           <div className='w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center mb-2 text-gray-400 text-2xl relative'>
-            <UserOutlined style={{ fontSize: 48 }} />
+            {userProfile.image ? (
+              <img src={userProfile.image} alt='Avatar' className='w-full h-full rounded-full object-cover' />
+            ) : (
+              <UserOutlined style={{ fontSize: 48 }} />
+            )}
           </div>
           <div className='text-xl font-bold mt-2'>{userProfile.fullName}</div>
           <div className='text-gray-500 mb-4'>Phụ huynh</div>
