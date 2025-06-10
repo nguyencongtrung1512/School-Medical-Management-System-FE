@@ -2,7 +2,7 @@ const path = {
   //===============Public===============
   home: '/',
   login: '/login',
-  signup: '/signup',
+  register: '/register',
   blog: '/blog',
   blogDetail: '/blog/:id',
   // ============ Parent ============

@@ -31,6 +31,7 @@ import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagem
 import BlogList from './pages/admin/BlogManagement/Bloglist'
 import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 import ProtectedRoute from './components/ProtectedRoute'
+import Register from './pages/register/register'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -39,6 +40,10 @@ export default function useRouteElements() {
     {
       path: path.login,
       element: <Login />
+    },
+    {
+      path: path.register,
+      element: <Register />
     },
 
     // PARENT routes

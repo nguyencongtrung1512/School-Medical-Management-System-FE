@@ -12,7 +12,7 @@ const { Header, Content } = Layout
 const AdminLayout: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   const dropdownRef = useRef<HTMLDivElement>(null)
 

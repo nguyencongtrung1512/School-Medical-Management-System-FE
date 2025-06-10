@@ -7,11 +7,36 @@ interface LoginRequest {
 
 interface LoginResponse {
   success: boolean
-  data: string // JWT token
+  data?: string // JWT token
+  message?: string // Message, especially for error cases
+}
+
+interface RegisterRequest {
+  email: string
+  password: string
+  fullName: string
+  phone: string
+  image?: string
+  isDeleted?: boolean
+}
+
+interface RegisterResponse {
+  success: boolean
+  message: string
+  data: {
+    email: string
+    fullName: string
+    phone: string
+    role: string
+  }
 }
 
 export const loginAPI = (data: LoginRequest) => {
   return axiosInstance.post<LoginResponse>('/auth/login', data)
+}
+
+export const registerAPI = (data: RegisterRequest) => {
+  return axiosInstance.post<RegisterResponse>('/users/register', data)
 }
 
 export const logoutAPI = () => {

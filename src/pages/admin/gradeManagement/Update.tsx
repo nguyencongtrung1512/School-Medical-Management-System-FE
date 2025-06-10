@@ -75,12 +75,8 @@ const UpdateGrade: React.FC<UpdateGradeProps> = ({
         <Form.Item name='name' label='Tên khối' rules={[{ required: true, message: 'Vui chỉ nhập tên khối!' }]}>
           <Input placeholder='Nhập tên khối' />
         </Form.Item>
-        <Form.Item
-          name='positionOrder'
-          label='Thuật tờ'
-          rules={[{ required: true, message: 'Vui chỉ nhập thuật tờ!' }]}
-        >
-          <Input placeholder='Nhập thuật tờ' />
+        <Form.Item name='positionOrder' label='Thứ tự' rules={[{ required: true, message: 'Vui chỉ nhập thuật tờ!' }]}>
+          <Input placeholder='Nhập thứ tự' />
         </Form.Item>
       </Form>
     </Modal>

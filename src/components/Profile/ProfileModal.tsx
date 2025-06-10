@@ -2,6 +2,8 @@ import { Modal, Spin, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { getCurrentUserAPI, updateUserAPI } from '../../api/user.api'
 import { formatDate } from '../../utils/utils'
+import axios from 'axios'
+import cloudinaryConfig from '../../service/cloudinary'
 
 interface Profile {
   _id: string
@@ -59,7 +61,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
         const dataToUpdate: { fullName?: string; phone?: string; image?: string } = {
           fullName: editedProfile.fullName,
           phone: editedProfile.phone,
-          image: editedProfile.image,
+          image: editedProfile.image
         }
         await updateUserAPI(profile._id, dataToUpdate)
         setProfile((prev) => ({ ...prev!, ...editedProfile }))
@@ -98,14 +100,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   }
 
   return (
-    <Modal
-      title='Thông tin cá nhân'
-      open={isOpen}
-      onCancel={onClose}
-      footer={null}
-      width={600}
-      className='p-6'
-    >
+    <Modal title='Thông tin cá nhân' open={isOpen} onCancel={onClose} footer={null} width={600} className='p-6'>
       {loading ? (
         <Spin>loading...</Spin>
       ) : error ? (
@@ -143,9 +138,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                   type='text'
                   className='flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out'
                   value={editedProfile?.fullName || ''}
-                  onChange={(e) =>
-                    setEditedProfile({ ...editedProfile, fullName: e.target.value })
-                  }
+                  onChange={(e) => setEditedProfile({ ...editedProfile, fullName: e.target.value })}
                 />
               ) : (
                 <span className='text-gray-900'>{profile.fullName}</span>
@@ -162,9 +155,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                   type='text'
                   className='flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out'
                   value={editedProfile?.phone || ''}
-                  onChange={(e) =>
-                    setEditedProfile({ ...editedProfile, phone: e.target.value })
-                  }
+                  onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
                 />
               ) : (
                 <span className='text-gray-900'>{profile.phone}</span>

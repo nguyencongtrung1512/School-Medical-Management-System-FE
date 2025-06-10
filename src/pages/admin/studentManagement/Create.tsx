@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { createStudentAPI } from '../../../api/student.api'
 import { searchUsersAPI } from '../../../api/user.api'
+import dayjs from 'dayjs'
+import { CalendarOutlined } from '@ant-design/icons'
 
 interface CreateClassProps {
   isModalVisible: boolean
@@ -15,6 +17,9 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
   const { classId } = useParams<{ classId: string }>()
   const [parents, setParents] = React.useState<{ _id: string; fullName: string }[]>([])
   const [loadingParents, setLoadingParents] = React.useState(false)
+
+  const maxDate = dayjs().subtract(6, 'year')
+  const minDate = dayjs().subtract(50, 'year')
 
   const fetchParents = async (searchText = '') => {
     setLoadingParents(true)
@@ -75,7 +80,11 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         <Form.Item
           name='fullName'
           label='Tên học sinh'
-          rules={[{ required: true, message: 'Vui lòng nhập tên học sinh!' }]}
+          rules={[
+            { required: true, message: 'Vui lòng nhập tên học sinh!' },
+            { min: 2, message: 'Tên học sinh phải có ít nhất 2 ký tự!' },
+            { max: 50, message: 'Tên học sinh không được vượt quá 50 ký tự!' }
+          ]}
         >
           <Input placeholder='Nhập tên học sinh' />
         </Form.Item>
@@ -83,13 +92,35 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
           <Select placeholder='Chọn giới tính'>
             <Select.Option value='male'>Nam</Select.Option>
             <Select.Option value='female'>Nữ</Select.Option>
-            <Select.Option value='other'>Khác</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name='dob' label='Ngày sinh' rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}>
-          <DatePicker />
+        <Form.Item
+          name='dob'
+          label='Ngày sinh'
+          rules={[
+            { required: true, message: 'Vui lòng chọn ngày sinh!' },
+            {
+              validator: (_, value) => {
+                if (value && value.isAfter(maxDate)) {
+                  return Promise.reject('Học sinh phải từ 6 tuổi trở lên!')
+                }
+                if (value && value.isBefore(minDate)) {
+                  return Promise.reject('Ngày sinh không hợp lệ!')
+                }
+                return Promise.resolve()
+              }
+            }
+          ]}
+        >
+          <DatePicker
+            style={{ width: '100%' }}
+            disabledDate={(current) => {
+              return current && (current > maxDate || current < minDate)
+            }}
+            suffixIcon={<CalendarOutlined />}
+          />
         </Form.Item>
-        <Form.Item name='parentId' label='Phụ huynh'>
+        <Form.Item name='parentId' label='Phụ huynh' rules={[{ required: true, message: 'Vui lòng chọn phụ huynh!' }]}>
           <Select
             showSearch
             placeholder='Chọn phụ huynh'
