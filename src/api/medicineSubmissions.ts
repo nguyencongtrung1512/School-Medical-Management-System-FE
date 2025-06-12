@@ -49,3 +49,11 @@ export const createMedicineSubmission = async (
 export const getDetailMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
   return axiosInstance.get(`/medicine-submissions/${id}`)
 }
+
+export const updateMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
+  return axiosInstance.put(`/medicine-submissions/${id}`)
+}
+
+export const deleteMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
+  return axiosInstance.delete(`/medicine-submissions/${id}`)
+}

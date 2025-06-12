@@ -11,6 +11,11 @@ export interface LoginResponse {
   message?: string // Message, especially for error cases
 }
 
+interface StudentParent {
+  studentCode: string
+  type: 'father' | 'mother' | 'guardian'
+}
+
 interface RegisterRequest {
   email: string
   password: string
@@ -18,6 +23,8 @@ interface RegisterRequest {
   phone: string
   image?: string
   isDeleted?: boolean
+  role: 'parent' | 'student'
+  studentParents: StudentParent[]
 }
 
 interface RegisterResponse {
@@ -28,6 +35,7 @@ interface RegisterResponse {
     fullName: string
     phone: string
     role: string
+    studentParents: StudentParent[]
   }
 }
 

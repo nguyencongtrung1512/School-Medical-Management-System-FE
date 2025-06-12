@@ -120,7 +120,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
             suffixIcon={<CalendarOutlined />}
           />
         </Form.Item>
-        <Form.Item name='parentId' label='Phụ huynh' rules={[{ required: true, message: 'Vui lòng chọn phụ huynh!' }]}>
+        <Form.Item name='parentId' label='Phụ huynh'>
           <Select
             showSearch
             placeholder='Chọn phụ huynh'

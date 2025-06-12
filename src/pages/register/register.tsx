@@ -1,6 +1,6 @@
 import React from 'react'
-import { Form, Input, Button, Row, Col, Alert } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Row, Col, Alert, Select, Space } from 'antd'
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import path from '../../constants/path'
@@ -14,6 +14,11 @@ interface RegisterFormValues {
   confirmPassword: string
   fullname: string
   email: string
+  role: 'parent' | 'student'
+  studentParents: {
+    studentCode: string
+    type: 'father' | 'mother' | 'guardian'
+  }[]
 }
 
 interface RegisterFormProps {
@@ -44,7 +49,9 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
         email: values.email,
         password: values.password,
         fullName: values.fullname,
-        phone: values.phoneNumber
+        phone: values.phoneNumber,
+        role: values.role,
+        studentParents: values.studentParents
       })
       if (response.success) {
         toast.success('Đăng ký thành công!')
@@ -219,6 +226,77 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
                   </Form.Item>
                 </Col>
               </Row>
+
+              <Row gutter={24}>
+                <Col span={24}>
+                  <Form.Item
+                    name="role"
+                    rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
+                    className='mb-4'
+                  >
+                    <Select
+                      placeholder="Chọn vai trò"
+                      size="large"
+                      options={[
+                        { value: 'parent', label: 'Phụ huynh' },
+                        { value: 'student', label: 'Học sinh' }
+                      ]}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) => prevValues.role !== currentValues.role}
+              >
+                {({ getFieldValue }) =>
+                  getFieldValue('role') === 'parent' && (
+                    <Row gutter={24}>
+                      <Col span={24}>
+                        <Form.List name="studentParents">
+                          {(fields, { add, remove }) => (
+                            <>
+                              {fields.map(({ key, name, ...restField }) => (
+                                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                                  <Form.Item
+                                    {...restField}
+                                    name={[name, 'studentCode']}
+                                    rules={[{ required: true, message: 'Vui lòng nhập mã học sinh!' }]}
+                                  >
+                                    <Input placeholder="Mã học sinh" />
+                                  </Form.Item>
+                                  <Form.Item
+                                    {...restField}
+                                    name={[name, 'type']}
+                                    rules={[{ required: true, message: 'Vui lòng chọn danh tính!' }]}
+                                  >
+                                    <Select
+                                      style={{ width: 120 }}
+                                      placeholder="Chọn danh tính"
+                                      options={[
+                                        { value: 'father', label: 'Cha' },
+                                        { value: 'mother', label: 'Mẹ' },
+                                        { value: 'guardian', label: 'Người giám hộ' }
+                                      ]}
+                                    />
+                                  </Form.Item>
+                                  <MinusCircleOutlined onClick={() => remove(name)} />
+                                </Space>
+                              ))}
+                              <Form.Item>
+                                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                  Thêm danh tính
+                                </Button>
+                              </Form.Item>
+                            </>
+                          )}
+                        </Form.List>
+                      </Col>
+                    </Row>
+                  )
+                }
+              </Form.Item>
 
               <Form.Item className='mb-0 mt-6'>
                 <Button
