@@ -13,7 +13,7 @@ interface MedicalSupply {
   __v: number
 }
 
-interface Medicine {
+export interface Medicine {
   _id: string
   name: string
   description: string
@@ -55,7 +55,7 @@ interface Student {
   parentId: string
 }
 
-interface MedicalEvent {
+export interface MedicalEvent {
   _id: string
   studentId: string
   schoolNurseId: string
@@ -110,23 +110,21 @@ interface UpdateMedicalEventRequest {
 }
 
 export const getMedicalEvents = async (pageNum: number = 1, pageSize: number = 10): Promise<MedicalEventResponse> => {
-  const response = await axiosInstance.get(`/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`)
-  return response.data
+  return axiosInstance.get(`/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`)
 }
 
 export const getMedicalEventById = async (id: string): Promise<MedicalEvent> => {
-  const response = await axiosInstance.get(`/medical-events/${id}`)
-  return response.data
+  return axiosInstance.get(`/medical-events/${id}`)
+
 }
 
 export const createMedicalEvent = async (data: CreateMedicalEventRequest): Promise<MedicalEvent> => {
-  const response = await axiosInstance.post('/medical-events/create', data)
-  return response.data
+  return axiosInstance.post('/medical-events/create', data)
 }
 
 export const updateMedicalEvent = async (id: string, data: UpdateMedicalEventRequest): Promise<MedicalEvent> => {
-  const response = await axiosInstance.put(`/medical-events/${id}`, data)
-  return response.data
+  return axiosInstance.put(`/medical-events/${id}`, data)
+
 }
 
 export const deleteMedicalEvent = async (id: string): Promise<void> => {

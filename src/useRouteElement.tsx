@@ -32,6 +32,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
 import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
 import MedicinesList from './pages/nurse/medicines/MedicinesList'
+import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -136,6 +137,10 @@ export default function useRouteElements() {
         {
           path: path.MEDICINES,
           element: <MedicinesList />
+        },
+        {
+          path: path.MEDICAL_SUPPLIES,
+          element: <MedicalSuppliesList />
         },
         {
           path: path.MEDICAL_PLAN,
