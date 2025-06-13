@@ -29,7 +29,7 @@ interface FormValues {
   storage: string
   expiryDate?: dayjs.Dayjs
   reason: string
-  specialNotes?: string
+  note?: string
   agreement1: boolean
   agreement2: boolean
 }
@@ -102,7 +102,9 @@ const CreateSubmission: React.FC = () => {
             timesPerDay: values.timesPerDay,
             timeSlots: values.timing.split(',').map((time) => time.trim()),
             startDate: values.duration[0].format('YYYY-MM-DD'),
-            endDate: values.duration[1].format('YYYY-MM-DD')
+            endDate: values.duration[1].format('YYYY-MM-DD'),
+            reason: values.reason,
+            note: values.note
           }
         ]
       }
@@ -233,7 +235,7 @@ const CreateSubmission: React.FC = () => {
               <TextArea rows={3} placeholder='VD: Hạ sốt, kháng sinh điều trị viêm họng' />
             </Form.Item>
 
-            <Form.Item name='specialNotes' label='Ghi chú đặc biệt'>
+            <Form.Item name='note' label='Ghi chú đặc biệt'>
               <TextArea rows={3} placeholder='VD: Dị ứng, cần uống với sữa, không dùng khi đau bụng' />
             </Form.Item>
           </div>

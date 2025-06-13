@@ -31,6 +31,7 @@ import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './pages/register'
 import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
+import MedicinesList from './pages/nurse/medicines/MedicinesList'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -96,54 +97,58 @@ export default function useRouteElements() {
     // },
 
     //================ NURSE routes ================
+    // {
+    //   path: path.BASE_NURSE,
+    //   element: <ProtectedRoute requiredRole='NURSE' />,
+    //   children: [
     {
       path: path.BASE_NURSE,
-      element: <ProtectedRoute requiredRole='NURSE' />,
+      element: <NurseLayout />,
       children: [
         {
-          path: path.BASE_NURSE,
-          element: <NurseLayout />,
-          children: [
-            {
-              path: path.DASHBOARD_NURSE,
-              element: <DashBoardNurse />
-            },
-            {
-              path: path.HEALTH_RECORD_CENSORSHIP,
-              element: <HealthRecordCensorship />
-            },
-            {
-              path: path.NURSE_PROFILE,
-              element: <NurseProfile />
-            },
-            {
-              path: path.SCHEDULE_VACCINATION,
-              element: <ScheduleVaccination />
-            },
-            {
-              path: path.RESULTS_AFTER_VACCINATION,
-              element: <ResultsAfterVaccination />
-            },
-            {
-              path: path.RECEIVE_MEDICINE,
-              element: <ReceiveMedicine />
-            },
-            {
-              path: path.MEDICAL_REPORT,
-              element: <MedicalReport />
-            },
-            {
-              path: path.MEDICAL_PLAN,
-              element: <MedicalPlan />
-            },
-            {
-              path: path.PRIVATE_CONSULTATION,
-              element: <PrivateConsultation />
-            }
-          ]
+          path: path.DASHBOARD_NURSE,
+          element: <DashBoardNurse />
+        },
+        {
+          path: path.HEALTH_RECORD_CENSORSHIP,
+          element: <HealthRecordCensorship />
+        },
+        {
+          path: path.NURSE_PROFILE,
+          element: <NurseProfile />
+        },
+        {
+          path: path.SCHEDULE_VACCINATION,
+          element: <ScheduleVaccination />
+        },
+        {
+          path: path.RESULTS_AFTER_VACCINATION,
+          element: <ResultsAfterVaccination />
+        },
+        {
+          path: path.RECEIVE_MEDICINE,
+          element: <ReceiveMedicine />
+        },
+        {
+          path: path.MEDICAL_REPORT,
+          element: <MedicalReport />
+        },
+        {
+          path: path.MEDICINES,
+          element: <MedicinesList />
+        },
+        {
+          path: path.MEDICAL_PLAN,
+          element: <MedicalPlan />
+        },
+        {
+          path: path.PRIVATE_CONSULTATION,
+          element: <PrivateConsultation />
         }
       ]
     },
+    // ]
+    // },
 
     //================ ADMIN routes ================
     {

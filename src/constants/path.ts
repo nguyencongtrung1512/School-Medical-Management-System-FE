@@ -28,6 +28,7 @@ const path = {
   MEDICAL_REPORT: '/nurse/medical-report', //báo cáo y tế
   MEDICAL_PLAN: '/nurse/medical-plan', //kế hoạch khám bệnh
   PRIVATE_CONSULTATION: '/nurse/private-consultation', //tư vấn riêng
+  MEDICINES: '/nurse/medicines',
   //=============Admin============
   BASE_ADMIN: '/admin',
   DASHBOARD_ADMIN: '/admin/dashboard',
