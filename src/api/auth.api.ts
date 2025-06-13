@@ -23,7 +23,7 @@ interface RegisterRequest {
   phone: string
   image?: string
   isDeleted?: boolean
-  role: 'parent' | 'student'
+  role: 'parent' | 'school-nurse'
   studentParents: StudentParent[]
 }
 
