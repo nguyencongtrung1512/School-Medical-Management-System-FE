@@ -88,7 +88,7 @@ interface MedicalEventResponse {
   pageInfo: PageInfo
 }
 
-interface CreateMedicalEventRequest {
+export interface CreateMedicalEventRequest {
   studentId: string
   eventName: string
   description: string

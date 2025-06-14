@@ -5,8 +5,8 @@ import { getAllMedicalSupplies, deleteMedicalSupply } from '../../../api/medical
 import type { MedicalSupply } from '../../../api/medicalSupplies'
 import CreateMedicalSupplyForm from './Create'
 import dayjs from 'dayjs'
-import UpdateMedicalSupplyForm from './update'
 import { toast } from 'react-toastify'
+import UpdateMedicalSupplyForm from './Update'
 
 const MedicalSuppliesList: React.FC = () => {
   const [medicalSupplies, setMedicalSupplies] = useState<MedicalSupply[]>([])
@@ -26,7 +26,7 @@ const MedicalSuppliesList: React.FC = () => {
       setMedicalSupplies(response.pageData)
       setTotal(response.data.totalElements)
     } catch (error) {
-      toast.error('Không thể tải danh sách vật tư y tế')
+      console.log(error)
     } finally {
       setLoading(false)
     }
@@ -53,7 +53,7 @@ const MedicalSuppliesList: React.FC = () => {
       toast.success('Xóa vật tư y tế thành công')
       fetchMedicalSupplies()
     } catch (error) {
-      toast.error('Không thể xóa vật tư y tế')
+      console.log(error)
     }
   }
 
