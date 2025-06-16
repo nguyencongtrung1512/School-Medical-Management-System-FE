@@ -22,6 +22,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     try {
       const data = await getMedicalEventById(id)
       setMedicalEvent(data)
+      console.log("trung", data)
       form.setFieldsValue({
         eventName: data.eventName,
         description: data.description,

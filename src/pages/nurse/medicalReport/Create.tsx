@@ -122,7 +122,11 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item name='eventName' label='Tên sự kiện' rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện!' }]}>
+          <Form.Item
+            name='eventName'
+            label='Tên sự kiện'
+            rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện!' }]}
+          >
             <Input placeholder='Nhập tên sự kiện' />
           </Form.Item>
         </Col>

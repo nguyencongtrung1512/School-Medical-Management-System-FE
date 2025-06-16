@@ -99,7 +99,7 @@ export interface CreateMedicalEventRequest {
   notes?: string
 }
 
-interface UpdateMedicalEventRequest {
+export interface UpdateMedicalEventRequest {
   eventName?: string
   description?: string
   actionTaken?: string
@@ -115,7 +115,6 @@ export const getMedicalEvents = async (pageNum: number = 1, pageSize: number = 1
 
 export const getMedicalEventById = async (id: string): Promise<MedicalEvent> => {
   return axiosInstance.get(`/medical-events/${id}`)
-
 }
 
 export const createMedicalEvent = async (data: CreateMedicalEventRequest): Promise<MedicalEvent> => {

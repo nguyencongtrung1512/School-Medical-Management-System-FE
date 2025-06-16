@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Form, Input, Button, Upload, message, Spin } from 'antd'
-import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined, LoadingOutlined } from '@ant-design/icons'
-import { Profile, updateUserAPI } from '../../../api/user.api'
+import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined, LoadingOutlined, LockOutlined } from '@ant-design/icons'
+import { Profile, updateUserAPI, changePasswordAPI } from '../../../api/user.api'
 import { RcFile, UploadChangeParam, UploadFile } from 'antd/lib/upload/interface'
 import axios from 'axios'
 import { handleUploadFile } from '../../../utils/upload'
 
-interface UpdateUserResponse {
-  success: boolean
-  message?: string
-  data?: Profile
-}
 
 interface UpdateProfileModalProps {
   visible: boolean
@@ -19,12 +14,93 @@ interface UpdateProfileModalProps {
   onUpdateSuccess: () => void
 }
 
+interface ChangePasswordModalProps {
+  visible: boolean
+  onClose: () => void
+}
+
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onClose }) => {
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+
+  const onFinish = async (values: { oldPassword: string; newPassword: string }) => {
+    setLoading(true)
+    try {
+      const response = await changePasswordAPI(values)
+      if (response.success) {
+        console.log(response.success)
+        message.success('Đổi mật khẩu thành công!')
+        form.resetFields()
+        onClose()
+      } else {
+        message.error(response.message || 'Đổi mật khẩu thất bại!')
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        message.error(error.response?.data?.message || 'Đã xảy ra lỗi khi đổi mật khẩu.')
+      } else {
+        message.error('Đã xảy ra lỗi khi đổi mật khẩu.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal title='Đổi mật khẩu' open={visible} onCancel={onClose} footer={null} destroyOnClose width={400} centered>
+      <Form form={form} layout='vertical' onFinish={onFinish}>
+        <Form.Item
+          name='oldPassword'
+          label='Mật khẩu cũ'
+          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu cũ!' }]}
+        >
+          <Input.Password prefix={<LockOutlined />} />
+        </Form.Item>
+        <Form.Item
+          name='newPassword'
+          label='Mật khẩu mới'
+          rules={[
+            { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
+            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
+          ]}
+        >
+          <Input.Password prefix={<LockOutlined />} />
+        </Form.Item>
+        <Form.Item
+          name='confirmPassword'
+          label='Xác nhận mật khẩu mới'
+          dependencies={['newPassword']}
+          rules={[
+            { required: true, message: 'Vui lòng xác nhận mật khẩu mới!' },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue('newPassword') === value) {
+                  return Promise.resolve()
+                }
+                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'))
+              }
+            })
+          ]}
+        >
+          <Input.Password prefix={<LockOutlined />} />
+        </Form.Item>
+        <Form.Item>
+          <Button type='primary' htmlType='submit' loading={loading} block>
+            Đổi mật khẩu
+          </Button>
+        </Form.Item>
+      </Form>
+    </Modal>
+  )
+}
+
 const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClose, userProfile, onUpdateSuccess }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [imageUrl, setImageUrl] = useState<string | undefined>(userProfile?.image)
   const [uploading, setUploading] = useState(false)
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false)
 
   useEffect(() => {
     if (visible && userProfile) {
@@ -214,7 +290,15 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({ visible, onClos
             Cập nhật
           </Button>
         </Form.Item>
+
+        <Form.Item>
+          <Button type='link' onClick={() => setChangePasswordVisible(true)} block>
+            Đổi mật khẩu
+          </Button>
+        </Form.Item>
       </Form>
+
+      <ChangePasswordModal visible={changePasswordVisible} onClose={() => setChangePasswordVisible(false)} />
     </Modal>
   )
 }

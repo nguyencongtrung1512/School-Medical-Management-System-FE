@@ -61,12 +61,11 @@ const Login: React.FC = () => {
           }
         }
       } else {
-        toast.error(response.data.message || 'Đăng nhập thất bại!')
+        console.log(response.data.message || 'Đăng nhập thất bại!')
       }
     } catch (error) {
       const axiosError = error as AxiosError<LoginResponse>
       console.error('Login error:', axiosError)
-      toast.error(axiosError.response?.data?.message || 'Đăng nhập thất bại!')
     } finally {
       setLoading(false)
     }

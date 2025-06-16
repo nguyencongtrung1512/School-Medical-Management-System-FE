@@ -58,11 +58,11 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
         fullName: values.fullname,
         phone: values.phoneNumber,
         role: values.role,
-        studentParents: values.studentParents
+        studentParents: values.studentParents,
+        isDeleted: false
       })
       if (response.success) {
         toast.success('Đăng ký thành công!')
-        console.log('Form instance before resetFields:', form)
         form.resetFields()
         navigate(path.login)
       } else {

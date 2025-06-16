@@ -21,8 +21,13 @@ interface UpdateUserResponse {
   data: Profile
 }
 
+interface StudentParent {
+  studentCode: string
+  type: 'father' | 'mother' | 'guardian'
+}
+
 interface LinkStudentRequest {
-  studentCodes: string[]
+  studentParents: StudentParent[]
 }
 
 interface LinkStudentResponse {
@@ -30,9 +35,21 @@ interface LinkStudentResponse {
   data: {
     fullName: string
     studentCode: string
+    type: 'father' | 'mother' | 'guardian'
   }[]
   message?: string
 }
+
+interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+}
+
+interface ChangePasswordResponse {
+  success: boolean
+  message?: string
+}
+
 // Tìm kiếm user có phân trang, lọc theo vai trò (role)
 export const searchUsersAPI = (pageNum: number = 1, pageSize: number = 10, query?: string, role?: string) => {
   let url = `/users/search/${pageNum}/${pageSize}?`
@@ -62,4 +79,8 @@ export const getCurrentUserAPI = (): Promise<AxiosResponse<Profile>> => {
 
 export const linkStudentAPI = (data: LinkStudentRequest): Promise<AxiosResponse<LinkStudentResponse>> => {
   return axiosInstance.post('/users/link-students', data)
+}
+
+export const changePasswordAPI = (data: ChangePasswordRequest): Promise<AxiosResponse<ChangePasswordResponse>> => {
+  return axiosInstance.post('/users/change-password', data)
 }

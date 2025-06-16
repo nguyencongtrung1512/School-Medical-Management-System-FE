@@ -15,7 +15,7 @@ interface ScheduleData {
   confirmed: number
   rejected: number
   pending: number
-  status: 'active' | 'completed' | 'cancelled'
+  status: 'ongoing' | 'completed' | 'cancelled'
   document?: string
   content?: string
   confirmedStudents?: {
@@ -48,7 +48,6 @@ const mockData: ScheduleData[] = [
     rejected: 2,
     pending: 3,
     status: 'active',
-    document: 'thong-tin-tiem-chung.pdf',
     content: 'Thông báo về đợt tiêm chủng định kỳ cho học sinh lớp 1',
     confirmedStudents: [
       {
@@ -97,7 +96,7 @@ const VaccinationSchedule: React.FC = () => {
       key: 'eventType'
     },
     {
-      title: 'Khối/Lớp',
+      title: 'Khối',
       dataIndex: 'grade',
       key: 'grade'
     },
@@ -147,7 +146,7 @@ const VaccinationSchedule: React.FC = () => {
     <div className='p-6 space-y-8'>
       <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
         <Title level={3} className='mb-6'>
-          Lịch tiêm chủng / khám sức khỏe
+          Lịch tiêm chủng
         </Title>
 
         <Card className='shadow-md'>
@@ -187,16 +186,11 @@ const VaccinationSchedule: React.FC = () => {
               <Descriptions.Item label='Loại sự kiện' span={3}>
                 {selectedSchedule.eventType}
               </Descriptions.Item>
-              <Descriptions.Item label='Khối/Lớp' span={3}>
+              <Descriptions.Item label='Khối' span={3}>
                 {selectedSchedule.grade}
               </Descriptions.Item>
               <Descriptions.Item label='Ngày dự kiến' span={3}>
                 {selectedSchedule.date}
-              </Descriptions.Item>
-              <Descriptions.Item label='Tài liệu đính kèm' span={3}>
-                <a href='#' className='text-blue-500 hover:text-blue-700'>
-                  {selectedSchedule.document}
-                </a>
               </Descriptions.Item>
               <Descriptions.Item label='Nội dung thông báo' span={3}>
                 {selectedSchedule.content}
