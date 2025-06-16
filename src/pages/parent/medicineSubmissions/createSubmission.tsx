@@ -56,8 +56,8 @@ const CreateSubmission: React.FC = () => {
         } else {
           message.warning('Bạn chưa liên kết với học sinh nào!')
         }
-      } catch (error) {
-        message.error('Không thể lấy danh sách học sinh!')
+      } catch {
+        toast.error('Không thể lấy danh sách học sinh!')
       }
     }
 
@@ -84,15 +84,18 @@ const CreateSubmission: React.FC = () => {
       }
 
       const user = JSON.parse(userStr)
-      if (!user.id) {
-        toast.error('Thông tin người dùng không hợp lệ!', { autoClose: 1000 })
+      console.log('User info from localStorage:', user)
+
+      if (!user || !user.id) {
+        console.error('Invalid user data:', user)
+        toast.error('Thông tin người dùng không hợp lệ! Vui lòng đăng nhập lại.', { autoClose: 2000 })
         return
       }
 
       const submissionData = {
         parentId: user.id,
         studentId: values.studentId,
-        schoolNurseId: '683a72580f9eb8044e40e296',
+        schoolNurseId: '684edd803d818cee89d4d61d',
         medicines: [
           {
             name: values.medicineName,
@@ -114,7 +117,7 @@ const CreateSubmission: React.FC = () => {
         toast.success('Gửi thông tin thuốc thành công!', { autoClose: 1000 })
         form.resetFields()
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi gửi thông tin thuốc!', { autoClose: 1000 })
     } finally {
       setLoading(false)

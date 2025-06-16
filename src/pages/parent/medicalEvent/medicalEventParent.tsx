@@ -1,67 +1,57 @@
-import React, { useState } from 'react'
-import { Card, Table, Tag, Space, Typography, Button, Modal, Descriptions, Timeline, Row, Col, Statistic } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Card, Table, Typography, Button, Modal, Descriptions, Row, Col, Statistic } from 'antd'
 import {
   FileTextOutlined,
   ExclamationCircleOutlined,
-  CheckCircleOutlined,
   ClockCircleOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { getMedicalEvents } from '../../../api/medicalEvent'
+import type { MedicalEvent, MedicalEventResponse } from '../../../api/medicalEvent'
+import { useAuth } from '../../../contexts/auth.context'
+import { toast } from 'react-toastify'
 
-const { Title, Text } = Typography
-
-interface MedicalEvent {
-  id: string
-  eventTime: string
-  eventType: 'fever' | 'accident' | 'epidemic' | 'other'
-  description: string
-  action: 'rest' | 'call_parent' | 'hospital'
-  notes?: string
-  status: 'pending' | 'in_progress' | 'completed'
-  createdBy: string
-  createdAt: string
-  attachments?: string[]
-}
-
-const mockData: MedicalEvent[] = [
-  {
-    id: '1',
-    eventTime: '2024-03-20 10:30',
-    eventType: 'fever',
-    description: 'Học sinh sốt cao 39 độ',
-    action: 'call_parent',
-    notes: 'Đã cho uống hạ sốt và gọi phụ huynh',
-    status: 'completed',
-    createdBy: 'Y tá Nguyễn Thị H',
-    createdAt: '2024-03-20 10:35'
-  },
-  {
-    id: '2',
-    eventTime: '2024-03-19 14:15',
-    eventType: 'accident',
-    description: 'Học sinh té ngã trong giờ ra chơi',
-    action: 'hospital',
-    notes: 'Đã sơ cứu và chuyển bệnh viện',
-    status: 'in_progress',
-    createdBy: 'Y tá Nguyễn Thị H',
-    createdAt: '2024-03-19 14:20'
-  },
-  {
-    id: '3',
-    eventTime: '2024-02-15 09:00',
-    eventType: 'fever',
-    description: 'Học sinh sốt nhẹ 37.5 độ',
-    action: 'rest',
-    notes: 'Đã cho nghỉ ngơi và theo dõi',
-    status: 'completed',
-    createdBy: 'Y tá Trần Văn A',
-    createdAt: '2024-02-15 09:05'
-  }
-]
+const { Title } = Typography
 
 const MedicalEventParent: React.FC = () => {
+  const { user } = useAuth()
+  const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([])
+  const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<MedicalEvent | null>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+
+  const fetchMedicalEventsForChildren = async () => {
+    if (!user || !user.studentIds || user.studentIds.length === 0) {
+      console.log("Không có user hoặc studentIds:", user);
+      setMedicalEvents([])
+      return
+    }
+
+    try {
+      setLoading(true)
+      const allEvents: MedicalEvent[] = []
+      console.log("Danh sách studentIds:", user.studentIds);
+
+      for (const studentId of user.studentIds) {
+        console.log("Đang fetch dữ liệu cho studentId:", studentId);
+        const response: MedicalEventResponse = await getMedicalEvents(1, 100, studentId)
+        console.log("Response từ API:", response)
+        console.log("Dữ liệu pageData:", response.pageData)
+        allEvents.push(...response.pageData)
+      }
+      console.log("Tất cả events sau khi gộp:", allEvents);
+      setMedicalEvents(allEvents)
+    } catch (error) {
+      console.error('Lỗi khi tải sự kiện y tế cho trẻ:', error)
+      toast.error('Không thể tải sự kiện y tế cho con của bạn.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMedicalEventsForChildren()
+  }, [user])
 
   const handleViewDetails = (record: MedicalEvent) => {
     setSelectedEvent(record)
@@ -70,24 +60,14 @@ const MedicalEventParent: React.FC = () => {
 
   const columns: ColumnsType<MedicalEvent> = [
     {
-      title: 'Thời gian',
-      dataIndex: 'eventTime',
-      key: 'eventTime'
+      title: 'Học sinh',
+      dataIndex: ['student', 'fullName'],
+      key: 'studentName'
     },
     {
-      title: 'Loại sự kiện',
-      dataIndex: 'eventType',
-      key: 'eventType',
-      render: (type: string) => {
-        const types = {
-          fever: { color: 'red', text: 'Sốt' },
-          accident: { color: 'orange', text: 'Tai nạn' },
-          epidemic: { color: 'purple', text: 'Dịch bệnh' },
-          other: { color: 'blue', text: 'Khác' }
-        }
-        const { color, text } = types[type as keyof typeof types]
-        return <Tag color={color}>{text}</Tag>
-      }
+      title: 'Tên sự kiện',
+      dataIndex: 'eventName',
+      key: 'eventName'
     },
     {
       title: 'Mô tả',
@@ -96,46 +76,29 @@ const MedicalEventParent: React.FC = () => {
       ellipsis: true
     },
     {
-      title: 'Xử lý cần thiết',
-      dataIndex: 'action',
-      key: 'action',
-      render: (action: string) => {
-        const actions = {
-          rest: { color: 'green', text: 'Cho nghỉ' },
-          call_parent: { color: 'blue', text: 'Gọi phụ huynh' },
-          hospital: { color: 'red', text: 'Chuyển viện' }
-        }
-        const { color, text } = actions[action as keyof typeof actions]
-        return <Tag color={color}>{text}</Tag>
-      }
+      title: 'Biện pháp xử lý',
+      dataIndex: 'actionTaken',
+      key: 'actionTaken',
+      ellipsis: true
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const statuses = {
-          pending: { color: 'blue', text: 'Chờ xử lý' },
-          in_progress: { color: 'orange', text: 'Đang xử lý' },
-          completed: { color: 'green', text: 'Đã hoàn thành' }
-        }
-        const { color, text } = statuses[status as keyof typeof statuses]
-        return <Tag color={color}>{text}</Tag>
-      }
+      title: 'Mức độ nghiêm trọng',
+      dataIndex: 'isSerious',
+      key: 'isSerious',
+      render: (isSerious: boolean) => (
+        <span style={{ color: isSerious ? 'red' : 'green' }}>{isSerious ? 'Nghiêm trọng' : 'Không nghiêm trọng'}</span>
+      )
     },
     {
-      title: 'Yêu cầu xử lý',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const statuses = {
-          pending: { color: 'blue', text: 'Chờ xử lý' },
-          in_progress: { color: 'orange', text: 'Chở về nhà' },
-          completed: { color: 'green', text: 'Đã hoàn thành' }
-        }
-        const { color, text } = statuses[status as keyof typeof statuses]
-        return <Tag color={color}>{text}</Tag>
-      }
+      title: 'Người tạo',
+      dataIndex: ['schoolNurse', 'fullName'],
+      key: 'createdBy'
+    },
+    {
+      title: 'Thời gian tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (text: string) => new Date(text).toLocaleString()
     },
     {
       title: 'Thao tác',
@@ -148,8 +111,8 @@ const MedicalEventParent: React.FC = () => {
     }
   ]
 
-  const currentEvents = mockData.filter((event) => event.status !== 'completed')
-  const historyEvents = mockData.filter((event) => event.status === 'completed')
+  const currentEvents = medicalEvents.filter((event) => !event.isDeleted)
+  const historyEvents = medicalEvents.filter((event) => event.isDeleted)
 
   return (
     <div className='p-6 space-y-8'>
@@ -163,7 +126,7 @@ const MedicalEventParent: React.FC = () => {
             <Card className='bg-red-50'>
               <Statistic
                 title='Sốt'
-                value={currentEvents.filter((e) => e.eventType === 'fever').length}
+                value={currentEvents.filter((e) => e.eventName.toLowerCase().includes('sốt')).length}
                 valueStyle={{ color: '#cf1322' }}
                 prefix={<ExclamationCircleOutlined />}
               />
@@ -173,7 +136,7 @@ const MedicalEventParent: React.FC = () => {
             <Card className='bg-orange-50'>
               <Statistic
                 title='Tai nạn'
-                value={currentEvents.filter((e) => e.eventType === 'accident').length}
+                value={currentEvents.filter((e) => e.eventName.toLowerCase().includes('tai nạn')).length}
                 valueStyle={{ color: '#fa8c16' }}
                 prefix={<ExclamationCircleOutlined />}
               />
@@ -182,8 +145,8 @@ const MedicalEventParent: React.FC = () => {
           <Col span={8}>
             <Card className='bg-blue-50'>
               <Statistic
-                title='Đang xử lý'
-                value={currentEvents.filter((e) => e.status === 'in_progress').length}
+                title='Nghiêm trọng'
+                value={currentEvents.filter((e) => e.isSerious).length}
                 valueStyle={{ color: '#1890ff' }}
                 prefix={<ClockCircleOutlined />}
               />
@@ -192,7 +155,7 @@ const MedicalEventParent: React.FC = () => {
         </Row>
 
         <Card className='shadow-md'>
-          <Table columns={columns} dataSource={currentEvents} rowKey='id' pagination={false} />
+          <Table columns={columns} dataSource={currentEvents} rowKey='_id' loading={loading} pagination={false} />
         </Card>
       </div>
 
@@ -201,34 +164,7 @@ const MedicalEventParent: React.FC = () => {
           Lịch sử báo cáo y tế
         </Title>
 
-        <Timeline
-          items={historyEvents.map((event) => ({
-            color: event.eventType === 'fever' ? 'red' : event.eventType === 'accident' ? 'orange' : 'blue',
-            children: (
-              <Card className='mb-4'>
-                <div className='flex justify-between items-start'>
-                  <div>
-                    <Text strong className='text-lg'>
-                      {event.eventType === 'fever'
-                        ? 'Sốt'
-                        : event.eventType === 'accident'
-                          ? 'Tai nạn'
-                          : event.eventType === 'epidemic'
-                            ? 'Dịch bệnh'
-                            : 'Khác'}
-                    </Text>
-                    <div className='text-gray-600 mt-2'>{event.eventTime}</div>
-                    <div className='mt-2'>{event.description}</div>
-                    {event.notes && <div className='mt-2 text-gray-600'>Ghi chú: {event.notes}</div>}
-                  </div>
-                  <Tag color='green' icon={<CheckCircleOutlined />}>
-                    Đã hoàn thành
-                  </Tag>
-                </div>
-              </Card>
-            )
-          }))}
-        />
+        <Table columns={columns} dataSource={historyEvents} rowKey='_id' loading={loading} />
       </div>
 
       <Modal
@@ -245,27 +181,45 @@ const MedicalEventParent: React.FC = () => {
         {selectedEvent && (
           <div className='space-y-6'>
             <Descriptions bordered>
-              <Descriptions.Item label='Thời gian' span={3}>
-                {selectedEvent.eventTime}
+              <Descriptions.Item label='Thời gian tạo' span={3}>
+                {new Date(selectedEvent.createdAt).toLocaleString()}
               </Descriptions.Item>
-              <Descriptions.Item label='Loại sự kiện' span={3}>
-                {selectedEvent.eventType === 'fever'
-                  ? 'Sốt'
-                  : selectedEvent.eventType === 'accident'
-                    ? 'Tai nạn'
-                    : selectedEvent.eventType === 'epidemic'
-                      ? 'Dịch bệnh'
-                      : 'Khác'}
+              <Descriptions.Item label='Học sinh' span={3}>
+                {selectedEvent.student?.fullName || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label='Tên sự kiện' span={3}>
+                {selectedEvent.eventName}
               </Descriptions.Item>
               <Descriptions.Item label='Mô tả' span={3}>
                 {selectedEvent.description}
               </Descriptions.Item>
-              <Descriptions.Item label='Xử lý' span={3}>
-                {selectedEvent.action === 'rest'
-                  ? 'Cho nghỉ'
-                  : selectedEvent.action === 'call_parent'
-                    ? 'Gọi phụ huynh'
-                    : 'Chuyển viện'}
+              <Descriptions.Item label='Biện pháp xử lý' span={3}>
+                {selectedEvent.actionTaken}
+              </Descriptions.Item>
+              <Descriptions.Item label='Thuốc sử dụng' span={3}>
+                {selectedEvent.medicines && selectedEvent.medicines.length > 0 ? (
+                  selectedEvent.medicines.map(medicine => (
+                    <div key={medicine._id}>
+                      {medicine.name} - {medicine.quantity} {medicine.unit}
+                    </div>
+                  ))
+                ) : (
+                  'Không sử dụng'
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label='Vật tư y tế sử dụng' span={3}>
+                {selectedEvent.medicalSupplies && selectedEvent.medicalSupplies.length > 0 ? (
+                  selectedEvent.medicalSupplies.map(supply => (
+                    <div key={supply._id}>
+                      {supply.name} - {supply.quantity} {supply.unit}
+                    </div>
+                  ))
+                ) : (
+                  'Không sử dụng'
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label='Mức độ nghiêm trọng' span={3}>
+                {selectedEvent.isSerious ? 'Nghiêm trọng' : 'Không nghiêm trọng'}
               </Descriptions.Item>
               {selectedEvent.notes && (
                 <Descriptions.Item label='Ghi chú' span={3}>
@@ -273,7 +227,7 @@ const MedicalEventParent: React.FC = () => {
                 </Descriptions.Item>
               )}
               <Descriptions.Item label='Người tạo' span={3}>
-                {selectedEvent.createdBy}
+                {selectedEvent.schoolNurse?.fullName || 'N/A'}
               </Descriptions.Item>
             </Descriptions>
           </div>

@@ -106,19 +106,19 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Descriptions.Item label='Thuốc sử dụng' span={2}>
                   {medicalEvent.medicines && medicalEvent.medicines.length > 0
                     ? medicalEvent.medicines.map((medicine) => (
-                        <div key={medicine._id}>
-                          {medicine.name} - {medicine.quantity} {medicine.unit}
-                        </div>
-                      ))
+                      <div key={medicine._id}>
+                        {medicine.name} - {medicine.quantity} {medicine.unit}
+                      </div>
+                    ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Vật tư y tế sử dụng' span={2}>
                   {medicalEvent.medicalSupplies && medicalEvent.medicalSupplies.length > 0
                     ? medicalEvent.medicalSupplies.map((supply) => (
-                        <div key={supply._id}>
-                          {supply.name} - {supply.quantity} {supply.unit}
-                        </div>
-                      ))
+                      <div key={supply._id}>
+                        {supply.name} - {supply.quantity} {supply.unit}
+                      </div>
+                    ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Mức độ nghiêm trọng'>

@@ -88,7 +88,7 @@ interface PageInfo {
   totalPages: number
 }
 
-interface MedicalEventResponse {
+export interface MedicalEventResponse {
   pageData: MedicalEvent[]
   pageInfo: PageInfo
 }
@@ -114,8 +114,16 @@ export interface UpdateMedicalEventRequest {
   notes?: string
 }
 
-export const getMedicalEvents = async (pageNum: number = 1, pageSize: number = 10): Promise<MedicalEventResponse> => {
-  return axiosInstance.get(`/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`)
+export const getMedicalEvents = async (
+  pageNum: number = 1,
+  pageSize: number = 10,
+  userId?: string
+): Promise<MedicalEventResponse> => {
+  let url = `/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`
+  if (userId) {
+    url += `&userId=${userId}`
+  }
+  return axiosInstance.get(url)
 }
 
 export const getMedicalEventById = async (id: string): Promise<GetMedicalEventByIdResponse> => {

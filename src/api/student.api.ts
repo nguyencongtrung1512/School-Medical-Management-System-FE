@@ -5,6 +5,7 @@ export interface StudentProfile {
   _id: string
   fullName: string
   studentCode: string
+  classId?: string
 }
 
 // Lấy danh sách học sinh có tìm kiếm và phân trang

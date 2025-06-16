@@ -1,18 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Table,
   Button,
   Modal,
   Form,
   Input,
-  Select,
-  DatePicker,
   message,
   Card,
   Typography,
   Space,
   Tag,
-  Image,
   Descriptions,
   Row,
   Col,
@@ -20,147 +17,159 @@ import {
 } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
+import {
+  getAllMedicineSubmissions,
+  updateMedicineSubmission,
+  MedicineSubmissionData
+} from '../../../api/medicineSubmissions'
+import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
+import { getUserByIdAPI, Profile } from '../../../api/user.api'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
 
-interface MedicineRequest {
-  id: string
-  studentName: string
-  class: string
-  medicineName: string
-  medicineType: string
-  dosage: string
-  frequency: string
-  timing: string
-  duration: string
-  storage: string
-  senderName: string
-  emergencyPhone: string
-  sendDate: string
-  status: 'pending' | 'received' | 'in_progress' | 'completed'
-  reason: string
-  specialNotes?: string
-  images?: string[]
+interface PopulatedMedicineSubmissionData {
+  parentId: string
+  parentInfo?: Profile
+  studentId: StudentProfile
+  schoolNurseId: string
+  medicines: (MedicineSubmissionData['medicines'][number] & {
+    _id: string
+    createdAt: string
+    updatedAt: string
+  })[]
+  status: MedicineSubmissionData['status']
+  isDeleted: boolean
+  _id: string
+  createdAt: string
+  updatedAt: string
+  __v: number
   nurseNotes?: string
 }
 
 const ReceiveMedicine: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false)
-  const [selectedRequest, setSelectedRequest] = useState<MedicineRequest | null>(null)
+  const [selectedRequest, setSelectedRequest] = useState<PopulatedMedicineSubmissionData | null>(null)
   const [form] = Form.useForm()
+  const [medicineRequests, setMedicineRequests] = useState<PopulatedMedicineSubmissionData[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
 
-  // Mock data - sau này sẽ lấy từ API
-  const medicineRequests: MedicineRequest[] = [
-    {
-      id: '1',
-      studentName: 'Nguyễn Văn An',
-      class: '5A',
-      medicineName: 'Paracetamol',
-      medicineType: 'vien',
-      dosage: '1 viên',
-      frequency: '2 lần/ngày',
-      timing: 'Sau bữa ăn',
-      duration: '20/03/2024 - 22/03/2024',
-      storage: 'normal',
-      senderName: 'Nguyễn Văn Bố',
-      emergencyPhone: '0123456789',
-      sendDate: '20/03/2024',
-      status: 'pending',
-      reason: 'Hạ sốt',
-      specialNotes: 'Uống với nước ấm',
-      images: ['https://example.com/medicine1.jpg']
-    },
-    {
-      id: '2',
-      studentName: 'Trần Thị Bình',
-      class: '3B',
-      medicineName: 'Vitamin C',
-      medicineType: 'siro',
-      dosage: '5ml',
-      frequency: '1 lần/ngày',
-      timing: 'Buổi sáng',
-      duration: '18/03/2024 - 25/03/2024',
-      storage: 'normal',
-      senderName: 'Trần Văn Mẹ',
-      emergencyPhone: '0987654321',
-      sendDate: '18/03/2024',
-      status: 'in_progress',
-      reason: 'Bổ sung vitamin',
-      images: ['https://example.com/medicine2.jpg']
+  useEffect(() => {
+    const fetchMedicineRequests = async () => {
+      setLoading(true)
+      try {
+        const response = await getAllMedicineSubmissions(currentPage, pageSize)
+        const requestsWithStudentInfo = await Promise.all(
+          response.pageData.map(async (request) => {
+            try {
+              const [studentResponse, parentResponse] = await Promise.all([
+                getStudentByIdAPI(request.studentId as string),
+                getUserByIdAPI(request.parentId)
+              ])
+              return {
+                ...request,
+                studentId: studentResponse.data,
+                parentInfo: parentResponse.data
+              }
+            } catch (error) {
+              console.error('Error fetching info:', error)
+              return request
+            }
+          })
+        )
+        setMedicineRequests(requestsWithStudentInfo as PopulatedMedicineSubmissionData[])
+        setTotalItems(response.totalPage * pageSize)
+      } catch (error) {
+        message.error('Không thể lấy danh sách yêu cầu thuốc!')
+        console.error('Fetch medicine requests error:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
 
-  const columns: ColumnsType<MedicineRequest> = [
+    fetchMedicineRequests()
+  }, [currentPage, pageSize])
+
+  const handleTableChange = (page: number, pageSize?: number) => {
+    setCurrentPage(page)
+    if (pageSize) {
+      setPageSize(pageSize)
+    }
+  }
+
+  const columns: ColumnsType<PopulatedMedicineSubmissionData> = [
     {
       title: 'Học sinh',
-      dataIndex: 'studentName',
+      dataIndex: ['studentId', 'fullName'],
       key: 'studentName',
       render: (text, record) => (
         <div>
-          <div>{text}</div>
-          <Text type='secondary'>Lớp {record.class}</Text>
+          <div>{record.studentId.fullName}</div>
+          <Text type='secondary'>Mã số: {record.studentId.studentCode}</Text>
         </div>
       )
     },
     {
       title: 'Thuốc',
-      dataIndex: 'medicineName',
+      dataIndex: ['medicines', 0, 'name'],
       key: 'medicineName',
       render: (text, record) => (
         <div>
-          <div>{text}</div>
-          <Text type='secondary'>{record.medicineType}</Text>
+          <div>{record.medicines[0]?.name}</div>
+          <Text type='secondary'>Liều lượng: {record.medicines[0]?.dosage}</Text>
         </div>
       )
     },
     {
       title: 'Người gửi',
-      dataIndex: 'senderName',
+      dataIndex: 'parentId',
       key: 'senderName',
       render: (text, record) => (
         <div>
-          <div>{text}</div>
-          <Text type='secondary'>{record.emergencyPhone}</Text>
+          <div>{record.parentInfo?.fullName || 'N/A'}</div>
+          <Text type='secondary'>Số điện thoại: {record.parentInfo?.phone || 'N/A'}</Text>
         </div>
       )
     },
     {
       title: 'Ngày gửi',
-      dataIndex: 'sendDate',
-      key: 'sendDate'
-    },
-    {
-      title: 'Thời gian sử dụng',
-      dataIndex: 'duration',
-      key: 'duration'
+      dataIndex: 'createdAt',
+      key: 'sendDate',
+      render: (text: string) => new Date(text).toLocaleDateString('vi-VN')
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
+      render: (status: PopulatedMedicineSubmissionData['status']) => {
         let color = 'blue'
         let text = 'Chờ xác nhận'
         let icon = <ClockCircleOutlined />
 
         switch (status) {
-          case 'received':
-            color = 'cyan'
-            text = 'Đã nhận thuốc'
-            icon = <MedicineBoxOutlined />
-            break
-          case 'in_progress':
-            color = 'orange'
-            text = 'Đang thực hiện'
-            icon = <ClockCircleOutlined />
-            break
           case 'completed':
             color = 'green'
             text = 'Đã hoàn thành'
             icon = <CheckCircleOutlined />
             break
+          case 'approved':
+            color = 'lime'
+            text = 'Đã duyệt'
+            icon = <CheckCircleOutlined />
+            break
+          case 'rejected':
+            color = 'red'
+            text = 'Đã từ chối'
+            icon = <CheckCircleOutlined />
+            break
+          case 'pending':
+          default:
+            color = 'blue'
+            text = 'Chờ xác nhận'
+            icon = <ClockCircleOutlined />
         }
 
         return (
@@ -179,17 +188,17 @@ const ReceiveMedicine: React.FC = () => {
             Xem chi tiết
           </Button>
           {record.status === 'pending' && (
-            <Button type='primary' onClick={() => handleUpdateStatus(record.id, 'received')}>
+            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'received')}>
               Nhận thuốc
             </Button>
           )}
           {record.status === 'received' && (
-            <Button type='primary' onClick={() => handleUpdateStatus(record.id, 'in_progress')}>
+            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'in_progress')}>
               Bắt đầu thực hiện
             </Button>
           )}
           {record.status === 'in_progress' && (
-            <Button type='primary' onClick={() => handleUpdateStatus(record.id, 'completed')}>
+            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'completed')}>
               Hoàn thành
             </Button>
           )}
@@ -198,17 +207,29 @@ const ReceiveMedicine: React.FC = () => {
     }
   ]
 
-  const handleViewDetails = (record: MedicineRequest) => {
+  const handleViewDetails = (record: PopulatedMedicineSubmissionData) => {
     setSelectedRequest(record)
     setIsModalVisible(true)
   }
 
-  const handleUpdateStatus = (id: string, newStatus: MedicineRequest['status']) => {
-    // Sau này sẽ gọi API để cập nhật trạng thái
-    message.success('Cập nhật trạng thái thành công!')
+  const handleUpdateStatus = async (id: string, newStatus: MedicineSubmissionData['status']) => {
+    try {
+      const response = await updateMedicineSubmission(id) // Assuming updateMedicineSubmission takes id and newStatus as body
+      if (response.success) {
+        message.success('Cập nhật trạng thái thành công!')
+        setMedicineRequests((prevRequests) =>
+          prevRequests.map((req) => (req._id === id ? { ...req, status: newStatus } : req))
+        )
+      } else {
+        message.error('Cập nhật trạng thái thất bại!')
+      }
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
+      console.error('Update status error:', error)
+    }
   }
 
-  const handleAddNote = (values: { nurseNotes: string }) => {
+  const handleAddNote = () => {
     if (selectedRequest) {
       // Sau này sẽ gọi API để thêm ghi chú
       message.success('Thêm ghi chú thành công!')
@@ -221,7 +242,8 @@ const ReceiveMedicine: React.FC = () => {
     total: medicineRequests.length,
     pending: medicineRequests.filter((r) => r.status === 'pending').length,
     inProgress: medicineRequests.filter((r) => r.status === 'in_progress').length,
-    completed: medicineRequests.filter((r) => r.status === 'completed').length
+    completed: medicineRequests.filter((r) => r.status === 'completed').length,
+    received: medicineRequests.filter((r) => r.status === 'received').length
   }
 
   return (
@@ -244,6 +266,11 @@ const ReceiveMedicine: React.FC = () => {
             </Col>
             <Col span={6}>
               <Card>
+                <Statistic title='Đã nhận thuốc' value={stats.received} valueStyle={{ color: '#16a085' }} />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
                 <Statistic title='Đang thực hiện' value={stats.inProgress} valueStyle={{ color: '#faad14' }} />
               </Card>
             </Col>
@@ -255,7 +282,20 @@ const ReceiveMedicine: React.FC = () => {
           </Row>
 
           {/* Bảng danh sách */}
-          <Table columns={columns} dataSource={medicineRequests} rowKey='id' pagination={{ pageSize: 10 }} />
+          <Table
+            columns={columns}
+            dataSource={medicineRequests}
+            rowKey='_id'
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              onChange: handleTableChange,
+              showSizeChanger: true,
+              pageSizeOptions: ['5', '10', '20', '50']
+            }}
+            loading={loading}
+          />
 
           {/* Modal chi tiết */}
           <Modal
@@ -269,31 +309,41 @@ const ReceiveMedicine: React.FC = () => {
               <div>
                 <Descriptions bordered column={2}>
                   <Descriptions.Item label='Học sinh' span={2}>
-                    {selectedRequest.studentName} - Lớp {selectedRequest.class}
+                    {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentCode}
+                    {selectedRequest.studentId.classId && (
+                      <div>
+                        <Text type='secondary'>Lớp: {selectedRequest.studentId.classId}</Text>
+                      </div>
+                    )}
                   </Descriptions.Item>
-                  <Descriptions.Item label='Tên thuốc'>{selectedRequest.medicineName}</Descriptions.Item>
-                  <Descriptions.Item label='Dạng thuốc'>{selectedRequest.medicineType}</Descriptions.Item>
-                  <Descriptions.Item label='Liều lượng'>{selectedRequest.dosage}</Descriptions.Item>
-                  <Descriptions.Item label='Số lần uống'>{selectedRequest.frequency}</Descriptions.Item>
-                  <Descriptions.Item label='Thời gian uống'>{selectedRequest.timing}</Descriptions.Item>
-                  <Descriptions.Item label='Thời gian sử dụng'>{selectedRequest.duration}</Descriptions.Item>
-                  <Descriptions.Item label='Cách bảo quản'>
-                    {selectedRequest.storage === 'normal' ? 'Nhiệt độ thường' : 'Bảo quản lạnh'}
+                  <Descriptions.Item label='Phụ huynh' span={2}>
+                    {selectedRequest.parentInfo?.fullName || 'N/A'}
+                    <div>
+                      <Text type='secondary'>Số điện thoại: {selectedRequest.parentInfo?.phone || 'N/A'}</Text>
+                    </div>
                   </Descriptions.Item>
-                  <Descriptions.Item label='Người gửi' span={2}>
-                    {selectedRequest.senderName} - {selectedRequest.emergencyPhone}
+                  <Descriptions.Item label='Tên thuốc'>{selectedRequest.medicines[0]?.name}</Descriptions.Item>
+                  <Descriptions.Item label='Liều lượng'>{selectedRequest.medicines[0]?.dosage}</Descriptions.Item>
+                  <Descriptions.Item label='Số lần uống'>{selectedRequest.medicines[0]?.timesPerDay}</Descriptions.Item>
+                  <Descriptions.Item label='Thời gian uống'>
+                    {selectedRequest.medicines[0]?.usageInstructions}
+                  </Descriptions.Item>
+                  <Descriptions.Item label='Thời gian sử dụng' span={2}>
+                    {new Date(selectedRequest.medicines[0].startDate).toLocaleDateString('vi-VN')} -{' '}
+                    {new Date(selectedRequest.medicines[0].endDate).toLocaleDateString('vi-VN')}
                   </Descriptions.Item>
                   <Descriptions.Item label='Lý do dùng thuốc' span={2}>
-                    {selectedRequest.reason}
+                    {selectedRequest.medicines[0]?.reason}
                   </Descriptions.Item>
-                  {selectedRequest.specialNotes && (
+                  {selectedRequest.medicines[0]?.note && (
                     <Descriptions.Item label='Ghi chú đặc biệt' span={2}>
-                      {selectedRequest.specialNotes}
+                      {selectedRequest.medicines[0]?.note}
                     </Descriptions.Item>
                   )}
                 </Descriptions>
 
-                {selectedRequest.images && selectedRequest.images.length > 0 && (
+                {/* Hình ảnh thuốc - hiện tại không có trong API, giữ lại nếu muốn thêm sau */}
+                {/* {selectedRequest.images && selectedRequest.images.length > 0 && (
                   <div style={{ marginTop: 16 }}>
                     <Title level={5}>Hình ảnh thuốc</Title>
                     <Image.PreviewGroup>
@@ -306,7 +356,7 @@ const ReceiveMedicine: React.FC = () => {
                       </Row>
                     </Image.PreviewGroup>
                   </div>
-                )}
+                )} */}
 
                 <Form form={form} layout='vertical' onFinish={handleAddNote} style={{ marginTop: 16 }}>
                   <Form.Item name='nurseNotes' label='Ghi chú của y tá' initialValue={selectedRequest.nurseNotes}>

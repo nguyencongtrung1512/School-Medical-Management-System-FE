@@ -5,6 +5,7 @@ interface User {
   email: string
   role: string
   roleName: string
+  studentIds?: string[]
 }
 
 interface AuthContextType {
