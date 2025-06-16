@@ -76,6 +76,11 @@ export interface MedicalEvent {
   medicalSupplies: MedicalSupply[]
 }
 
+export interface GetMedicalEventByIdResponse {
+  success: boolean;
+  data: MedicalEvent;
+}
+
 interface PageInfo {
   pageNum: string
   pageSize: string
@@ -113,7 +118,7 @@ export const getMedicalEvents = async (pageNum: number = 1, pageSize: number = 1
   return axiosInstance.get(`/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`)
 }
 
-export const getMedicalEventById = async (id: string): Promise<MedicalEvent> => {
+export const getMedicalEventById = async (id: string): Promise<GetMedicalEventByIdResponse> => {
   return axiosInstance.get(`/medical-events/${id}`)
 }
 
@@ -123,7 +128,6 @@ export const createMedicalEvent = async (data: CreateMedicalEventRequest): Promi
 
 export const updateMedicalEvent = async (id: string, data: UpdateMedicalEventRequest): Promise<MedicalEvent> => {
   return axiosInstance.put(`/medical-events/${id}`, data)
-
 }
 
 export const deleteMedicalEvent = async (id: string): Promise<void> => {

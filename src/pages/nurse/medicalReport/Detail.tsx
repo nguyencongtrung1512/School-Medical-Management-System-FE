@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
 import { Modal, Descriptions, Form, Input, Select, Button, message } from 'antd'
 import { getMedicalEventById, updateMedicalEvent } from '../../../api/medicalEvent'
-import type { MedicalEvent, UpdateMedicalEventRequest } from '../../../api/medicalEvent'
+import type { MedicalEvent, UpdateMedicalEventRequest, GetMedicalEventByIdResponse } from '../../../api/medicalEvent'
+import { getMedicines } from '../../../api/medicines'
+import { getAllMedicalSupplies } from '../../../api/medicalSupplies'
+import type { Medicine } from '../../../api/medicines'
+import type { MedicalSupply } from '../../../api/medicalSupplies'
+import { toast } from 'react-toastify'
 
 const { TextArea } = Input
 
@@ -17,22 +22,25 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false)
   const [medicalEvent, setMedicalEvent] = useState<MedicalEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [medicines, setMedicines] = useState<Medicine[]>([])
+  const [medicalSupplies, setMedicalSupplies] = useState<MedicalSupply[]>([])
 
   const fetchMedicalEvent = async () => {
     try {
-      const data = await getMedicalEventById(id)
-      setMedicalEvent(data)
-      console.log("trung", data)
+      const response: GetMedicalEventByIdResponse = await getMedicalEventById(id)
+      console.log('trung', response)
+      setMedicalEvent(response.data)
+      console.log('medicalEvent sau khi set:', response.data)
       form.setFieldsValue({
-        eventName: data.eventName,
-        description: data.description,
-        actionTaken: data.actionTaken,
-        medicinesId: data.medicinesId,
-        medicalSuppliesId: data.medicalSuppliesId,
-        isSerious: data.isSerious,
-        notes: data.notes
+        eventName: response.data.eventName,
+        description: response.data.description,
+        actionTaken: response.data.actionTaken,
+        medicinesId: response.data.medicinesId,
+        medicalSuppliesId: response.data.medicalSuppliesId,
+        isSerious: response.data.isSerious,
+        notes: response.data.notes
       })
-    } catch (error) {
+    } catch {
       message.error('Có lỗi xảy ra khi tải thông tin sự kiện!')
     }
   }
@@ -40,38 +48,51 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   React.useEffect(() => {
     if (visible && id) {
       fetchMedicalEvent()
+      if (isEditing) {
+        fetchMedicinesAndSupplies()
+      }
     }
-  }, [visible, id])
+  }, [visible, id, isEditing])
 
   const handleUpdate = async (values: UpdateMedicalEventRequest) => {
     try {
       setLoading(true)
       await updateMedicalEvent(id, values)
-      message.success('Cập nhật sự kiện y tế thành công!')
+      toast.success('Cập nhật sự kiện y tế thành công!')
       setIsEditing(false)
       onSuccess()
-    } catch (error) {
+    } catch {
       message.error('Có lỗi xảy ra khi cập nhật sự kiện!')
     } finally {
       setLoading(false)
     }
   }
 
+  const fetchMedicinesAndSupplies = async () => {
+    try {
+      setLoading(true)
+      const [medicinesResponse, suppliesResponse] = await Promise.all([
+        getMedicines(1, 100),
+        getAllMedicalSupplies(1, 100)
+      ])
+      setMedicines(medicinesResponse.pageData)
+      setMedicalSupplies(suppliesResponse.pageData)
+    } catch {
+      message.error('Không thể tải danh sách thuốc và vật tư y tế')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <Modal
-      title='Chi tiết sự kiện y tế'
-      open={visible}
-      onCancel={onClose}
-      width={800}
-      footer={null}
-    >
+    <Modal title='Chi tiết sự kiện y tế' open={visible} onCancel={onClose} width={800} footer={null}>
       {medicalEvent && (
         <div>
           {!isEditing ? (
             <>
               <Descriptions bordered column={2}>
                 <Descriptions.Item label='Học sinh' span={2}>
-                  {medicalEvent.student.fullName}
+                  {medicalEvent.student?.fullName || 'N/A'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Tên sự kiện' span={2}>
                   {medicalEvent.eventName}
@@ -83,25 +104,27 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                   {medicalEvent.actionTaken}
                 </Descriptions.Item>
                 <Descriptions.Item label='Thuốc sử dụng' span={2}>
-                  {medicalEvent.medicines.map(medicine => (
-                    <div key={medicine._id}>
-                      {medicine.name} - {medicine.quantity} {medicine.unit}
-                    </div>
-                  ))}
+                  {medicalEvent.medicines && medicalEvent.medicines.length > 0
+                    ? medicalEvent.medicines.map((medicine) => (
+                        <div key={medicine._id}>
+                          {medicine.name} - {medicine.quantity} {medicine.unit}
+                        </div>
+                      ))
+                    : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Vật tư y tế sử dụng' span={2}>
-                  {medicalEvent.medicalSupplies.map(supply => (
-                    <div key={supply._id}>
-                      {supply.name} - {supply.quantity} {supply.unit}
-                    </div>
-                  ))}
+                  {medicalEvent.medicalSupplies && medicalEvent.medicalSupplies.length > 0
+                    ? medicalEvent.medicalSupplies.map((supply) => (
+                        <div key={supply._id}>
+                          {supply.name} - {supply.quantity} {supply.unit}
+                        </div>
+                      ))
+                    : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Mức độ nghiêm trọng'>
                   {medicalEvent.isSerious ? 'Nghiêm trọng' : 'Không nghiêm trọng'}
                 </Descriptions.Item>
-                <Descriptions.Item label='Người tạo'>
-                  {medicalEvent.schoolNurse.fullName}
-                </Descriptions.Item>
+                <Descriptions.Item label='Người tạo'>{medicalEvent.schoolNurse?.fullName || 'N/A'}</Descriptions.Item>
                 {medicalEvent.notes && (
                   <Descriptions.Item label='Ghi chú' span={2}>
                     {medicalEvent.notes}
@@ -115,11 +138,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
               </div>
             </>
           ) : (
-            <Form
-              form={form}
-              layout='vertical'
-              onFinish={handleUpdate}
-            >
+            <Form form={form} layout='vertical' onFinish={handleUpdate}>
               <Form.Item
                 name='eventName'
                 label='Tên sự kiện'
@@ -128,11 +147,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Input />
               </Form.Item>
 
-              <Form.Item
-                name='description'
-                label='Mô tả'
-                rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-              >
+              <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
                 <TextArea rows={4} />
               </Form.Item>
 
@@ -144,23 +159,17 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <TextArea rows={3} />
               </Form.Item>
 
-              <Form.Item
-                name='medicinesId'
-                label='Thuốc sử dụng'
-              >
+              <Form.Item name='medicinesId' label='Thuốc sử dụng'>
                 <Select
                   mode='multiple'
-                  options={[]} // TODO: Thêm danh sách thuốc từ API
+                  options={medicines.map((medicine) => ({ value: medicine._id, label: medicine.name }))}
                 />
               </Form.Item>
 
-              <Form.Item
-                name='medicalSuppliesId'
-                label='Vật tư y tế sử dụng'
-              >
+              <Form.Item name='medicalSuppliesId' label='Vật tư y tế sử dụng'>
                 <Select
                   mode='multiple'
-                  options={[]} // TODO: Thêm danh sách vật tư từ API
+                  options={medicalSupplies.map((supply) => ({ value: supply._id, label: supply.name }))}
                 />
               </Form.Item>
 
@@ -177,10 +186,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 />
               </Form.Item>
 
-              <Form.Item
-                name='notes'
-                label='Ghi chú'
-              >
+              <Form.Item name='notes' label='Ghi chú'>
                 <TextArea rows={3} />
               </Form.Item>
 

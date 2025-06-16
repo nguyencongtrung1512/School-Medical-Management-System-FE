@@ -10,7 +10,19 @@ export interface MedicalSupply {
   supplier: string
 }
 
-export const getAllMedicalSupplies = async (page: number, size: number) => {
+interface PageInfo {
+  pageNum: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
+interface MedicalSupplyResponse {
+  pageData: MedicalSupply[]
+  pageInfo: PageInfo
+}
+
+export const getAllMedicalSupplies = async (page: number, size: number): Promise<MedicalSupplyResponse> => {
   return axiosInstance.get(`/medical-supplies/search/${page}/${size}`)
 }
 
