@@ -243,7 +243,7 @@ const ScheduleVaccination: React.FC = () => {
               <Col span={16}>
                 <Space>
                   <Select
-                    placeholder='Khối/Lớp'
+                    placeholder='Khối'
                     allowClear
                     style={{ width: 150 }}
                     onChange={(value: string | undefined) => handleFilterChange('gradeId', value)}

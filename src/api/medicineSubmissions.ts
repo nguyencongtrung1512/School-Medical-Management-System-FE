@@ -20,12 +20,6 @@ interface CreateMedicineSubmissionRequest {
   medicines: Medicine[]
 }
 
-interface StudentInfo {
-  _id: string
-  fullName: string
-  studentCode: string
-}
-
 export interface MedicineSubmissionData {
   parentId: string
   studentId: string
@@ -35,18 +29,13 @@ export interface MedicineSubmissionData {
     createdAt: string
     updatedAt: string
   })[]
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress' | 'received'
+  status: 'pending' | 'approved' | 'rejected' | 'completed'
   isDeleted: boolean
   _id: string
   createdAt: string
   updatedAt: string
   __v: number
   nurseNotes?: string
-}
-
-interface MedicineSubmissionResponse {
-  success: boolean
-  data: MedicineSubmissionData
 }
 
 interface MedicineSubmissionsResponse {
@@ -57,11 +46,11 @@ interface MedicineSubmissionsResponse {
 
 export const createMedicineSubmission = async (
   data: CreateMedicineSubmissionRequest
-): Promise<MedicineSubmissionResponse> => {
+): Promise<MedicineSubmissionData> => {
   return axiosInstance.post('/medicine-submissions/create', data)
 }
 
-export const getDetailMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
+export const getDetailMedicineSubmission = async (id: string): Promise<MedicineSubmissionData> => {
   return axiosInstance.get(`/medicine-submissions/${id}`)
 }
 
@@ -80,10 +69,17 @@ export const getAllMedicineSubmissions = async (
   return axiosInstance.get(`/medicine-submissions/search/${page}/${limit}`)
 }
 
-export const updateMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
+export const updateMedicineSubmission = async (id: string): Promise<MedicineSubmissionData> => {
   return axiosInstance.put(`/medicine-submissions/${id}`)
 }
 
-export const deleteMedicineSubmission = async (id: string): Promise<MedicineSubmissionResponse> => {
+export const deleteMedicineSubmission = async (id: string): Promise<MedicineSubmissionData> => {
   return axiosInstance.delete(`/medicine-submissions/${id}`)
+}
+
+export const updateMedicineSubmissionStatus = async (
+  id: string,
+  status: 'pending' | 'approved' | 'rejected' | 'completed'
+): Promise<MedicineSubmissionData> => {
+  return axiosInstance.patch(`/medicine-submissions/${id}/status`, { status })
 }

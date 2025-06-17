@@ -19,7 +19,7 @@ import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@
 import type { ColumnsType } from 'antd/es/table'
 import {
   getAllMedicineSubmissions,
-  updateMedicineSubmission,
+  updateMedicineSubmissionStatus,
   MedicineSubmissionData
 } from '../../../api/medicineSubmissions'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
@@ -188,16 +188,16 @@ const ReceiveMedicine: React.FC = () => {
             Xem chi tiết
           </Button>
           {record.status === 'pending' && (
-            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'received')}>
-              Nhận thuốc
+            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'approved')}>
+              Duyệt đơn
             </Button>
           )}
-          {record.status === 'received' && (
-            <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'in_progress')}>
-              Bắt đầu thực hiện
+          {record.status === 'pending' && (
+            <Button danger onClick={() => handleUpdateStatus(record._id, 'rejected')}>
+              Từ chối
             </Button>
           )}
-          {record.status === 'in_progress' && (
+          {record.status === 'approved' && (
             <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'completed')}>
               Hoàn thành
             </Button>
@@ -214,15 +214,12 @@ const ReceiveMedicine: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: MedicineSubmissionData['status']) => {
     try {
-      const response = await updateMedicineSubmission(id) // Assuming updateMedicineSubmission takes id and newStatus as body
-      if (response.success) {
-        message.success('Cập nhật trạng thái thành công!')
-        setMedicineRequests((prevRequests) =>
-          prevRequests.map((req) => (req._id === id ? { ...req, status: newStatus } : req))
-        )
-      } else {
-        message.error('Cập nhật trạng thái thất bại!')
-      }
+      const response = await updateMedicineSubmissionStatus(id, newStatus)
+      console.log('trung đây', response)
+      message.success('Cập nhật trạng thái thành công!')
+      setMedicineRequests((prevRequests) =>
+        prevRequests.map((req) => (req._id === id ? { ...req, status: newStatus } : req))
+      )
     } catch (error) {
       message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
       console.error('Update status error:', error)
@@ -241,9 +238,9 @@ const ReceiveMedicine: React.FC = () => {
   const stats = {
     total: medicineRequests.length,
     pending: medicineRequests.filter((r) => r.status === 'pending').length,
-    inProgress: medicineRequests.filter((r) => r.status === 'in_progress').length,
+    approved: medicineRequests.filter((r) => r.status === 'approved').length,
     completed: medicineRequests.filter((r) => r.status === 'completed').length,
-    received: medicineRequests.filter((r) => r.status === 'received').length
+    rejected: medicineRequests.filter((r) => r.status === 'rejected').length
   }
 
   return (
@@ -266,17 +263,17 @@ const ReceiveMedicine: React.FC = () => {
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title='Đã nhận thuốc' value={stats.received} valueStyle={{ color: '#16a085' }} />
+                <Statistic title='Đã duyệt' value={stats.approved} valueStyle={{ color: '#52c41a' }} />
               </Card>
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title='Đang thực hiện' value={stats.inProgress} valueStyle={{ color: '#faad14' }} />
+                <Statistic title='Đã hoàn thành' value={stats.completed} valueStyle={{ color: '#16a085' }} />
               </Card>
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title='Đã hoàn thành' value={stats.completed} valueStyle={{ color: '#52c41a' }} />
+                <Statistic title='Từ chối' value={stats.rejected} valueStyle={{ color: '#a42e2e' }} />
               </Card>
             </Col>
           </Row>
@@ -341,22 +338,6 @@ const ReceiveMedicine: React.FC = () => {
                     </Descriptions.Item>
                   )}
                 </Descriptions>
-
-                {/* Hình ảnh thuốc - hiện tại không có trong API, giữ lại nếu muốn thêm sau */}
-                {/* {selectedRequest.images && selectedRequest.images.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <Title level={5}>Hình ảnh thuốc</Title>
-                    <Image.PreviewGroup>
-                      <Row gutter={[8, 8]}>
-                        {selectedRequest.images.map((image, index) => (
-                          <Col span={8} key={index}>
-                            <Image src={image} alt={`Thuốc ${index + 1}`} />
-                          </Col>
-                        ))}
-                      </Row>
-                    </Image.PreviewGroup>
-                  </div>
-                )} */}
 
                 <Form form={form} layout='vertical' onFinish={handleAddNote} style={{ marginTop: 16 }}>
                   <Form.Item name='nurseNotes' label='Ghi chú của y tá' initialValue={selectedRequest.nurseNotes}>
