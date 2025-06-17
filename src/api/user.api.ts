@@ -73,11 +73,11 @@ export const updateUserAPI = (
   return axiosInstance.put(`/users/${id}`, data)
 }
 
-export const getCurrentUserAPI = (): Promise<AxiosResponse<Profile>> => {
+export const getCurrentUserAPI = (): Promise<Profile> => {
   return axiosInstance.get(`/users`)
 }
 
-export const linkStudentAPI = (data: LinkStudentRequest): Promise<AxiosResponse<LinkStudentResponse>> => {
+export const linkStudentAPI = (data: LinkStudentRequest): Promise<LinkStudentResponse> => {
   return axiosInstance.post('/users/link-students', data)
 }
 

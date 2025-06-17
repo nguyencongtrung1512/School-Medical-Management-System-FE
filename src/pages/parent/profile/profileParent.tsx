@@ -5,25 +5,17 @@ import {
   PhoneOutlined,
   CalendarOutlined,
   EditOutlined,
-  UserAddOutlined
+  UserAddOutlined,
+  LoadingOutlined
 } from '@ant-design/icons'
 import { getCurrentUserAPI, linkStudentAPI } from '../../../api/user.api'
 import { Profile } from '../../../api/user.api'
 import { toast } from 'react-toastify'
-import { Modal, Form, Input } from 'antd'
+import { Modal, Form, Input, Spin } from 'antd'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import { AxiosResponse } from 'axios'
 import { StudentProfile } from '../../../api/student.api'
 import UpdateProfileModal from './updateProfile'
-
-interface LinkStudentResponse {
-  success: boolean
-  data: Array<{
-    fullName: string
-    studentCode: string
-  }>
-  message?: string
-}
 
 const ProfileParent = () => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
@@ -42,22 +34,18 @@ const ProfileParent = () => {
     try {
       setLoading(true)
       const response = await getCurrentUserAPI()
+      console.log('Current user profile API response:', response)
       setUserProfile(response.data)
 
-      if (response.data.studentIds) {
-        const studentIds = Array.isArray(response.data.studentIds)
-          ? response.data.studentIds
-          : (response.data.studentIds as string)
-            .split(',')
-            .map((id: string) => id.trim())
-            .filter(Boolean)
+      if (response.data.studentIds && response.data.studentIds.length > 0) {
+        const studentIdsToFetch = response.data.studentIds
 
-        if (studentIds.length > 0) {
-          const studentsPromises = studentIds.map((id: string) => getStudentByIdAPI(id))
-          const studentsResponses = await Promise.all(studentsPromises)
-          const fetchedStudents = studentsResponses.map((res: AxiosResponse<StudentProfile>) => res.data)
-          setLinkedChildren(fetchedStudents)
-        }
+        const studentsPromises = studentIdsToFetch.map((id: string) => getStudentByIdAPI(id))
+        const studentsResponses = await Promise.all(studentsPromises)
+        const fetchedStudents = studentsResponses.map((res: AxiosResponse<StudentProfile>) => res.data)
+        setLinkedChildren(fetchedStudents)
+      } else {
+        setLinkedChildren([]) // Reset if no studentIds or empty
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
@@ -94,22 +82,42 @@ const ProfileParent = () => {
 
   const handleLinkStudent = async (values: { studentCode: string }) => {
     try {
-      const response = await linkStudentAPI({ studentCodes: [values.studentCode] })
-      if (response.success && response.data.length > 0) {
-        setLinkedChildren((prev) => [...prev, ...response.data])
+      setLoading(true)
+      const apiResponse = await linkStudentAPI({
+        studentParents: [{ studentCode: values.studentCode, type: 'father' }]
+      })
+
+      if (apiResponse.success && apiResponse.data.length > 0) {
+        setLinkedChildren((prev) => [
+          ...prev,
+          ...apiResponse.data.map(
+            (item: { fullName: string; studentCode: string; type: 'father' | 'mother' | 'guardian' }) => ({
+              fullName: item.fullName,
+              studentCode: item.studentCode
+            })
+          )
+        ])
         toast.success('Liên kết học sinh thành công!')
         handleCancel()
+        fetchUserProfile() // Gọi lại hàm fetchUserProfile để cập nhật dữ liệu mới nhất
       } else {
-        toast.error(response.message || 'Liên kết học sinh thất bại. Vui lòng kiểm tra mã học sinh.')
+        toast.error(apiResponse.message || 'Liên kết học sinh thất bại. Vui lòng kiểm tra mã học sinh.')
       }
     } catch (error) {
       console.error('Error linking student:', error)
       toast.error('Đã xảy ra lỗi khi liên kết học sinh.')
+    } finally {
+      setLoading(false)
     }
   }
 
   if (loading) {
-    return <div className='flex justify-center items-center h-screen'>Đang tải...</div>
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+        <span className='ml-2'>Đang tải dữ liệu...</span>
+      </div>
+    )
   }
 
   if (!userProfile) {
