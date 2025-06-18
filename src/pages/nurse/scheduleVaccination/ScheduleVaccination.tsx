@@ -180,14 +180,14 @@ const ScheduleVaccination: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       filters: [
-        { text: 'Đang diễn ra', value: VaccineEventStatus.ONGOING },
+        { text: 'Chờ Duyệt', value: VaccineEventStatus.ONGOING },
         { text: 'Hoàn thành', value: VaccineEventStatus.COMPLETED },
         { text: 'Đã hủy', value: VaccineEventStatus.CANCELLED }
       ],
       onFilter: (value, record) => record.status === value,
       render: (status: string) => {
         const statusConfig = {
-          ongoing: { color: 'blue', text: 'Đang diễn ra' },
+          ongoing: { color: 'blue', text: 'Chờ Duyệt' },
           completed: { color: 'green', text: 'Hoàn thành' },
           cancelled: { color: 'red', text: 'Đã hủy' }
         }
@@ -261,7 +261,7 @@ const ScheduleVaccination: React.FC = () => {
                     style={{ width: 150 }}
                     onChange={(value: string | undefined) => handleFilterChange('status', value)}
                   >
-                    <Option value={VaccineEventStatus.ONGOING}>Đang diễn ra</Option>
+                    <Option value={VaccineEventStatus.ONGOING}>Chờ Duyệt</Option>
                     <Option value={VaccineEventStatus.COMPLETED}>Hoàn thành</Option>
                     <Option value={VaccineEventStatus.CANCELLED}>Đã hủy</Option>
                   </Select>

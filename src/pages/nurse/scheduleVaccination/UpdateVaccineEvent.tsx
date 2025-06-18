@@ -161,14 +161,6 @@ const UpdateVaccineEvent: React.FC<UpdateVaccineEventProps> = ({ eventId, onSucc
           <Input.TextArea rows={4} placeholder='Nhập mô tả chi tiết về sự kiện' />
         </Form.Item>
 
-        <Form.Item name='status' label='Trạng thái' rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}>
-          <Select placeholder='Chọn trạng thái'>
-            <Option value={VaccineEventStatus.ONGOING}>Đang diễn ra</Option>
-            <Option value={VaccineEventStatus.COMPLETED}>Hoàn thành</Option>
-            <Option value={VaccineEventStatus.CANCELLED}>Đã hủy</Option>
-          </Select>
-        </Form.Item>
-
         <Form.Item>
           <Space>
             <Button type='primary' htmlType='submit' className='bg-blue-500' loading={loading}>

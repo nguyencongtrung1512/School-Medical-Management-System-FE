@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { Form, Input, Select, DatePicker, Checkbox, Button, message, Spin } from 'antd'
 import dayjs from 'dayjs'
 import { createMedicineSubmission } from '../../../api/medicineSubmissions'
-import { getCurrentUserAPI } from '../../../api/user.api'
+import { getCurrentUserAPI, searchNurseUsersAPI, NurseProfile } from '../../../api/user.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import { toast } from 'react-toastify'
+import debounce from 'lodash/debounce'
 
 const { TextArea } = Input
 const { RangePicker } = DatePicker
@@ -32,6 +33,7 @@ interface FormValues {
   note?: string
   agreement1: boolean
   agreement2: boolean
+  schoolNurseId: string
 }
 
 const CreateSubmission: React.FC = () => {
@@ -39,6 +41,8 @@ const CreateSubmission: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [nurses, setNurses] = useState<NurseProfile[]>([])
+  const [nurseLoading, setNurseLoading] = useState(false)
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -73,6 +77,27 @@ const CreateSubmission: React.FC = () => {
     }
   }
 
+  const fetchNurses = async (searchText?: string) => {
+    try {
+      setNurseLoading(true)
+      const response = await searchNurseUsersAPI(1, 10, searchText)
+      console.log('trúng:', response)
+
+      setNurses(response.pageData)
+
+    } catch (error) {
+      toast.error('Không thể tải danh sách y tá!')
+    } finally {
+      setNurseLoading(false)
+    }
+  }
+
+  const debouncedFetchNurses = debounce(fetchNurses, 500)
+
+  useEffect(() => {
+    fetchNurses()
+  }, [])
+
   const onFinish = async (values: FormValues) => {
     try {
       setSubmitting(true)
@@ -95,7 +120,7 @@ const CreateSubmission: React.FC = () => {
       const submissionData = {
         parentId: user.id,
         studentId: values.studentId,
-        schoolNurseId: '684edd803d818cee89d4d61d',
+        schoolNurseId: values.schoolNurseId,
         medicines: [
           {
             name: values.medicineName,
@@ -169,6 +194,24 @@ const CreateSubmission: React.FC = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn ngày gửi thuốc!' }]}
               >
                 <DatePicker className='w-full' format='DD/MM/YYYY' />
+              </Form.Item>
+
+              <Form.Item
+                name='schoolNurseId'
+                label='Y tá phụ trách'
+                rules={[{ required: true, message: 'Vui lòng chọn y tá phụ trách!' }]}
+              >
+                <Select
+                  showSearch
+                  placeholder='Chọn y tá phụ trách'
+                  loading={nurseLoading}
+                  onSearch={debouncedFetchNurses}
+                  filterOption={false}
+                  options={nurses.map((nurse) => ({
+                    value: nurse._id,
+                    label: nurse.fullName
+                  }))}
+                />
               </Form.Item>
             </div>
           </div>

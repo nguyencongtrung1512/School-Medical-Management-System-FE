@@ -39,3 +39,7 @@ export const updateVaccineEvent = async (_id: string, data: Partial<Omit<Vaccine
 export const deleteVaccineEvent = async (_id: string) => {
   return axiosInstance.delete(`/vaccine-events/${_id}`)
 }
+
+export const updateVaccineEventStatus = async (_id: string, status: VaccineEventStatus) => {
+  return axiosInstance.patch(`/vaccine-events/${_id}/status`, { status })
+}

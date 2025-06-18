@@ -111,7 +111,7 @@ const VaccinationSchedule: React.FC = () => {
       key: 'status',
       render: (status: string) => {
         const statusConfig = {
-          active: { color: 'blue', text: 'Đang diễn ra' },
+          active: { color: 'blue', text: 'Chờ Duyệt' },
           completed: { color: 'green', text: 'Hoàn thành' },
           cancelled: { color: 'red', text: 'Đã hủy' }
         }

@@ -18,9 +18,9 @@ import {
 import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  getAllMedicineSubmissions,
   updateMedicineSubmissionStatus,
-  MedicineSubmissionData
+  MedicineSubmissionData,
+  getMedicineSubmissionsByNurseId
 } from '../../../api/medicineSubmissions'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
@@ -61,7 +61,21 @@ const ReceiveMedicine: React.FC = () => {
     const fetchMedicineRequests = async () => {
       setLoading(true)
       try {
-        const response = await getAllMedicineSubmissions(currentPage, pageSize)
+        const userStr = localStorage.getItem('user')
+        if (!userStr) {
+          message.error('Vui lòng đăng nhập lại!')
+          setLoading(false)
+          return
+        }
+
+        const user = JSON.parse(userStr)
+        if (!user || !user.id) {
+          message.error('Thông tin người dùng không hợp lệ!')
+          setLoading(false)
+          return
+        }
+
+        const response = await getMedicineSubmissionsByNurseId(user.id, currentPage, pageSize)
         const requestsWithStudentInfo = await Promise.all(
           response.pageData.map(async (request) => {
             try {

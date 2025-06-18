@@ -62,6 +62,14 @@ export const getMedicineSubmissionsByParentId = async (
   return axiosInstance.get(`/medicine-submissions/search/${page}/${limit}?parentId=${parentId}`)
 }
 
+export const getMedicineSubmissionsByNurseId = async (
+  nurseId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<MedicineSubmissionsResponse> => {
+  return axiosInstance.get(`/medicine-submissions/search/${page}/${limit}?schoolNurseId=${nurseId}`)
+}
+
 export const getAllMedicineSubmissions = async (
   page: number = 1,
   limit: number = 10
@@ -83,3 +91,4 @@ export const updateMedicineSubmissionStatus = async (
 ): Promise<MedicineSubmissionData> => {
   return axiosInstance.patch(`/medicine-submissions/${id}/status`, { status })
 }
+

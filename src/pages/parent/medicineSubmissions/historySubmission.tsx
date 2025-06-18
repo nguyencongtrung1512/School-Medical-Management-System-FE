@@ -10,6 +10,7 @@ const { Text } = Typography
 type PopulatedMedicineRequest = Omit<MedicineSubmissionData, 'studentId'> & {
   studentId: StudentProfile
   parentInfo?: Profile
+  nurseInfo?: Profile
 }
 
 function HistorySubmission() {
@@ -45,6 +46,7 @@ function HistorySubmission() {
           response.pageData.map(async (request) => {
             let studentInfo: StudentProfile | undefined
             let parentInfo: Profile | undefined
+            let nurseInfo: Profile | undefined
             try {
               const studentResponse = await getStudentByIdAPI(request.studentId as string)
               studentInfo = studentResponse.data
@@ -65,6 +67,16 @@ function HistorySubmission() {
               parentInfo = { _id: request.parentId, fullName: 'Phụ huynh không xác định', phone: 'N/A' } as Profile
             }
 
+            if (request.schoolNurseId) {
+              try {
+                const nurseResponse = await getUserByIdAPI(request.schoolNurseId)
+                nurseInfo = nurseResponse.data
+              } catch (error) {
+                console.error('Error fetching nurse info for request:', request._id, error)
+                nurseInfo = { _id: request.schoolNurseId, fullName: 'Y tá không xác định', phone: 'N/A' } as Profile
+              }
+            }
+
             return {
               _id: request._id,
               parentId: request.parentId,
@@ -77,7 +89,8 @@ function HistorySubmission() {
               __v: request.__v,
               nurseNotes: request.nurseNotes,
               studentId: studentInfo!,
-              parentInfo: parentInfo
+              parentInfo: parentInfo,
+              nurseInfo: nurseInfo
             }
           })
         )
@@ -219,6 +232,14 @@ function HistorySubmission() {
                     <Text type='secondary'>Số điện thoại: {selectedRequest.parentInfo?.phone || 'N/A'}</Text>
                   </div>
                 </Descriptions.Item>
+                {selectedRequest.nurseInfo && (
+                  <Descriptions.Item label='Y tá phụ trách' span={2}>
+                    {selectedRequest.nurseInfo.fullName}
+                    <div>
+                      <Text type='secondary'>Số điện thoại: {selectedRequest.nurseInfo.phone || 'N/A'}</Text>
+                    </div>
+                  </Descriptions.Item>
+                )}
                 <Descriptions.Item label='Tên thuốc'>{selectedRequest.medicines[0]?.name}</Descriptions.Item>
                 <Descriptions.Item label='Liều lượng'>{selectedRequest.medicines[0]?.dosage}</Descriptions.Item>
                 <Descriptions.Item label='Số lần uống'>{selectedRequest.medicines[0]?.timesPerDay}</Descriptions.Item>

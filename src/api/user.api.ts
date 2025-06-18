@@ -50,11 +50,34 @@ interface ChangePasswordResponse {
   message?: string
 }
 
+export interface NurseProfile {
+  _id: string
+  fullName: string
+  email: string
+  phone: string
+  image?: string
+}
+
+interface SearchNurseResponse {
+  success: boolean
+  data: {
+    pageData: NurseProfile[]
+    total: number
+  }
+  message?: string
+}
+
 // Tìm kiếm user có phân trang, lọc theo vai trò (role)
 export const searchUsersAPI = (pageNum: number = 1, pageSize: number = 10, query?: string, role?: string) => {
   let url = `/users/search/${pageNum}/${pageSize}?`
   if (query) url += `query=${encodeURIComponent(query)}&`
   if (role) url += `role=${role}`
+  return axiosInstance.get(url)
+}
+
+export const searchNurseUsersAPI = (pageNum: number = 1, pageSize: number = 10, query?: string): Promise<AxiosResponse<SearchNurseResponse>> => {
+  let url = `/users/search/${pageNum}/${pageSize}?role=school-nurse`
+  if (query) url += `&query=${encodeURIComponent(query)}`
   return axiosInstance.get(url)
 }
 
