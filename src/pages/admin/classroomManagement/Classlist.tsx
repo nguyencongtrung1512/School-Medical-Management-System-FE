@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message } from 'antd'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Select } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
+import { getClassesAPI } from '../../../api/classes.api'
 import CreateClass from './Create'
 import DeleteClass from './Delete'
 import UpdateClass from './Update'
@@ -26,6 +27,7 @@ interface Classes {
   }
   totalStudents?: number
   status?: string
+  schoolYear: string
 }
 
 interface Grade {
@@ -54,6 +56,8 @@ const ClassList: React.FC = () => {
     pageSize: 10,
     total: 0
   })
+  const [selectedYear, setSelectedYear] = useState<string>('')
+  const [schoolYears, setSchoolYears] = useState<string[]>([])
 
   const fetchGradeInfo = async () => {
     if (!gradeId) return
@@ -74,9 +78,11 @@ const ClassList: React.FC = () => {
 
     try {
       setLoading(true)
-      const response = await getGradeByIdAPI(gradeId)
-      const classesData = response.data?.classes || []
-      console.log('Danh sách lớp:', classesData)
+      const response = await getClassesAPI(10, 1, gradeId, selectedYear || undefined)
+      const classesData = response.pageData || []
+      console.log('ttt', response.pageData)
+      const years = Array.from(new Set((classesData as Classes[]).map((c: Classes) => c.schoolYear).filter(Boolean))) as string[]
+      setSchoolYears(years)
       if (Array.isArray(classesData)) {
         const transformedClasses: Classes[] = classesData.map((classItem: Classes) => ({
           ...classItem,
@@ -102,12 +108,12 @@ const ClassList: React.FC = () => {
       fetchGradeInfo()
       fetchClasses()
     }
-  }, [gradeId, pagination.current, pagination.pageSize])
+  }, [gradeId, pagination.current, pagination.pageSize, selectedYear])
 
   useEffect(() => {
     fetchClasses()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.current, pagination.pageSize])
+  }, [pagination.current, pagination.pageSize, selectedYear])
 
   const handleAddClass = () => {
     setIsCreateModalVisible(true)
@@ -202,6 +208,20 @@ const ClassList: React.FC = () => {
           <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass} className='text-base h-10 px-6'>
             Thêm lớp mới
           </Button>
+        </div>
+
+        <div className='mb-4'>
+          <Select
+            style={{ width: 200 }}
+            placeholder='Chọn năm học'
+            allowClear
+            value={selectedYear || undefined}
+            onChange={value => setSelectedYear(value || '')}
+          >
+            {schoolYears.map(year => (
+              <Select.Option key={year} value={year}>{year}</Select.Option>
+            ))}
+          </Select>
         </div>
 
         <Row gutter={[16, 16]} className='mb-6'>

@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 interface Class {
   _id: string
   name: string
+  schoolYear: string
 }
 
 interface UpdateClassProps {
@@ -21,7 +22,8 @@ const UpdateClass: React.FC<UpdateClassProps> = ({ isModalVisible, onCancel, onO
   useEffect(() => {
     if (editingClass) {
       form.setFieldsValue({
-        name: editingClass.name
+        name: editingClass.name,
+        schoolYear: editingClass.schoolYear
       })
     }
   }, [editingClass, form])
@@ -33,7 +35,8 @@ const UpdateClass: React.FC<UpdateClassProps> = ({ isModalVisible, onCancel, onO
       if (!editingClass) return
 
       const data = {
-        name: values.name
+        name: values.name,
+        schoolYear: values.schoolYear
       }
 
       await updateClassAPI(editingClass._id, data)
@@ -60,6 +63,9 @@ const UpdateClass: React.FC<UpdateClassProps> = ({ isModalVisible, onCancel, onO
       <Form form={form} layout='vertical'>
         <Form.Item name='name' label='Tên lớp' rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}>
           <Input placeholder='Nhập tên lớp' />
+        </Form.Item>
+        <Form.Item name='schoolYear' label='Năm học' rules={[{ required: true, message: 'Vui lòng nhập năm học!' }]}>
+          <Input placeholder='2024-2025' />
         </Form.Item>
       </Form>
     </Modal>

@@ -23,7 +23,8 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
 
       const data = {
         name: values.name,
-        gradeId: gradeId
+        gradeId: gradeId,
+        schoolYear: values.schoolYear
       }
 
       await createClassAPI(data)
@@ -50,6 +51,9 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       <Form form={form} layout='vertical'>
         <Form.Item name='name' label='Tên lớp' rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}>
           <Input placeholder='Nhập tên lớp' />
+        </Form.Item>
+        <Form.Item name='schoolYear' label='Năm học' rules={[{ required: true, message: 'Vui lòng nhập năm học!' }]}>
+          <Input placeholder='2024-2025' />
         </Form.Item>
       </Form>
     </Modal>
