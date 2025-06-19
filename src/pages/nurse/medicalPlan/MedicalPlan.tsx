@@ -242,87 +242,7 @@ const MedicalPlan: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        <Card>
-          <Row justify='space-between' align='middle'>
-            <Col>
-              <Typography.Title level={4}>Kế hoạch y tế</Typography.Title>
-            </Col>
-            <Col>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => form.submit()}>
-                Tạo kế hoạch mới
-              </Button>
-            </Col>
-          </Row>
-
-          <Form form={form} layout='vertical' onFinish={handleCreatePlan} style={{ marginTop: '24px' }}>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name='title'
-                  label='Tiêu đề kế hoạch'
-                  rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-                >
-                  <Input placeholder='Nhập tiêu đề kế hoạch' />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name='type'
-                  label='Loại kế hoạch'
-                  rules={[{ required: true, message: 'Vui lòng chọn loại kế hoạch!' }]}
-                >
-                  <Select
-                    options={[
-                      { value: 'equipment', label: 'Trang thiết bị' },
-                      { value: 'training', label: 'Tập huấn' },
-                      { value: 'medicine', label: 'Thuốc men' },
-                      { value: 'other', label: 'Khác' }
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name='dateRange'
-                  label='Thời gian thực hiện'
-                  rules={[{ required: true, message: 'Vui lòng chọn thời gian!' }]}
-                >
-                  <RangePicker style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name='priority'
-                  label='Độ ưu tiên'
-                  rules={[{ required: true, message: 'Vui lòng chọn độ ưu tiên!' }]}
-                >
-                  <Select
-                    options={[
-                      { value: 'high', label: 'Cao' },
-                      { value: 'medium', label: 'Trung bình' },
-                      { value: 'low', label: 'Thấp' }
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item
-              name='description'
-              label='Mô tả chi tiết'
-              rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-            >
-              <TextArea rows={4} placeholder='Nhập mô tả chi tiết về kế hoạch...' />
-            </Form.Item>
-
-            <Form.Item name='notes' label='Ghi chú thêm'>
-              <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
-            </Form.Item>
-          </Form>
-        </Card>
+        
 
         <Card title='Danh sách kế hoạch'>
           <Table columns={columns} dataSource={medicalPlans} rowKey='id' pagination={{ pageSize: 10 }} />
@@ -437,6 +357,87 @@ const MedicalPlan: React.FC = () => {
             </div>
           )}
         </Modal>
+        <Card>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Typography.Title level={4}>Kế hoạch y tế</Typography.Title>
+            </Col>
+            <Col>
+              <Button type='primary' icon={<PlusOutlined />} onClick={() => form.submit()}>
+                Tạo kế hoạch mới
+              </Button>
+            </Col>
+          </Row>
+
+          <Form form={form} layout='vertical' onFinish={handleCreatePlan} style={{ marginTop: '24px' }}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name='title'
+                  label='Tiêu đề kế hoạch'
+                  rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
+                >
+                  <Input placeholder='Nhập tiêu đề kế hoạch' />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name='type'
+                  label='Loại kế hoạch'
+                  rules={[{ required: true, message: 'Vui lòng chọn loại kế hoạch!' }]}
+                >
+                  <Select
+                    options={[
+                      { value: 'equipment', label: 'Trang thiết bị' },
+                      { value: 'training', label: 'Tập huấn' },
+                      { value: 'medicine', label: 'Thuốc men' },
+                      { value: 'other', label: 'Khác' }
+                    ]}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name='dateRange'
+                  label='Thời gian thực hiện'
+                  rules={[{ required: true, message: 'Vui lòng chọn thời gian!' }]}
+                >
+                  <RangePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name='priority'
+                  label='Độ ưu tiên'
+                  rules={[{ required: true, message: 'Vui lòng chọn độ ưu tiên!' }]}
+                >
+                  <Select
+                    options={[
+                      { value: 'high', label: 'Cao' },
+                      { value: 'medium', label: 'Trung bình' },
+                      { value: 'low', label: 'Thấp' }
+                    ]}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name='description'
+              label='Mô tả chi tiết'
+              rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
+            >
+              <TextArea rows={4} placeholder='Nhập mô tả chi tiết về kế hoạch...' />
+            </Form.Item>
+
+            <Form.Item name='notes' label='Ghi chú thêm'>
+              <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
+            </Form.Item>
+          </Form>
+        </Card>
       </Space>
     </div>
   )
