@@ -43,10 +43,10 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <Sider width={220} className='fixed h-full left-0 top-0 bg-white border-r border-gray-200'>
-      <div className='h-16 flex items-center px-6 border-b border-gray-200'>
+    <Sider width={220} className='fixed h-full left-0 top-0 bg-gradient-to-b from-blue-100 to-blue-200 border-r border-blue-300'>
+      <div className='h-16 flex items-center px-6 border-b border-blue-300'>
         <div className='flex items-center'>
-          <span className='text-blue-500 mr-2'>
+          <span className='text-blue-600 mr-2'>
             <svg width='36' height='36' viewBox='0 0 36 36' fill='none' xmlns='http://www.w3.org/2000/svg'>
               <rect x='7' y='16' width='22' height='4' rx='2' fill='#1da1f2' />
               <rect x='16' y='7' width='4' height='22' rx='2' fill='#1da1f2' />
@@ -55,14 +55,14 @@ const Sidebar: React.FC = () => {
           </span>
           <span className='text-2xl font-bold select-none'>
             <span className='text-gray-900'>Edu</span>
-            <span className='text-blue-500'>Care</span>
+            <span className='text-blue-600'>Care</span>
           </span>
         </div>
       </div>
       <Menu
         mode='inline'
         selectedKeys={[location.pathname]}
-        className='border-0'
+        className='border-0 bg-transparent'
         items={menuItems}
         onClick={({ key }) => handleMenuClick(key)}
         style={{
@@ -70,6 +70,7 @@ const Sidebar: React.FC = () => {
           borderRight: 0,
           fontSize: '15px'
         }}
+        theme='light'
       />
     </Sider>
   )

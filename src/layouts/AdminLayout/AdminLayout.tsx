@@ -44,28 +44,27 @@ const AdminLayout: React.FC = () => {
     <Layout className='min-h-screen bg-gray-50'>
       <Sidebar />
       <Layout className='ml-[220px]'>
-        <Header className='bg-white px-8 py-4 shadow-sm flex items-center justify-between'>
-          <div className='text-2xl font-bold text-gray-800'>Admin Dashboard</div>
+        <Header className='bg-gradient-to-r from-blue-600 to-blue-400 px-8 py-4 shadow-lg flex items-center justify-between rounded-b-xl'>
+          <div className='text-2xl font-bold text-white drop-shadow'>Admin Dashboard</div>
           <div className='relative' ref={dropdownRef}>
             <button
-              className='flex text-xl items-center space-x-2 focus:outline-none rounded-full hover:bg-blue-100 p-1 transition-colors'
+              className='flex text-xl items-center space-x-2 focus:outline-none rounded-full hover:bg-blue-500 p-1 transition-colors bg-blue-100 text-blue-900 font-semibold shadow-md'
               onClick={() => setOpen(!open)}
             >
               <UserOutlined />
-              <span className='text-gray-700 font-medium'>{'Admin'}</span>
+              <span className='text-white font-medium'>Admin</span>
             </button>
-
             {open && (
-              <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200'>
+              <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-blue-200'>
                 <button
-                  className='w-full flex items-center px-3 py-2 text-gray-700 hover:bg-blue-50 transition-colors text-sm'
+                  className='w-full flex items-center px-3 py-2 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-semibold'
                   onClick={handleProfileClick}
                 >
                   <UserOutlined className='mr-2' />
                   <span>Hồ sơ</span>
                 </button>
                 <button
-                  className='w-full flex items-center px-3 py-2 text-red-500 hover:bg-blue-50 transition-colors text-sm'
+                  className='w-full flex items-center px-3 py-2 text-red-500 hover:bg-blue-100 transition-colors text-sm font-semibold'
                   onClick={handleLogout}
                 >
                   <LogoutOutlined className='mr-2' />
@@ -75,7 +74,7 @@ const AdminLayout: React.FC = () => {
             )}
           </div>
         </Header>
-        <Content className='m-6 p-6 bg-white rounded-lg shadow-sm'>
+        <Content className='m-6 p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg'>
           <Outlet />
         </Content>
       </Layout>
