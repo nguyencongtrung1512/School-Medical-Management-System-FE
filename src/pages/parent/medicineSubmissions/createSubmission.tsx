@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Input, Select, DatePicker, Checkbox, Button, message, Spin } from 'antd'
 import dayjs from 'dayjs'
-import { createMedicineSubmission } from '../../../api/medicineSubmissions'
+import { createMedicineSubmission } from '../../../api/medicineSubmissions.api'
 import { getCurrentUserAPI, searchNurseUsersAPI, NurseProfile } from '../../../api/user.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import { toast } from 'react-toastify'

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Table, Tag, Space, Button, Spin, Modal, Descriptions, Typography } from 'antd'
 import { toast } from 'react-toastify'
-import { getMedicineSubmissionsByParentId, MedicineSubmissionData } from '../../../api/medicineSubmissions'
+import { getMedicineSubmissionsByParentId, MedicineSubmissionData } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
 

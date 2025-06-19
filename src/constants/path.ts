@@ -7,9 +7,9 @@ const path = {
   blogDetail: '/blog/:id',
   // ============ Parent ============
   profileParent: '/parent/profile',
-  healthRecord: '/parent/health-record', //khai báo sức khỏe của con
-  medicineSubmissions: '/parent/medicine-submissions', //gửi thuốc
-  vaccinationSchedule: '/parent/vaccination-schedule', //lịch tiêm chủng cho con
+  healthRecord: '/parent/health-record',
+  medicineSubmissions: '/parent/medicine-submissions',
+  vaccinationSchedule: '/parent/vaccination-schedule',
   vaccinationScheduleDetail: '/parent/vaccination-schedule-detail', //chi tiết thông báo tiêm chủng cho phụ huynh
   historyVaccination: '/parent/history-vaccination', //lịch sử tiêm chủng
   medicalPlan: '/parent/medical-plan', //xem kế hoạch khám bệnh
@@ -26,7 +26,7 @@ const path = {
   RESULTS_AFTER_VACCINATION: '/nurse/results-after-vaccination', //khai báo kết quả tiêm chủng
   RECEIVE_MEDICINE: '/nurse/receive-medicine', //nhận thuốc
   MEDICAL_REPORT: '/nurse/medical-report', //báo cáo y tế
-  MEDICAL_PLAN: '/nurse/medical-plan', //kế hoạch khám bệnh
+  MEDICAL_PLAN: '/nurse/medical-check-event', //kế hoạch khám bệnh
   PRIVATE_CONSULTATION: '/nurse/private-consultation', //tư vấn riêng
   MEDICINES: '/nurse/medicines',// kho thuốc
   MEDICAL_SUPPLIES: '/nurse/medical-supplies',

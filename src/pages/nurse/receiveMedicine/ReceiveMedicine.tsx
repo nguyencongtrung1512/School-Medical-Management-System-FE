@@ -21,7 +21,7 @@ import {
   updateMedicineSubmissionStatus,
   MedicineSubmissionData,
   getMedicineSubmissionsByNurseId
-} from '../../../api/medicineSubmissions'
+} from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
 

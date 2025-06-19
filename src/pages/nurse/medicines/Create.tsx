@@ -1,6 +1,6 @@
 import React from 'react'
 import { Form, Input, Button } from 'antd'
-import { createMedicine } from '../../../api/medicines'
+import { createMedicine } from '../../../api/medicines.api'
 import { toast } from 'react-toastify'
 
 interface CreateMedicineFormProps {

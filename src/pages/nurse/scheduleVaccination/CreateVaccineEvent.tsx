@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Select, DatePicker, Button, Card, Input, message } from 'antd'
-import { createVaccineEvent } from '../../../api/vaccineEvent'
+import { createVaccineEvent } from '../../../api/vaccineEvent.api'
 import { getGradesAPI } from '../../../api/grade.api'
 import dayjs from 'dayjs'
 import { toast } from 'react-toastify'

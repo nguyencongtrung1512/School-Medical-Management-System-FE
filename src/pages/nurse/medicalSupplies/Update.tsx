@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Form, Input, InputNumber, Button, DatePicker } from 'antd'
-import { updateMedicalSupply } from '../../../api/medicalSupplies'
-import type { MedicalSupply } from '../../../api/medicalSupplies'
+import { updateMedicalSupply } from '../../../api/medicalSupplies.api'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 

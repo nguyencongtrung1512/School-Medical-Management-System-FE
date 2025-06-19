@@ -6,8 +6,8 @@ import {
   ClockCircleOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { getMedicalEvents } from '../../../api/medicalEvent'
-import type { MedicalEvent, MedicalEventResponse } from '../../../api/medicalEvent'
+import { getMedicalEvents } from '../../../api/medicalEvent.api'
+import type { MedicalEvent, MedicalEventResponse } from '../../../api/medicalEvent.api'
 import { useAuth } from '../../../contexts/auth.context'
 import { toast } from 'react-toastify'
 

@@ -3,12 +3,12 @@ import { Button, Table, Tag, Space, Card, Typography, Tabs, Input, Row, Col, Mod
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { getAllVaccineEvents, updateVaccineEvent } from '../../../api/vaccineEvent'
+import { getAllVaccineEvents, updateVaccineEvent } from '../../../api/vaccineEvent.api'
 import { getGradesAPI } from '../../../api/grade.api'
 import dayjs from 'dayjs'
 import CreateVaccineEvent from './CreateVaccineEvent'
 import UpdateVaccineEvent from './UpdateVaccineEvent'
-import { VaccineEventStatus } from '../../../api/vaccineEvent'
+import { VaccineEventStatus } from '../../../api/vaccineEvent.api'
 import { toast } from 'react-toastify'
 
 const { Title } = Typography

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Table, Typography, Space, Tag, Button, Modal, Row, Col, message, Statistic } from 'antd'
 import { CheckOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons'
-import { getAllVaccineEvents, updateVaccineEventStatus, VaccineEventStatus } from '../../../api/vaccineEvent'
+import { getAllVaccineEvents, updateVaccineEventStatus, VaccineEventStatus } from '../../../api/vaccineEvent.api'
 
 const { Title } = Typography
 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Select, DatePicker, Button, Card, Input, message, Space } from 'antd'
-import { getVaccineEventDetail, updateVaccineEvent } from '../../../api/vaccineEvent'
+import { getVaccineEventDetail, updateVaccineEvent } from '../../../api/vaccineEvent.api'
 import { getGradesAPI } from '../../../api/grade.api'
 import dayjs from 'dayjs'
 import { toast } from 'react-toastify'
-import { VaccineEventStatus } from '../../../api/vaccineEvent'
+import { VaccineEventStatus } from '../../../api/vaccineEvent.api'
 
 const { Option } = Select
 

@@ -16,7 +16,6 @@ import PrivateConsultation from './pages/nurse/privateConsultation/PrivateConsul
 import AdminLayout from './layouts/AdminLayout/AdminLayout'
 import DashBoardAdmin from './pages/admin/dashBoardAdmin/DashBoardAdmin'
 import CensorList from './pages/admin/censorManagement/CensorList'
-import MedicalPlan from './pages/nurse/medicalPlan'
 import UserList from './pages/admin/userManagement/UserList'
 import StudentList from './pages/admin/studentManagement/StudentList'
 import GradeList from './pages/admin/gradeManagement/GradeList'
@@ -32,6 +31,7 @@ import Register from './pages/register'
 import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
 import MedicinesList from './pages/nurse/medicines/MedicinesList'
 import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
+import MedicalCheckEvent from './pages/nurse/medicalCheckEvent'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -139,7 +139,7 @@ export default function useRouteElements() {
         },
         {
           path: path.MEDICAL_PLAN,
-          element: <MedicalPlan />
+          element: <MedicalCheckEvent />
         },
         {
           path: path.PRIVATE_CONSULTATION,

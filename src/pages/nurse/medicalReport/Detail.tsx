@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Modal, Descriptions, Form, Input, Select, Button, message } from 'antd'
-import { getMedicalEventById, updateMedicalEvent } from '../../../api/medicalEvent'
-import type { MedicalEvent, UpdateMedicalEventRequest, GetMedicalEventByIdResponse } from '../../../api/medicalEvent'
-import { getMedicines } from '../../../api/medicines'
-import { getAllMedicalSupplies } from '../../../api/medicalSupplies'
-import type { Medicine } from '../../../api/medicines'
-import type { MedicalSupply } from '../../../api/medicalSupplies'
+import { getMedicalEventById, updateMedicalEvent } from '../../../api/medicalEvent.api'
+import type { MedicalEvent, UpdateMedicalEventRequest, GetMedicalEventByIdResponse } from '../../../api/medicalEvent.api'
+import { getMedicines } from '../../../api/medicines.api'
+import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
+import type { Medicine } from '../../../api/medicines.api'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { toast } from 'react-toastify'
 
 const { TextArea } = Input

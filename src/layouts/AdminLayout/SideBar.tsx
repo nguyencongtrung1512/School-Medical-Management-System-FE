@@ -43,7 +43,10 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <Sider width={220} className='fixed h-full left-0 top-0 bg-gradient-to-b from-blue-100 to-blue-200 border-r border-blue-300'>
+    <Sider
+      width={220}
+      className='fixed h-full left-0 top-0 bg-white from-blue-100 to-blue-200 border-r border-blue-300'
+    >
       <div className='h-16 flex items-center px-6 border-b border-blue-300'>
         <div className='flex items-center'>
           <span className='text-blue-600 mr-2'>

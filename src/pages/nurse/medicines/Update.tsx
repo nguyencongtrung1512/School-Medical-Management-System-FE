@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Form, Input, Button } from 'antd'
-import { updateMedicine } from '../../../api/medicines'
-import type { Medicine } from '../../../api/medicines'
+import { updateMedicine } from '../../../api/medicines.api'
+import type { Medicine } from '../../../api/medicines.api'
 import { toast } from 'react-toastify'
 
 interface UpdateMedicineFormProps {

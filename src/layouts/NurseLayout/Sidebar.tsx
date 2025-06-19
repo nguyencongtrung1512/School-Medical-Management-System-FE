@@ -17,11 +17,6 @@ const Sidebar: React.FC = () => {
       label: 'DashBoard'
     },
     {
-      key: path.HEALTH_RECORD_CENSORSHIP,
-      icon: <FileSearchOutlined className='text-lg' />,
-      label: 'Kiểm duyệt hồ sơ sức khỏe'
-    },
-    {
       key: path.PRIVATE_CONSULTATION,
       icon: <FileSearchOutlined className='text-lg' />,
       label: 'Tư vấn'
@@ -69,10 +64,7 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <Sider
-      width={220}
-      className='fixed h-full left-0 top-0 bg-white from-blue-50 to-blue-100 border-r border-blue-300'
-    >
+    <Sider width={220} className='fixed h-full left-0 top-0 bg-white from-blue-50 to-blue-100 border-r border-blue-300'>
       <div className='h-16 flex items-center px-6 border-b border-blue-300'>
         <div className='flex items-center'>
           <span className='text-blue-600 mr-2'>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Form, Input, InputNumber, Button, DatePicker } from 'antd'
-import { createMedicalSupply } from '../../../api/medicalSupplies'
+import { createMedicalSupply } from '../../../api/medicalSupplies.api'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 
