@@ -1,18 +1,34 @@
 import axiosInstance from '../service/axiosInstance'
 
 export interface Blog {
-  id: string
+  _id: string
   categoryId: string
   title: string
   content: string
   description: string
   image?: string
+  userId?: string
+  createdAt?: string
+  updatedAt?: string
+  username?: string
+  totalComments?: number
+  categoryName?: string
+  author?: {
+    _id: string
+    fullName: string
+    email: string
+    avatar?: string
+  }
+  category?: {
+    _id: string
+    name: string
+  }
 }
 
 export interface BlogSearchParams {
   pageNum: number
   pageSize: number
-  search?: string
+  query?: string
   categoryId?: string
   userId?: string
 }
@@ -32,7 +48,7 @@ export const blogApi = {
       params: {
         pageSize: params.pageSize,
         pageNum: params.pageNum,
-        search: params.search,
+        query: params.query,
         categoryId: params.categoryId,
         userId: params.userId
       }
@@ -40,7 +56,13 @@ export const blogApi = {
   },
 
   // Tạo blog mới
-  createBlogApi: (data: Omit<Blog, 'id'>) => {
+  createBlogApi: (data: {
+    title: string
+    description: string
+    content: string
+    categoryId: string
+    image?: string
+  }) => {
     return axiosInstance.post<Blog>('/blogs/create', data)
   },
 

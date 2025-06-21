@@ -1,124 +1,87 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import dayjs from 'dayjs'
+import { blogApi } from '../../../api/blog.api'
+import { categoryApi } from '../../../api/category.api'
+import type { Blog } from '../../../api/blog.api'
+import type { Category } from '../../../api/category.api'
 
-interface BlogPost {
-  id: number
-  title: string
-  excerpt: string
-  content: string
-  image: string
-  date: string
-  category: string
-  comments: number
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-const blogPosts: BlogPost[] = [
-  {
-    id: 1,
-    title: 'Cách chăm sóc sức khỏe cho trẻ trong mùa dịch',
-    excerpt: 'Những biện pháp phòng tránh và chăm sóc sức khỏe cho trẻ trong mùa dịch bệnh...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '20/03/2024',
-    category: 'Sức khỏe',
-    comments: 5
-  },
-  {
-    id: 2,
-    title: 'Dinh dưỡng hợp lý cho trẻ mầm non',
-    excerpt: 'Chế độ dinh dưỡng khoa học giúp trẻ phát triển toàn diện...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '19/03/2024',
-    category: 'Dinh dưỡng',
-    comments: 3
-  },
-  {
-    id: 3,
-    title: 'Phát triển tâm lý cho trẻ mầm non',
-    excerpt: 'Những phương pháp giúp trẻ phát triển tâm lý lành mạnh...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '18/03/2024',
-    category: 'Tâm lý',
-    comments: 7
-  },
-  {
-    id: 4,
-    title: 'Lịch tiêm chủng cho trẻ mầm non',
-    excerpt: 'Thông tin về các mũi tiêm cần thiết cho trẻ trong độ tuổi mầm non...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '17/03/2024',
-    category: 'Tiêm chủng',
-    comments: 4
-  },
-  {
-    id: 5,
-    title: 'Tư vấn dinh dưỡng cho trẻ biếng ăn',
-    excerpt: 'Giải pháp cho trẻ biếng ăn và cách xây dựng thói quen ăn uống lành mạnh...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '16/03/2024',
-    category: 'Tư vấn',
-    comments: 6
-  },
-  {
-    id: 6,
-    title: 'Phòng tránh bệnh mùa đông cho trẻ',
-    excerpt: 'Các biện pháp phòng tránh bệnh mùa đông hiệu quả cho trẻ mầm non...',
-    content: 'Nội dung chi tiết bài viết...',
-    image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-    date: '15/03/2024',
-    category: 'Sức khỏe',
-    comments: 8
-  }
-]
+const postsPerPage = 6
 
 const Blog: React.FC = () => {
   const navigate = useNavigate()
+
+  // Pagination & search
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
 
+  // Data state
+  const [blogs, setBlogs] = useState<Blog[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [totalPages, setTotalPages] = useState(1)
 
-  const categories = [
-    { name: 'Sức khỏe', count: 3 },
-    { name: 'Dinh dưỡng', count: 4 },
-    { name: 'Tâm lý', count: 9 },
-    { name: 'Tiêm chủng', count: 4 },
-    { name: 'Tư vấn', count: 9 }
-  ]
+  // Fetch categories once
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res: any = await categoryApi.searchCategoryApi({ pageNum: 1, pageSize: 100 })
+        const data = res.pageData || res.content || []
+        setCategories(data)
+      } catch (error) {
+        console.error('Fetch categories error', error)
+      }
+    }
 
-  const recentPosts = blogPosts.slice(4, 6)
+    fetchCategories()
+  }, [])
 
-  const postsPerPage = 3
+  // Fetch blogs whenever page or search term changes
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res: any = await blogApi.searchBlogApi({
+          pageNum: currentPage,
+          pageSize: postsPerPage,
+          query: searchTerm
+        })
+        const dataBlogs = res.pageData || res.content || []
+        setBlogs(dataBlogs)
 
-  // Filter posts based on search term
-  const filteredPosts = searchTerm
-    ? blogPosts.filter(
-      (post) =>
-        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    : blogPosts
+        const pageInfo = res.pageInfo || { totalPages: res.totalPages || 1 }
+        setTotalPages(Number(pageInfo.totalPages))
+      } catch (error) {
+        console.error('Fetch blogs error', error)
+      }
+    }
 
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage)
+    fetchBlogs()
+  }, [currentPage, searchTerm])
+
+  // Derived data
+  const recentPosts = blogs.slice(0, 3)
+
+  // Tính toán số bài viết trong từng danh mục
+  const categoriesWithCount = categories.map((cat) => ({
+    ...cat,
+    count: blogs.filter((b) => b.categoryId === cat._id).length
+  }))
 
   const handlePageChange = (page: number): void => {
     setCurrentPage(page)
     window.scrollTo(0, 0)
   }
 
-  const displayedPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage)
-
-  const handlePostClick = (postId: number): void => {
+  const handlePostClick = (postId: string): void => {
     navigate(`/blog/${postId}`)
   }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setCurrentPage(1) // Reset to first page when searching
+    setCurrentPage(1)
   }
 
   return (
@@ -148,12 +111,12 @@ const Blog: React.FC = () => {
         <div className='flex flex-col lg:flex-row gap-12'>
           {/* Blog Posts */}
           <div className='w-full lg:w-2/3 space-y-12'>
-            {displayedPosts.length > 0 ? (
-              displayedPosts.map((post) => (
+            {blogs.length > 0 ? (
+              blogs.map((post) => (
                 <div
-                  key={post.id}
+                  key={post._id}
                   className='bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer'
-                  onClick={() => handlePostClick(post.id)}
+                  onClick={() => handlePostClick(post._id)}
                 >
                   <div className='flex flex-col md:flex-row h-auto min-h-[300px]'>
                     <div className='w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden'>
@@ -165,12 +128,15 @@ const Blog: React.FC = () => {
                     </div>
                     <div className='w-full md:w-1/2 p-6 overflow-hidden'>
                       <div className='bg-green-500 hover:bg-[#001a33] text-white inline-block px-4 py-1.5 rounded-md mb-4 text-sm font-medium transition-colors duration-200 cursor-pointer'>
-                        {post.category}
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        {(post as any).categoryName || (post.category && (post.category as any).name)}
                       </div>
                       <h2 className='text-lg md:text-2xl font-bold mb-3 text-gray-900 line-clamp-2'>{post.title}</h2>
-                      <p className='text-gray-600 mb-3 text-sm line-clamp-3'>{post.excerpt}</p>
+                      <p className='text-gray-600 mb-3 text-sm line-clamp-3'>{post.description}</p>
                       <div className='text-gray-500 text-xs'>
-                        {post.date} • {post.comments} Bình luận
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        {dayjs(post.createdAt).format('DD/MM/YYYY')} •{' '}
+                        {(post as any).totalComments ?? (post as any).commentIds?.length ?? 0} Bình luận
                       </div>
                     </div>
                   </div>
@@ -184,7 +150,7 @@ const Blog: React.FC = () => {
             )}
 
             {/* Pagination */}
-            {filteredPosts.length > 0 && (
+            {totalPages > 1 && (
               <div className='flex gap-2 mt-12 justify-center'>
                 {currentPage > 1 && (
                   <button
@@ -199,8 +165,9 @@ const Blog: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full ${currentPage === page ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-600'
-                      }`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full ${
+                      currentPage === page ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-600'
+                    }`}
                   >
                     {page}
                   </button>
@@ -254,8 +221,8 @@ const Blog: React.FC = () => {
             <div className='bg-white p-6 rounded-2xl shadow-sm'>
               <h3 className='text-xl font-bold mb-4 text-gray-900'>Categories</h3>
               <ul className='space-y-3'>
-                {categories.map((category, index) => (
-                  <li key={index} className='flex items-center'>
+                {categoriesWithCount.map((category) => (
+                  <li key={category._id} className='flex items-center'>
                     <span className='w-2 h-2 bg-blue-500 rounded-full mr-3'></span>
                     <span className='text-gray-700 hover:text-blue-500 cursor-pointer'>
                       {category.name} ({category.count})
@@ -270,7 +237,7 @@ const Blog: React.FC = () => {
               <h3 className='text-xl font-bold mb-4 text-gray-900'>Recent posts</h3>
               <div className='space-y-4'>
                 {recentPosts.map((post) => (
-                  <div key={post.id} className='flex gap-3 cursor-pointer' onClick={() => handlePostClick(post.id)}>
+                  <div key={post._id} className='flex gap-3 cursor-pointer' onClick={() => handlePostClick(post._id)}>
                     <div className='w-20 h-20 min-w-[80px] rounded overflow-hidden relative'>
                       <img
                         src={post.image}
@@ -279,7 +246,7 @@ const Blog: React.FC = () => {
                       />
                     </div>
                     <div className='flex flex-col justify-center'>
-                      <div className='text-xs text-gray-500 mb-1'>{post.date.split(',')[0]}</div>
+                      <div className='text-xs text-gray-500 mb-1'>{dayjs(post.createdAt).format('DD/MM/YYYY')}</div>
                       <h4 className='font-medium text-gray-800 leading-tight hover:text-blue-500 line-clamp-2'>
                         {post.title}
                       </h4>

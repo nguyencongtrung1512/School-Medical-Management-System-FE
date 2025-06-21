@@ -1,81 +1,67 @@
-import React from 'react'
+/* eslint-disable */
+import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import dayjs from 'dayjs'
+import DOMPurify from 'dompurify'
+import { blogApi } from '../../../api/blog.api'
+import { commentApi } from '../../../api/comment.api'
+import type { Blog } from '../../../api/blog.api'
+import type { Comment } from '../../../api/comment.api'
 
 const BlogPost: React.FC = () => {
-  const { id } = useParams()
-  const postId = parseInt(id || '1')
+  const { id } = useParams<{ id: string }>()
 
-  // Mock data for the current post
-  const post = {
-    id: postId,
-    title: 'Khoa học đằng sau liệu pháp hành vi nhận thức cho học sinh',
-    category: 'TÂM LÝ',
-    date: 'Ngày 15 tháng 10, 2023',
-    comments: 1,
-    author: 'Nguyễn Văn A',
-    content: [
-      'Qroin faucibus nec mauris a sodales, sed elementum mi tincidunt. Sed eget viverra egestas nisi in consequat. Fusce sodales augue a accumsan. Cras sollicitudin, ipsum eget blandit pulvinar, integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim.',
-      'Sed ut perspiciatis, unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam eaque ipsa, quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt, explicabo.',
-      'At vero eos et accusam',
-      'Sed ut perspiciatis, unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam eaque ipsa, quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt.',
-      'Sed ut perspiciatis, unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam eaque ipsa, quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt, explicabo.',
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit. Lorem ipsum dolor sit amet, consectetur adipisicing elit.'
-    ],
-    authorImage: 'https://i.pravatar.cc/150?img=3',
-    image: 'https://getwallpapers.com/wallpaper/full/e/f/7/7182.jpg',
-    image1: 'https://wallpaperaccess.com/full/136935.jpg',
-    image2: 'https://wallpaperaccess.com/full/136954.jpg',
-    quote:
-      'Curabitur varius eros et lacus rutrum consequat. Mauris sollicitudin enim condimentum, luctus justo non, molestie nisl.'
+  const [post, setPost] = useState<Blog | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [recommendedPosts, setRecommendedPosts] = useState<Blog[]>([])
+
+  useEffect(() => {
+    if (!id) return
+
+    const fetchData = async () => {
+      try {
+        const blogRes: any = await blogApi.getBlogByIdApi(id)
+        setPost(blogRes.data || blogRes)
+
+        const commentRes: any = await commentApi.searchCommentsApi({ pageNum: 1, pageSize: 100, blogId: id })
+        setComments(commentRes.pageData || commentRes.content || [])
+
+        const recRes: any = await blogApi.searchBlogApi({ pageNum: 1, pageSize: 4 })
+        const rec = (recRes.pageData || recRes.content || []).filter((b: Blog) => b._id !== id)
+        setRecommendedPosts(rec.slice(0, 2))
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  if (!post) {
+    return <div className='text-center py-10'>Đang tải...</div>
   }
 
-  // Mock data for recommended posts
-  const recommendedPosts = [
-    {
-      id: 5,
-      title: 'Sức mạnh của tư duy tích cực trong tâm lý học',
-      category: 'TÂM LÝ',
-      image: 'https://wallpaperaccess.com/full/4482585.jpg'
-    },
-    {
-      id: 6,
-      title: 'Khám phá các loại rối loạn tâm lý khác nhau',
-      category: 'TÂM LÝ',
-      image: 'https://medicine.missouri.edu/sites/default/files/inline-images/MiniMed2.jpg'
-    }
-  ]
-
-  // Mock data for comments
-  const comments = [
-    {
-      id: 1,
-      author: 'Nguyễn Văn A',
-      date: 'Ngày 3 tháng 10, 2023, lúc 12:30 pm',
-      content:
-        'Sed ut perspiciatis, unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam eaque ipsa, quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt, explicabo.',
-      isAuthor: true,
-      avatar: 'https://i.pravatar.cc/150?img=3'
-    }
-  ]
-
-  // Tags for the post
-  const tags = ['Sức khỏe', 'Dinh dưỡng', 'Tâm lý', 'Tiêm chủng', 'Tư vấn']
+  const tags: string[] = []
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center px-6 md:px-28 py-12'>
       <div className='w-full max-w-[1000px] bg-white rounded-2xl shadow-sm p-8'>
         <div className='mb-8 text-center'>
           <div className='bg-green-500 hover:bg-[#001a33] text-white inline-block px-4 py-1.5 rounded-md mb-4 text-sm font-medium transition-colors duration-200 cursor-pointer'>
-            {post.category}
+            {(post as any).categoryName || (post.category && (post.category as any).name)}
           </div>
           <h1 className='text-4xl md:text-5xl font-bold mb-6 text-gray-900'>{post.title}</h1>
           <div className='flex items-center justify-center gap-2 mb-4'>
-            <img src={post.authorImage} alt='' className='w-10 h-10 rounded-full object-cover' />
-            <span className='font-medium'>{post.author}</span>
+            <img
+              src={post.author?.avatar || 'https://i.pravatar.cc/150'}
+              alt=''
+              className='w-10 h-10 rounded-full object-cover'
+            />
+            <span className='font-medium'>{post.author?.fullName || post.username}</span>
             <span className='text-gray-500'>•</span>
-            <span className='text-gray-500'>{post.date}</span>
+            <span className='text-gray-500'>{dayjs(post.createdAt).format('DD/MM/YYYY')}</span>
             <span className='text-gray-500'>•</span>
-            <span className='text-gray-500'>{post.comments} Bình luận</span>
+            <span className='text-gray-500'>{comments.length} Bình luận</span>
           </div>
         </div>
 
@@ -83,37 +69,10 @@ const BlogPost: React.FC = () => {
           <img src={post.image} alt={post.title} className='w-full h-[400px] object-cover' />
         </div>
 
-        <div className='prose max-w-none mb-12'>
-          {post.content.map((paragraph, index) => (
-            <React.Fragment key={index}>
-              {index === 2 && <h2 className='text-2xl font-bold mt-8 mb-4'>{paragraph}</h2>}
-              {index !== 2 && <p className='mb-6 text-gray-700'>{paragraph}</p>}
-              {index === 3 && (
-                <div className='flex gap-8 my-10'>
-                  <div className='w-1/2 rounded-2xl overflow-hidden relative'>
-                    <img
-                      src={post.image1}
-                      alt=''
-                      className='w-full h-64 object-cover transition-transform duration-500 hover:scale-110'
-                    />
-                  </div>
-                  <div className='w-1/2 rounded-2xl overflow-hidden relative'>
-                    <img
-                      src={post.image2}
-                      alt=''
-                      className='w-full h-64 object-cover transition-transform duration-500 hover:scale-110'
-                    />
-                  </div>
-                </div>
-              )}
-              {index === 4 && (
-                <blockquote className='border-l-4 border-green-500 pl-6 py-2 my-8 italic bg-gray-50 rounded-r-lg'>
-                  {post.quote}
-                </blockquote>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+        <div
+          className='prose max-w-none mb-12'
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
+        ></div>
 
         <div className='flex flex-wrap gap-4 mb-12 justify-between items-center border-t border-b border-gray-200 py-6'>
           <div className='flex flex-wrap gap-2'>
@@ -159,9 +118,13 @@ const BlogPost: React.FC = () => {
         </div>
 
         <div className='flex items-center gap-4 mb-16 bg-gray-50 p-6 rounded-2xl'>
-          <img src={post.authorImage} alt={post.author} className='w-20 h-20 rounded-full object-cover' />
+          <img
+            src={post.author?.avatar || 'https://i.pravatar.cc/150'}
+            alt={post.author?.fullName}
+            className='w-20 h-20 rounded-full object-cover'
+          />
           <div>
-            <h3 className='text-xl font-bold mb-1'>{post.author}</h3>
+            <h3 className='text-xl font-bold mb-1'>{post.author?.fullName || post.username}</h3>
             <p className='text-gray-600 mb-2'>ABOUT AUTHOR</p>
             <p className='text-gray-700'>
               Phasellus et ipsum justo. Aenean fringilla a fermentum mauris non venenatis. Praesent at nulla aliquam
@@ -174,17 +137,21 @@ const BlogPost: React.FC = () => {
           <h3 className='text-2xl font-bold mb-8'>{comments.length} Bình luận</h3>
 
           {comments.map((comment) => (
-            <div key={comment.id} className='flex gap-4 mb-8 bg-gray-50 p-4 rounded-2xl'>
-              <img src={comment.avatar} alt={comment.author} className='w-12 h-12 rounded-full object-cover' />
+            <div key={comment._id} className='flex gap-4 mb-8 bg-gray-50 p-4 rounded-2xl'>
+              <img
+                src={comment.user?.avatar || 'https://i.pravatar.cc/150'}
+                alt={comment.user?.fullName}
+                className='w-12 h-12 rounded-full object-cover'
+              />
               <div className='flex-1'>
                 <div className='flex justify-between items-center mb-2'>
                   <div>
-                    <span className='font-bold mr-2'>{comment.author}</span>
-                    {comment.isAuthor && (
+                    <span className='font-bold mr-2'>{comment.user?.fullName}</span>
+                    {comment.userId === post.userId && (
                       <span className='bg-gray-200 px-2 py-0.5 text-xs rounded-md'>Post Author</span>
                     )}
                   </div>
-                  <span className='text-sm text-gray-500'>{comment.date}</span>
+                  <span className='text-sm text-gray-500'>{dayjs(comment.createdAt).format('DD/MM/YYYY HH:mm')}</span>
                 </div>
                 <p className='text-gray-700 mb-2'>{comment.content}</p>
                 <button className='text-gray-600 text-sm font-medium flex items-center gap-1 hover:text-gray-900 transition-colors duration-200'>
@@ -244,8 +211,8 @@ const BlogPost: React.FC = () => {
           <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
             {recommendedPosts.map((post) => (
               <Link
-                key={post.id}
-                to={`/blog/${post.id}`}
+                key={post._id}
+                to={`/blog/${post._id}`}
                 className='group bg-white rounded-2xl shadow-sm overflow-hidden'
               >
                 <div className='mb-4 overflow-hidden relative h-48'>
@@ -257,7 +224,7 @@ const BlogPost: React.FC = () => {
                 </div>
                 <div className='p-4'>
                   <div className='bg-green-500 hover:bg-[#001a33] text-white inline-block px-3 py-1 rounded-md mb-2 text-xs font-medium transition-colors duration-200'>
-                    {post.category}
+                    {(post as any).categoryName || (post.category && (post.category as any).name)}
                   </div>
                   <h4 className='font-bold text-lg text-gray-800 group-hover:text-blue-500 transition-colors line-clamp-2'>
                     {post.title}

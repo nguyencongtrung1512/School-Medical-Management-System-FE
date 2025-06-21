@@ -8,9 +8,9 @@ export interface Category {
 }
 
 export interface CategorySearchParams {
-  page: number
-  size: number
-  search?: string
+  pageNum: number
+  pageSize: number
+  query?: string
 }
 
 // Thêm export cho CategoryResponse
@@ -23,16 +23,17 @@ export interface CategoryResponse {
 }
 
 export const categoryApi = {
+  // Tìm kiếm categories có phân trang
   searchCategoryApi: (params: CategorySearchParams) => {
-    return axiosInstance.get(`/categories/search/${params.page}/${params.size}`, {
+    return axiosInstance.get<CategoryResponse>(`/categories/search/${params.pageNum}/${params.pageSize}`, {
       params: {
-        search: params.search
+        query: params.query
       }
     })
   },
 
   // Tạo category mới
-  createCategoryApi: (data: Omit<Category, 'id'>) => {
+  createCategoryApi: (data: { name: string; description?: string }) => {
     return axiosInstance.post<Category>('/categories', data)
   },
 
