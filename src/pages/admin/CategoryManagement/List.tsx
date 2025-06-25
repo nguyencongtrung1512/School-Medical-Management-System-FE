@@ -157,7 +157,7 @@ function CategoryList() {
 
   return (
     <div>
-      <h1>Danh sách Category</h1>
+      <h1 className="text-3xl font-bold mb-4">Danh sách Category</h1>
       <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
         <Search
           placeholder='Tìm kiếm theo tên...'

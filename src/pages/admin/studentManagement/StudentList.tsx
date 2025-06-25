@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Table, Button, Tag, Typography, Row, Col, Spin, Popconfirm, Space } from 'antd'
-import { InfoCircleOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons'
+import { PlusOutlined, UserOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
 import { getClassByIdAPI } from '../../../api/classes.api'
 import { getStudentByIdAPI, deleteStudentAPI } from '../../../api/student.api'
@@ -129,18 +129,15 @@ const StudentList: React.FC = () => {
       className: 'text-base',
       render: (_: unknown, record: Student) => (
         <Space>
-          <Button type='primary' icon={<InfoCircleOutlined />} onClick={() => handleViewDetail(record)}>
-            Xem chi tiết
-          </Button>
+          <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} />
+
           <Popconfirm
             title='Bạn có chắc chắn muốn xóa học sinh này không?'
             onConfirm={() => handleDeleteStudent(record._id)}
             okText='Có'
             cancelText='Không'
           >
-            <Button type='link' danger icon={<DeleteOutlined />}>
-              Xóa
-            </Button>
+            <Button type='link' danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       )

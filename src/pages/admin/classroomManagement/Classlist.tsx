@@ -178,15 +178,12 @@ const ClassList: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Classes) => (
         <Space>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}>
-            Xem học sinh
-          </Button>
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)}>
-            Sửa
-          </Button>
-          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}>
-            Xóa
-          </Button>
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}/>
+           
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)}/>
+            
+          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}/>
+            
         </Space>
       )
     }

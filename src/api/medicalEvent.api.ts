@@ -117,11 +117,15 @@ export interface UpdateMedicalEventRequest {
 export const getMedicalEvents = async (
   pageNum: number = 1,
   pageSize: number = 10,
-  userId?: string
+  userId?: string,
+  studentId?: string
 ): Promise<MedicalEventResponse> => {
   let url = `/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`
   if (userId) {
     url += `&userId=${userId}`
+  }
+  if (studentId) {
+    url += `&studentId=${studentId}`
   }
   return axiosInstance.get(url)
 }

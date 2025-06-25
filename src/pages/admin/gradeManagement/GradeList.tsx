@@ -154,15 +154,11 @@ const GradeList: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Grade) => (
         <Space>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
-            Xem lớp
-          </Button>
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
-            Sửa
-          </Button>
-          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}>
-            Xóa
-          </Button>
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}/>
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}/>
+           
+          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}/>
+            
         </Space>
       )
     }

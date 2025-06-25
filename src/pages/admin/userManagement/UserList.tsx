@@ -117,9 +117,7 @@ const UserList: React.FC = () => {
       className: 'text-base',
       render: (record: User) => (
         <Space size='middle'>
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditUser(record)} className='text-base'>
-            Sửa
-          </Button>
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditUser(record)} className='text-base' />
           <Popconfirm
             title='Xóa người dùng'
             description='Bạn có chắc chắn muốn xóa người dùng này?'
@@ -127,13 +125,9 @@ const UserList: React.FC = () => {
             okText='Xóa'
             cancelText='Hủy'
           >
-            <Button type='link' danger icon={<DeleteOutlined />} className='text-base'>
-              Xóa
-            </Button>
+            <Button type='link' danger icon={<DeleteOutlined />} className='text-base' />
           </Popconfirm>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} className='text-base'>
-            Xem chi tiết
-          </Button>
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} className='text-base' />
         </Space>
       )
     }

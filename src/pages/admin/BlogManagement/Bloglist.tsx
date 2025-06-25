@@ -21,7 +21,7 @@ function BlogList() {
           pageSize: 10,
           categoryId: categoryId
         })
-        console.log("res bloglist", response)
+        console.log('res bloglist', response)
         if (response.pageData) {
           setBlogs(response.pageData)
         }
@@ -86,11 +86,17 @@ function BlogList() {
       key: 'action',
       render: (_, record) => {
         console.log('Record in BlogList:', record)
-        return <a onClick={() => {
-          const url = path.BLOG_DETAIL.replace(':_id', record._id)
-          console.log('Navigating to:', url)
-          navigate(url)
-        }}>Xem chi tiết</a>
+        return (
+          <a
+            onClick={() => {
+              const url = path.BLOG_DETAIL.replace(':_id', record._id)
+              console.log('Navigating to:', url)
+              navigate(url)
+            }}
+          >
+            Xem chi tiết
+          </a>
+        )
       }
     }
   ]
@@ -98,7 +104,7 @@ function BlogList() {
   return (
     <div>
       <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
-        <h2>Danh sách Blog của Category</h2>
+        <h1 className='text-3xl font-bold mb-4'>Danh sách Blog của Category</h1>
         <Button type='primary' onClick={showCreateModal}>
           Thêm Blog Mới
         </Button>

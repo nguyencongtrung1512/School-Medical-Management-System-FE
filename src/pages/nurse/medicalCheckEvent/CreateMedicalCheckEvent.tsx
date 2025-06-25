@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Select, DatePicker, Button, Card, Input, message } from 'antd'
-import { createVaccineEvent } from '../../../api/vaccineEvent.api'
+import { createMedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
 import { getGradesAPI } from '../../../api/grade.api'
 import dayjs from 'dayjs'
 import { toast } from 'react-toastify'
@@ -12,21 +12,21 @@ interface Grade {
   name: string
 }
 
-interface CreateVaccineEventProps {
+interface CreateMedicalCheckEventProps {
   onSuccess: () => void
 }
 
 interface FormValues {
-  title: string
+  eventName: string
   gradeId: string
-  vaccineName: string
   location: string
   dateRange: [dayjs.Dayjs, dayjs.Dayjs]
-  registrationDeadline: dayjs.Dayjs
+  registrationRange: [dayjs.Dayjs, dayjs.Dayjs]
   description: string
+  schoolYear: string
 }
 
-const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) => {
+const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuccess }) => {
   const [form] = Form.useForm()
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(false)
@@ -47,21 +47,23 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) =>
   const handleSubmit = async (values: FormValues) => {
     try {
       setLoading(true)
-      const { dateRange, ...rest } = values
+      const { dateRange, registrationRange, ...rest } = values
       const data = {
-        ...rest,
-        startDate: dateRange[0].toISOString(),
-        endDate: dateRange[1].toISOString(),
-        registrationDeadline: values.registrationDeadline.toISOString(),
-        status: 'ongoing'
+        eventName: rest.eventName,
+        gradeId: rest.gradeId,
+        location: rest.location,
+        description: rest.description,
+        schoolYear: rest.schoolYear,
+        eventDate: dateRange[0].toISOString(),
+        startRegistrationDate: registrationRange[0].toISOString(),
+        endRegistrationDate: registrationRange[1].toISOString()
       }
-
-      await createVaccineEvent(data)
-      toast.success('Tạo kế hoạch tiêm chủng thành công')
+      await createMedicalCheckEvent(data)
+      toast.success('Tạo sự kiện khám sức khỏe thành công')
       form.resetFields()
       onSuccess()
     } catch {
-      message.error('Không thể tạo kế hoạch tiêm chủng')
+      message.error('Không thể tạo sự kiện khám sức khỏe')
     } finally {
       setLoading(false)
     }
@@ -70,8 +72,12 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) =>
   return (
     <Card className='max-w-3xl'>
       <Form form={form} layout='vertical' onFinish={handleSubmit} className='space-y-4'>
-        <Form.Item name='title' label='Tiêu đề' rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}>
-          <Input placeholder='Nhập tiêu đề sự kiện' />
+        <Form.Item
+          name='eventName'
+          label='Tên sự kiện khám y tế'
+          rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện' }]}
+        >
+          <Input placeholder='Nhập tên sự kiện' />
         </Form.Item>
 
         <Form.Item name='gradeId' label='Khối' rules={[{ required: true, message: 'Vui lòng chọn khối' }]}>
@@ -84,32 +90,28 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) =>
           </Select>
         </Form.Item>
 
-        <Form.Item
-          name='vaccineName'
-          label='Tên vaccine'
-          rules={[{ required: true, message: 'Vui lòng nhập tên vaccine' }]}
-        >
-          <Input placeholder='Nhập tên vaccine' />
+        <Form.Item name='location' label='Địa điểm' rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}>
+          <Input placeholder='Nhập địa điểm khám' />
         </Form.Item>
 
-        <Form.Item name='location' label='Địa điểm' rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}>
-          <Input placeholder='Nhập địa điểm tiêm chủng' />
+        <Form.Item name='schoolYear' label='Năm học' rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}>
+          <Input placeholder='Nhập năm học (VD: 2024-2025)' />
         </Form.Item>
 
         <Form.Item
           name='dateRange'
-          label='Thời gian diễn ra'
+          label='Thời gian diễn ra sự kiện'
           rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
         >
           <DatePicker.RangePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
         </Form.Item>
 
         <Form.Item
-          name='registrationDeadline'
-          label='Hạn đăng ký'
-          rules={[{ required: true, message: 'Vui lòng chọn hạn đăng ký' }]}
+          name='registrationRange'
+          label='Thời gian đăng ký'
+          rules={[{ required: true, message: 'Vui lòng chọn thời gian đăng ký' }]}
         >
-          <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
+          <DatePicker.RangePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
         </Form.Item>
 
         <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}>
@@ -118,7 +120,7 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) =>
 
         <Form.Item>
           <Button type='primary' htmlType='submit' className='bg-blue-500' loading={loading}>
-            Tạo kế hoạch
+            Tạo sự kiện
           </Button>
         </Form.Item>
       </Form>
@@ -126,4 +128,4 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess }) =>
   )
 }
 
-export default CreateVaccineEvent
+export default CreateMedicalCheckEvent
