@@ -84,7 +84,6 @@ const CreateSubmission: React.FC = () => {
       console.log('trúng:', response)
 
       setNurses(response.pageData)
-
     } catch (error) {
       toast.error('Không thể tải danh sách y tá!')
     } finally {
@@ -99,6 +98,7 @@ const CreateSubmission: React.FC = () => {
   }, [])
 
   const onFinish = async (values: FormValues) => {
+    console.log('Submit values:', values)
     try {
       setSubmitting(true)
       setLoading(true)
@@ -107,42 +107,35 @@ const CreateSubmission: React.FC = () => {
         toast.error('Vui lòng đăng nhập lại!', { autoClose: 1000 })
         return
       }
-
       const user = JSON.parse(userStr)
-      console.log('User info from localStorage:', user)
-
       if (!user || !user.id) {
-        console.error('Invalid user data:', user)
         toast.error('Thông tin người dùng không hợp lệ! Vui lòng đăng nhập lại.', { autoClose: 2000 })
         return
       }
-
       const submissionData = {
         parentId: user.id,
         studentId: values.studentId,
         schoolNurseId: values.schoolNurseId,
-        medicines: [
-          {
-            name: values.medicineName,
-            dosage: values.dosage,
-            usageInstructions: values.timing,
-            quantity: values.quantity,
-            timesPerDay: values.timesPerDay,
-            timeSlots: values.timing.split(',').map((time) => time.trim()),
-            startDate: values.duration[0].format('YYYY-MM-DD'),
-            endDate: values.duration[1].format('YYYY-MM-DD'),
-            reason: values.reason,
-            note: values.note
-          }
-        ]
+        medicines: (values.medicines || []).map((med) => ({
+          name: med.medicineName,
+          dosage: med.dosage,
+          usageInstructions: med.timing,
+          quantity: med.quantity,
+          timesPerDay: med.timesPerDay,
+          timeSlots: (med.timing || '').split(',').map((time) => time.trim()),
+          startDate: med.duration[0].format('YYYY-MM-DD'),
+          endDate: med.duration[1].format('YYYY-MM-DD'),
+          reason: med.reason,
+          note: med.note
+        }))
       }
-
       const response = await createMedicineSubmission(submissionData)
       if (response.success) {
         toast.success('Gửi thông tin thuốc thành công!', { autoClose: 1000 })
         form.resetFields()
       }
-    } catch {
+    } catch (error) {
+      console.log('trung', error)
       toast.error('Có lỗi xảy ra khi gửi thông tin thuốc!', { autoClose: 1000 })
     } finally {
       setLoading(false)
@@ -219,71 +212,92 @@ const CreateSubmission: React.FC = () => {
           {/* 2. Thông tin thuốc */}
           <div className='bg-gray-50 p-6 rounded-xl mb-6'>
             <h2 className='text-lg font-semibold mb-4'>2. Thông tin thuốc</h2>
-            <div className='grid grid-cols-2 gap-6'>
-              <Form.Item
-                name='medicineName'
-                label='Tên thuốc'
-                rules={[{ required: true, message: 'Vui lòng nhập tên thuốc!' }]}
-              >
-                <Input placeholder='Nhập tên thuốc' />
-              </Form.Item>
+            <Form.List name='medicines' rules={[{ required: true, message: 'Phải có ít nhất 1 loại thuốc!' }]}>
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <div key={key} className='grid grid-cols-2 gap-6 border-b border-gray-200 pb-4 mb-4'>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'medicineName']}
+                        label='Tên thuốc'
+                        rules={[{ required: true, message: 'Vui lòng nhập tên thuốc!' }]}
+                      >
+                        <Input placeholder='Nhập tên thuốc' />
+                      </Form.Item>
 
-              <Form.Item
-                name='quantity'
-                label='Số lượng thuốc'
-                rules={[{ required: true, message: 'Vui lòng nhập số lượng thuốc!' }]}
-              >
-                <Input type="number" min={1} placeholder='Nhập số lượng' />
-              </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'quantity']}
+                        label='Số lượng thuốc'
+                        rules={[{ required: true, message: 'Vui lòng nhập số lượng thuốc!' }]}
+                      >
+                        <Input type='number' min={1} placeholder='Nhập số lượng' />
+                      </Form.Item>
 
-              <Form.Item
-                name='dosage'
-                label='Liều lượng mỗi lần uống'
-                rules={[{ required: true, message: 'Vui lòng nhập liều lượng!' }]}
-              >
-                <Input placeholder='VD: 1 viên, 5ml' />
-              </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'dosage']}
+                        label='Liều lượng mỗi lần uống'
+                        rules={[{ required: true, message: 'Vui lòng nhập liều lượng!' }]}
+                      >
+                        <Input placeholder='VD: 1 viên, 5ml' />
+                      </Form.Item>
 
-              <Form.Item
-                name='timesPerDay'
-                label='Số lần uống trong ngày'
-                rules={[{ required: true, message: 'Vui lòng nhập số lần uống!' }]}
-              >
-                <Input type="number" min={1} placeholder='Nhập số lần uống' />
-              </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'timesPerDay']}
+                        label='Số lần uống trong ngày'
+                        rules={[{ required: true, message: 'Vui lòng nhập số lần uống!' }]}
+                      >
+                        <Input type='number' min={1} placeholder='Nhập số lần uống' />
+                      </Form.Item>
 
-              <Form.Item
-                name='timing'
-                label='Thời gian uống cụ thể'
-                rules={[{ required: true, message: 'Vui lòng nhập thời gian uống!' }]}
-              >
-                <Input placeholder='VD: 08:00, 12:00, 20:00' />
-              </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'timing']}
+                        label='Thời gian uống cụ thể'
+                        rules={[{ required: true, message: 'Vui lòng nhập thời gian uống!' }]}
+                      >
+                        <Input placeholder='VD: 08:00, 12:00, 20:00' />
+                      </Form.Item>
 
-              <Form.Item
-                name='duration'
-                label='Thời gian sử dụng'
-                rules={[{ required: true, message: 'Vui lòng chọn thời gian sử dụng!' }]}
-              >
-                <RangePicker className='w-full' format='DD/MM/YYYY' />
-              </Form.Item>
-            </div>
-          </div>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'duration']}
+                        label='Thời gian sử dụng'
+                        rules={[{ required: true, message: 'Vui lòng chọn thời gian sử dụng!' }]}
+                      >
+                        <RangePicker className='w-full' format='DD/MM/YYYY' />
+                      </Form.Item>
 
-          {/* 3. Lý do dùng thuốc */}
-          <div className='bg-gray-50 p-6 rounded-xl mb-6'>
-            <h2 className='text-lg font-semibold mb-4'>3. Lý do dùng thuốc</h2>
-            <Form.Item
-              name='reason'
-              label='Lý do dùng thuốc'
-              rules={[{ required: true, message: 'Vui lòng nhập lý do dùng thuốc!' }]}
-            >
-              <TextArea rows={3} placeholder='VD: Hạ sốt, kháng sinh điều trị viêm họng' />
-            </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'reason']}
+                        label='Lý do dùng thuốc'
+                        className='col-span-2'
+                        rules={[{ required: true, message: 'Vui lòng nhập lý do!' }]}
+                      >
+                        <TextArea rows={2} placeholder='VD: Hạ sốt, cảm cúm' />
+                      </Form.Item>
 
-            <Form.Item name='note' label='Ghi chú đặc biệt'>
-              <TextArea rows={3} placeholder='VD: Dị ứng, cần uống với sữa, không dùng khi đau bụng' />
-            </Form.Item>
+                      <Form.Item {...restField} name={[name, 'note']} label='Ghi chú' className='col-span-2'>
+                        <TextArea rows={2} placeholder='VD: Uống với sữa, dị ứng thuốc khác' />
+                      </Form.Item>
+
+                      <Button type='dashed' onClick={() => remove(name)} danger>
+                        Xóa thuốc này
+                      </Button>
+                    </div>
+                  ))}
+                  <Form.Item>
+                    <Button type='dashed' onClick={() => add()} block>
+                      + Thêm thuốc
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
           </div>
 
           {/* 4. Xác nhận và cam kết */}

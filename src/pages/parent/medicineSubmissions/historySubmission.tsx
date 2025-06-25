@@ -1,16 +1,46 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Tag, Space, Button, Spin, Modal, Descriptions, Typography } from 'antd'
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card'
+import { Button } from '../../../components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog'
+import { Badge } from '../../../components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
+import { Eye } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { getMedicineSubmissionsByParentId, MedicineSubmissionData } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
 
-const { Text } = Typography
-
 type PopulatedMedicineRequest = Omit<MedicineSubmissionData, 'studentId'> & {
   studentId: StudentProfile
   parentInfo?: Profile
   nurseInfo?: Profile
+}
+
+const statusBadge = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return (
+        <Badge variant='secondary' className='bg-yellow-100 text-yellow-800'>
+          Chờ xác nhận
+        </Badge>
+      )
+    case 'approved':
+      return (
+        <Badge variant='secondary' className='bg-green-100 text-green-800'>
+          Đã duyệt
+        </Badge>
+      )
+    case 'rejected':
+      return <Badge variant='destructive'>Đã từ chối</Badge>
+    case 'completed':
+      return (
+        <Badge variant='secondary' className='bg-purple-100 text-purple-800'>
+          Đã hoàn thành
+        </Badge>
+      )
+    default:
+      return <Badge variant='outline'>{status}</Badge>
+  }
 }
 
 function HistorySubmission() {
@@ -120,155 +150,135 @@ function HistorySubmission() {
     setIsModalVisible(true)
   }
 
-  const columns = [
-    {
-      title: 'Ngày gửi',
-      dataIndex: 'createdAt',
-      key: 'sendDate',
-      render: (text: string) => new Date(text).toLocaleDateString('vi-VN')
-    },
-    {
-      title: 'Học sinh',
-      dataIndex: ['studentId', 'fullName'],
-      key: 'studentName'
-    },
-    {
-      title: 'Tên thuốc',
-      dataIndex: ['medicines', 0, 'name'],
-      key: 'medicineName'
-    },
-    {
-      title: 'Thời gian sử dụng',
-      key: 'duration',
-      render: (_: unknown, record: PopulatedMedicineRequest) => {
-        const medicine = record.medicines[0]
-        return medicine
-          ? `${new Date(medicine.startDate).toLocaleDateString('vi-VN')} - ${new Date(medicine.endDate).toLocaleDateString('vi-VN')}`
-          : ''
-      }
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        let color = 'blue'
-        let text = 'Chờ xác nhận'
-
-        switch (status) {
-          case 'pending':
-            color = 'blue'
-            text = 'Chờ xác nhận'
-            break
-          case 'approved':
-            color = 'green'
-            text = 'Đã duyệt'
-            break
-          case 'rejected':
-            color = 'red'
-            text = 'Đã từ chối'
-            break
-          case 'completed':
-            color = 'purple'
-            text = 'Đã hoàn thành'
-            break
-        }
-
-        return <Tag color={color}>{text}</Tag>
-      }
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      render: (_: unknown, record: PopulatedMedicineRequest) => (
-        <Space size='middle'>
-          <Button type='link' onClick={() => handleViewDetails(record)}>
-            Xem chi tiết
-          </Button>
-        </Space>
-      )
-    }
-  ]
   return (
-    <Spin spinning={loading} tip='Đang tải...'>
-      <div>
-        <Table
-          columns={columns}
-          dataSource={medicineHistory}
-          rowKey='_id'
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            onChange: handleTableChange,
-            showSizeChanger: true,
-            pageSizeOptions: ['5', '10', '20', '50']
-          }}
-          className='bg-white'
-        />
-
-        {/* Modal chi tiết */}
-        <Modal
-          title='Chi tiết đơn thuốc'
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          width={800}
-          footer={null}
-        >
-          {selectedRequest && (
-            <div>
-              <Descriptions bordered column={2}>
-                <Descriptions.Item label='Học sinh' span={2}>
-                  {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentCode}
-                  {selectedRequest.studentId.classId && (
-                    <div>
-                      <Text type='secondary'>Lớp: {selectedRequest.studentId.classId}</Text>
-                    </div>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label='Phụ huynh' span={2}>
-                  {selectedRequest.parentInfo?.fullName || 'N/A'}
-                  <div>
-                    <Text type='secondary'>Số điện thoại: {selectedRequest.parentInfo?.phone || 'N/A'}</Text>
-                  </div>
-                </Descriptions.Item>
-                {selectedRequest.nurseInfo && (
-                  <Descriptions.Item label='Y tá phụ trách' span={2}>
-                    {selectedRequest.nurseInfo.fullName}
-                    <div>
-                      <Text type='secondary'>Số điện thoại: {selectedRequest.nurseInfo.phone || 'N/A'}</Text>
-                    </div>
-                  </Descriptions.Item>
-                )}
-                <Descriptions.Item label='Tên thuốc'>{selectedRequest.medicines[0]?.name}</Descriptions.Item>
-                <Descriptions.Item label='Liều lượng'>{selectedRequest.medicines[0]?.dosage}</Descriptions.Item>
-                <Descriptions.Item label='Số lần uống'>{selectedRequest.medicines[0]?.timesPerDay}</Descriptions.Item>
-                <Descriptions.Item label='Thời gian uống'>
-                  {selectedRequest.medicines[0]?.usageInstructions}
-                </Descriptions.Item>
-                <Descriptions.Item label='Thời gian sử dụng' span={2}>
-                  {new Date(selectedRequest.medicines[0].startDate).toLocaleDateString('vi-VN')} -{' '}
-                  {new Date(selectedRequest.medicines[0].endDate).toLocaleDateString('vi-VN')}
-                </Descriptions.Item>
-                <Descriptions.Item label='Lý do dùng thuốc' span={2}>
-                  {selectedRequest.medicines[0]?.reason}
-                </Descriptions.Item>
-                {selectedRequest.medicines[0]?.note && (
-                  <Descriptions.Item label='Ghi chú đặc biệt' span={2}>
-                    {selectedRequest.medicines[0]?.note}
-                  </Descriptions.Item>
-                )}
-                {selectedRequest.nurseNotes && (
-                  <Descriptions.Item label='Ghi chú của y tá' span={2}>
-                    {selectedRequest.nurseNotes}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
+    <div className='min-h-screen bg-gradient-to-br from-blue-100 to-cyan-50 p-6'>
+      <Card className='shadow-xl border-0 bg-white/80 backdrop-blur-sm'>
+        <CardHeader className='bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg'>
+          <CardTitle className='text-2xl font-bold flex items-center gap-2'>
+            <Eye className='h-6 w-6' />
+            Lịch sử gửi thuốc
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='p-6'>
+          {loading ? (
+            <div className='flex items-center justify-center py-12'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+              <span className='ml-3 text-gray-600'>Đang tải...</span>
+            </div>
+          ) : (
+            <div className='rounded-lg border border-gray-200 overflow-hidden'>
+              <Table>
+                <TableHeader>
+                  <TableRow className='bg-gray-50'>
+                    <TableHead className='font-semibold'>Ngày gửi</TableHead>
+                    <TableHead className='font-semibold'>Học sinh</TableHead>
+                    <TableHead className='font-semibold'>Tên thuốc</TableHead>
+                    <TableHead className='font-semibold'>Thời gian sử dụng</TableHead>
+                    <TableHead className='font-semibold'>Trạng thái</TableHead>
+                    <TableHead className='font-semibold text-center'>Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {medicineHistory.map((record) => (
+                    <TableRow key={record._id} className='hover:bg-gray-50 transition-colors'>
+                      <TableCell className='font-medium'>
+                        {new Date(record.createdAt).toLocaleDateString('vi-VN')}
+                      </TableCell>
+                      <TableCell>{record.studentId.fullName}</TableCell>
+                      <TableCell>{record.medicines[0]?.name}</TableCell>
+                      <TableCell>
+                        {record.medicines[0]
+                          ? `${new Date(record.medicines[0].startDate).toLocaleDateString('vi-VN')} - ${new Date(record.medicines[0].endDate).toLocaleDateString('vi-VN')}`
+                          : ''}
+                      </TableCell>
+                      <TableCell>{statusBadge(record.status)}</TableCell>
+                      <TableCell className='text-center'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => handleViewDetails(record)}
+                          className='hover:bg-blue-50 hover:border-blue-300'
+                        >
+                          <Eye className='h-4 w-4' />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
-        </Modal>
-      </div>
-    </Spin>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isModalVisible} onOpenChange={() => setIsModalVisible(false)}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle className='text-xl font-bold text-gray-800'>Chi tiết đơn thuốc</DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <label className='text-sm font-semibold text-gray-600'>Học sinh</label>
+                  <p className='text-gray-800 bg-gray-50 p-2 rounded'>
+                    {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentCode}
+                  </p>
+                  {selectedRequest.studentId.classId && (
+                    <div>
+                      <span className='text-xs text-gray-500'>Lớp: {selectedRequest.studentId.classId}</span>
+                    </div>
+                  )}
+                </div>
+                <div className='space-y-2'>
+                  <label className='text-sm font-semibold text-gray-600'>Ngày gửi</label>
+                  <p className='text-gray-800 bg-gray-50 p-2 rounded'>
+                    {new Date(selectedRequest.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+                <div className='space-y-2'>
+                  <label className='text-sm font-semibold text-gray-600'>Trạng thái</label>
+                  <div className='bg-gray-50 p-2 rounded'>{statusBadge(selectedRequest.status)}</div>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-semibold text-gray-600'>Danh sách thuốc</label>
+                <div className='bg-gray-50 p-2 rounded'>
+                  {selectedRequest.medicines && selectedRequest.medicines.length > 0 ? (
+                    selectedRequest.medicines.map((med, idx) => (
+                      <div key={idx} className='mb-2'>
+                        <div className='font-semibold'>Thuốc {idx + 1}: {med.name}</div>
+                        <div>Liều lượng: {med.dosage}</div>
+                        <div>Số lần uống/ngày: {med.timesPerDay}</div>
+                        <div>Thời gian uống: {med.usageInstructions}</div>
+                        <div>Thời gian sử dụng: {med.startDate ? `${new Date(med.startDate).toLocaleDateString('vi-VN')} - ${new Date(med.endDate).toLocaleDateString('vi-VN')}` : ''}</div>
+                        <div>Lý do: {med.reason}</div>
+                        {med.note && <div>Ghi chú: {med.note}</div>}
+                      </div>
+                    ))
+                  ) : (
+                    <div>Không có thuốc nào.</div>
+                  )}
+                </div>
+              </div>
+              {selectedRequest.nurseNotes && (
+                <div className='space-y-2'>
+                  <label className='text-sm font-semibold text-gray-600'>Ghi chú của y tá</label>
+                  <p className='text-gray-800 bg-blue-50 p-2 rounded border-l-4 border-blue-400'>
+                    {selectedRequest.nurseNotes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter className='gap-2'>
+            <Button variant='outline' onClick={() => setIsModalVisible(false)}>
+              Đóng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
 
