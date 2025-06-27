@@ -83,8 +83,8 @@ function Header() {
         <a href={path.medicalEvent} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Báo cáo y tế
         </a>
-        <a href={path.privateConsultation} className='text-gray-900 hover:text-blue-500 transition-colors'>
-          Tư vấn riêng
+        <a href={path.Appointment} className='text-gray-900 hover:text-blue-500 transition-colors'>
+          Đặt lịch tư vấn
         </a>
         <a href={path.blog} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Blog

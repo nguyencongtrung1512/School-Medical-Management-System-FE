@@ -32,6 +32,8 @@ import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubm
 import MedicinesList from './pages/nurse/medicines/MedicinesList'
 import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
 import MedicalCheckEvent from './pages/nurse/medicalCheckEvent'
+import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
+import AppointmentCheck from './pages/admin/AppointmentCheck/AppointmentCheck'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -76,8 +78,8 @@ export default function useRouteElements() {
           element: <MedicineSubmissions />
         },
         {
-          path: path.privateConsultation,
-          element: <PrivateConsultation />
+          path: path.Appointment,
+          element: <AppointmentPage />
         },
         {
           path: path.vaccinationSchedule,
@@ -166,6 +168,10 @@ export default function useRouteElements() {
             {
               path: path.CENSOR_LIST,
               element: <CensorList />
+            },
+            {
+              path: path.Appointment_Check,
+              element: <AppointmentCheck />
             },
             {
               path: path.USER_MANAGEMENT,

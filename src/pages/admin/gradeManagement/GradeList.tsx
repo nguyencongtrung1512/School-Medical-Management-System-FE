@@ -166,7 +166,7 @@ const GradeList: React.FC = () => {
 
   return (
     <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
+      <div className='bg-gradient-to-br p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
           <Title level={3} className='text-2xl'>Quản lý khối</Title>
           <Button type='primary' icon={<PlusOutlined />} onClick={handleAddGrade} className='text-base h-10 px-6'>

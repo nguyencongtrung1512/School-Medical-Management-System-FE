@@ -6,6 +6,7 @@ const path = {
   blog: '/blog',
   blogDetail: '/blog/:id',
   // ============ Parent ============
+  Appointment: '/Appointment',
   profileParent: '/parent/profile',
   healthRecord: '/parent/health-record',
   medicineSubmissions: '/parent/medicine-submissions',
@@ -32,6 +33,7 @@ const path = {
   MEDICAL_SUPPLIES: '/nurse/medical-supplies',
   //=============Admin============
   BASE_ADMIN: '/admin',
+  Appointment_Check: '/admin/appointment-check',
   DASHBOARD_ADMIN: '/admin/dashboard',
   CENSOR_LIST: '/admin/censor-list',
   USER_MANAGEMENT: '/admin/user-management',

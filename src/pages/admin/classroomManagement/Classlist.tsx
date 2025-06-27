@@ -178,12 +178,12 @@ const ClassList: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Classes) => (
         <Space>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}/>
-           
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)}/>
-            
-          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)}/>
-            
+          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)} />
+
+          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)} />
+
+          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)} />
+
         </Space>
       )
     }
@@ -195,7 +195,7 @@ const ClassList: React.FC = () => {
 
   return (
     <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg shadow-md'>
+      <div className='bg-gradient-to-br  p-6 rounded-lg shadow-md'>
         <div className='flex justify-between items-center mb-6'>
           <div>
             <Title level={3} className='text-2xl'>
@@ -223,7 +223,7 @@ const ClassList: React.FC = () => {
 
         <Row gutter={[16, 16]} className='mb-6'>
           <Col span={8}>
-            <Card className='bg-blue-50'>
+            <Card className='bg-blue-100'>
               <Statistic
                 title={<span className='text-base'>Tổng số lớp</span>}
                 value={classList.length}

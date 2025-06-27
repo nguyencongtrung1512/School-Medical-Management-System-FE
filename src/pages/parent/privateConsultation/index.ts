@@ -1,3 +1,3 @@
-import PrivateConsultation from './privateConsultation'
+// import AppointmentPage from './AppointmentPage'
 
-export default PrivateConsultation
+// export default AppointmentPage

@@ -107,3 +107,7 @@ export const linkStudentAPI = (data: LinkStudentRequest): Promise<LinkStudentRes
 export const changePasswordAPI = (data: ChangePasswordRequest): Promise<AxiosResponse<ChangePasswordResponse>> => {
   return axiosInstance.post('/users/change-password', data)
 }
+
+export const createUserAPI = (data: { fullName: string; phone: string; email: string; role: string; password?: string; image?: string }) => {
+  return axiosInstance.post('/users/create', data)
+}

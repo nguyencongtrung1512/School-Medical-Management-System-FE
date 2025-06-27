@@ -102,6 +102,12 @@ const StudentList: React.FC = () => {
 
   const columns = [
     {
+      title: 'Mã sinh viên',
+      dataIndex: 'studentCode',
+      key: 'studentCode',
+      className: 'text-base'
+    },
+    {
       title: 'Họ và tên',
       dataIndex: 'fullName',
       key: 'fullName',
@@ -154,7 +160,7 @@ const StudentList: React.FC = () => {
 
   return (
     <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl shadow-lg'>
+      <div className='bg-gradient-to-br  p-8 rounded-xl shadow-lg'>
         <div className='flex justify-between items-center mb-8'>
           <div className='space-y-1'>
             <Title level={3} className=' text-base !mb-0 text-gray-800'>
