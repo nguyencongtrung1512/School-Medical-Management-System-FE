@@ -10,8 +10,6 @@ import {
   Space,
   Tag,
   Button,
-  Form,
-  message,
   Row,
   Col,
   Statistic,
@@ -43,6 +41,7 @@ import { searchUsersAPI, getUserByIdAPI, deleteUserAPI } from '../../../api/user
 import Update from './Update'
 import Detail from './Detail'
 import RegisterNurse from './registerNurse'
+import { toast } from 'react-toastify'
 
 const { Title, Text } = Typography
 const { Search } = Input
@@ -115,7 +114,7 @@ const UserList: React.FC = () => {
       })
     } catch (error) {
       setUsers([])
-      message.error('Không thể tải danh sách người dùng')
+      console.log('Không thể tải danh sách người dùng')
     }
     setLoading(false)
   }
@@ -250,7 +249,7 @@ const UserList: React.FC = () => {
       setUserDetail(res.data)
     } catch {
       setUserDetail(null)
-      message.error('Không thể tải thông tin chi tiết')
+     console.log('Không thể tải thông tin chi tiết')
     }
     setLoadingDetail(false)
   }
@@ -265,10 +264,10 @@ const UserList: React.FC = () => {
       onOk: async () => {
         try {
           await deleteUserAPI(user._id)
-          message.success('Đã khóa người dùng thành công!')
+          toast.success('Đã khóa người dùng thành công!')
           fetchUsers()
         } catch {
-          message.error('khóa người dùng thất bại!')
+         console.log('khóa người dùng thất bại!')
         }
       }
     })

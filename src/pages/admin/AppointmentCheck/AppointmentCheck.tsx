@@ -4,7 +4,6 @@ import {
   Button,
   Select,
   Modal,
-  message,
   Input,
   Card,
   Tag,
@@ -29,6 +28,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import { getAppointments, approveAppointment } from '../../../api/appointment.api'
 import { searchNurseUsersAPI } from '../../../api/user.api'
+import { toast } from 'react-toastify'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -75,7 +75,6 @@ function AppointmentCheck() {
       setAppointments(res.pageData || [])
     } catch {
       setAppointments([])
-      message.error('Không thể tải danh sách lịch hẹn')
     } finally {
       setLoading(false)
     }
@@ -135,12 +134,12 @@ function AppointmentCheck() {
         status: 'approved',
         schoolNurseId: selectedNurse
       })
-      message.success('Giao y tá thành công!')
+      toast.success('Giao y tá thành công!')
       setModalOpen(false)
       setSelectedNurse('')
       fetchAppointments()
-    } catch {
-      message.error('Giao y tá thất bại!')
+    } catch (error) {
+      console.log(error)
     } finally {
       setAssigning(false)
     }
@@ -155,7 +154,7 @@ function AppointmentCheck() {
 
   const handleCancel = async () => {
     if (!selectedAppointment || !cancelReason.trim()) {
-      message.error('Vui lòng nhập lý do hủy!')
+      toast.error('Vui lòng nhập lý do hủy!')
       return
     }
     setAssigning(true)
@@ -166,11 +165,11 @@ function AppointmentCheck() {
         cancellationReason: cancelReason,
         note: cancelNote
       })
-      message.success('Hủy lịch thành công!')
+      toast.success('Hủy lịch thành công!')
       setCancelModalOpen(false)
       fetchAppointments()
     } catch {
-      message.error('Hủy lịch thất bại!')
+      toast.error('Hủy lịch thất bại!')
     } finally {
       setAssigning(false)
     }

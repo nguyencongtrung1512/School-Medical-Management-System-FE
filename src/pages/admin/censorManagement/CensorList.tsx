@@ -426,18 +426,6 @@ const CensorList: React.FC = () => {
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
             </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Button
-                icon={<FilterOutlined />}
-                size='large'
-                style={{ width: '100%' }}
-                onClick={() => {
-                  // Toggle filter panel or show filter modal
-                }}
-              >
-                Bộ lọc nâng cao
-              </Button>
-            </Col>
             <Col xs={24} sm={24} md={8}>
               <div className='flex justify-end'>
                 <Space>
