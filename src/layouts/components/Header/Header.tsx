@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import path from '../../../constants/path'
 import { useAuth } from '../../../contexts/auth.context'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import { getCurrentUserAPI } from '../../../api/user.api'
 import { Profile } from '../../../api/user.api'
 
@@ -41,14 +40,6 @@ function Header() {
   const handleLogout = () => {
     logout()
     setOpen(false)
-    toast.success('Đăng xuất thành công!', {
-      position: 'top-right',
-      autoClose: 1000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: true
-    })
     navigate(path.login)
   }
 
@@ -90,19 +81,27 @@ function Header() {
           Blog
         </a>
       </nav>
-      {/* Avatar user */}
+      {/* Avatar user hoặc nút đăng nhập */}
       <div className='relative' ref={dropdownRef}>
-        <button
-          className='flex items-center space-x-2 focus:outline-none transition-all duration-200 hover:opacity-80'
-          onClick={() => setOpen(!open)}
-        >
-          <img
-            src={userProfile?.image || 'https://i.pravatar.cc/150?img=3'}
-            alt='avatar'
-            className='w-10 h-10 rounded-full border-2 border-blue-400 object-cover'
-          />
-          <span className='font-semibold text-gray-800'>{userProfile?.fullName || 'Loading...'}</span>
-        </button>
+        {userProfile ? (
+          <button
+            className='flex items-center space-x-2 focus:outline-none transition-all duration-200 hover:opacity-80'
+            onClick={() => setOpen(!open)}
+          >
+            <img
+              src={userProfile?.image}
+              className='w-10 h-10 rounded-full border-2 border-blue-400 object-cover'
+            />
+            <span className='font-semibold text-gray-800'>{userProfile?.fullName}</span>
+          </button>
+        ) : (
+          <a
+            href={path.login}
+            className='inline-flex items-center px-6 py-2 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+          >
+            Đăng nhập
+          </a>
+        )}
         {open && (
           <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 transform transition-all duration-200 ease-in-out'>
             <div className='px-4 py-2 text-gray-900 font-bold'>{userProfile?.fullName}</div>

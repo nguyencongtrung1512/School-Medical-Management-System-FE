@@ -49,108 +49,108 @@ export default function useRouteElements() {
     },
 
     // PARENT routes
-    // {
-    //   path: '',
-    //   element: <ProtectedRoute requiredRole='PARENT' />,
-    //   children: [
     {
       path: '',
-      element: <MainLayout />,
+      element: <ProtectedRoute requiredRole='PARENT' />,
       children: [
         {
-          path: path.home,
-          element: <Home />
-        },
-        {
-          path: path.blog,
-          element: <Blog />
-        },
-        {
-          path: path.blogDetail,
-          element: <BlogPost />
-        },
-        {
-          path: path.healthRecord,
-          element: <HealthRecord />
-        },
-        {
-          path: path.medicineSubmissions,
-          element: <MedicineSubmissions />
-        },
-        {
-          path: path.Appointment,
-          element: <AppointmentPage />
-        },
-        {
-          path: path.vaccinationSchedule,
-          element: <VaccinationSchedule />
-        },
-        {
-          path: path.medicalEvent,
-          element: <MedicalEventParent />
-        },
-        {
-          path: path.profileParent,
-          element: <ProfileParent />
+          path: '',
+          element: <MainLayout />,
+          children: [
+            {
+              path: path.home,
+              element: <Home />
+            },
+            {
+              path: path.blog,
+              element: <Blog />
+            },
+            {
+              path: path.blogDetail,
+              element: <BlogPost />
+            },
+            {
+              path: path.healthRecord,
+              element: <HealthRecord />
+            },
+            {
+              path: path.medicineSubmissions,
+              element: <MedicineSubmissions />
+            },
+            {
+              path: path.Appointment,
+              element: <AppointmentPage />
+            },
+            {
+              path: path.vaccinationSchedule,
+              element: <VaccinationSchedule />
+            },
+            {
+              path: path.medicalEvent,
+              element: <MedicalEventParent />
+            },
+            {
+              path: path.profileParent,
+              element: <ProfileParent />
+            }
+          ]
         }
       ]
     },
-    // ]
-    // },
 
     //================ NURSE routes ================
-    // {
-    //   path: path.BASE_NURSE,
-    //   element: <ProtectedRoute requiredRole='NURSE' />,
-    //   children: [
     {
       path: path.BASE_NURSE,
-      element: <NurseLayout />,
+      element: <ProtectedRoute requiredRole='SCHOOL-NURSE' />,
       children: [
         {
-          path: path.DASHBOARD_NURSE,
-          element: <DashBoardNurse />
-        },
-        {
-          path: path.HEALTH_RECORD_CENSORSHIP,
-          element: <HealthRecordCensorship />
-        },
-        {
-          path: path.SCHEDULE_VACCINATION,
-          element: <ScheduleVaccination />
-        },
-        {
-          path: path.RESULTS_AFTER_VACCINATION,
-          element: <ResultsAfterVaccination />
-        },
-        {
-          path: path.RECEIVE_MEDICINE,
-          element: <ReceiveMedicine />
-        },
-        {
-          path: path.MEDICAL_REPORT,
-          element: <MedicalReport />
-        },
-        {
-          path: path.MEDICINES,
-          element: <MedicinesList />
-        },
-        {
-          path: path.MEDICAL_SUPPLIES,
-          element: <MedicalSuppliesList />
-        },
-        {
-          path: path.MEDICAL_PLAN,
-          element: <MedicalCheckEvent />
-        },
-        {
-          path: path.PRIVATE_CONSULTATION,
-          element: <PrivateConsultation />
+          path: path.BASE_NURSE,
+          element: <NurseLayout />,
+          children: [
+            {
+              path: path.DASHBOARD_NURSE,
+              element: <DashBoardNurse />
+            },
+            {
+              path: path.HEALTH_RECORD_CENSORSHIP,
+              element: <HealthRecordCensorship />
+            },
+            {
+              path: path.SCHEDULE_VACCINATION,
+              element: <ScheduleVaccination />
+            },
+            {
+              path: path.RESULTS_AFTER_VACCINATION,
+              element: <ResultsAfterVaccination />
+            },
+            {
+              path: path.RECEIVE_MEDICINE,
+              element: <ReceiveMedicine />
+            },
+            {
+              path: path.MEDICAL_REPORT,
+              element: <MedicalReport />
+            },
+            {
+              path: path.MEDICINES,
+              element: <MedicinesList />
+            },
+            {
+              path: path.MEDICAL_SUPPLIES,
+              element: <MedicalSuppliesList />
+            },
+            {
+              path: path.MEDICAL_PLAN,
+              element: <MedicalCheckEvent />
+            },
+            {
+              path: path.PRIVATE_CONSULTATION,
+              element: <PrivateConsultation />
+            }
+          ]
         }
       ]
     },
-    // ]
-    // },
 
     //================ ADMIN routes ================
     {

@@ -95,10 +95,14 @@ function Home() {
                 Chăm sóc sức khỏe học đường <span className='text-blue-500'>toàn diện</span> cho con bạn
               </h1>
               <p className='text-gray-600 mb-8 text-lg'>
-                EduCare là nền tảng kết nối giữa phụ huynh và nhà trường, giúp theo dõi và quản lý thông tin sức khỏe học sinh một cách hiệu quả.
+                EduCare là nền tảng kết nối giữa phụ huynh và nhà trường, giúp theo dõi và quản lý thông tin sức khỏe
+                học sinh một cách hiệu quả.
               </p>
               <div className='flex flex-wrap gap-4'>
-                <a href='/parent/health-record' className='px-6 py-3 border border-blue-500 text-blue-500 rounded-lg font-medium hover:bg-blue-50 transition-colors'>
+                <a
+                  href='/parent/health-record'
+                  className='px-6 py-3 border border-blue-500 text-blue-500 rounded-lg font-medium hover:bg-blue-50 transition-colors'
+                >
                   Khai báo hồ sơ
                 </a>
               </div>
@@ -118,7 +122,11 @@ function Home() {
           <div className='bg-white p-6 rounded-xl shadow-sm flex items-center'>
             <div className='w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4'>
               <svg width='28' height='28' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                <path d='M20 7L12 3L4 7M20 7V17L12 21M20 7L12 11M12 21L4 17V7M12 21V11M4 7L12 11' stroke='#1da1f2' strokeWidth='2' />
+                <path
+                  d='M20 7L12 3L4 7M20 7V17L12 21M20 7L12 11M12 21L4 17V7M12 21V11M4 7L12 11'
+                  stroke='#1da1f2'
+                  strokeWidth='2'
+                />
               </svg>
             </div>
             <div>
@@ -129,7 +137,13 @@ function Home() {
           <div className='bg-white p-6 rounded-xl shadow-sm flex items-center'>
             <div className='w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mr-4'>
               <svg width='28' height='28' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                <path d='M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z' stroke='#10b981' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
+                <path
+                  d='M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z'
+                  stroke='#10b981'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
               </svg>
             </div>
             <div>
@@ -140,7 +154,13 @@ function Home() {
           <div className='bg-white p-6 rounded-xl shadow-sm flex items-center'>
             <div className='w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mr-4'>
               <svg width='28' height='28' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                <path d='M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z' stroke='#f59e0b' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
+                <path
+                  d='M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z'
+                  stroke='#f59e0b'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
               </svg>
             </div>
             <div>
@@ -156,44 +176,58 @@ function Home() {
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
             <div className='bg-white rounded-xl shadow-sm overflow-hidden'>
               <div className='h-48 overflow-hidden'>
-                <img 
-                  src='https://www.pushengage.com/wp-content/uploads/2023/06/In-App-Notification-Examples.png' 
-                  alt='Tiêm chủng' 
+                <img
+                  src='https://www.pushengage.com/wp-content/uploads/2023/06/In-App-Notification-Examples.png'
+                  alt='Tiêm chủng'
                   className='w-full h-full object-cover'
                 />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-bold text-gray-900 mb-2'>Thông báo tiêm chủng</h3>
-                <p className='text-gray-600 mb-4'>Cập nhật lịch tiêm chủng và gửi thông báo nhắc nhở cho phụ huynh về các mũi tiêm sắp tới cho học sinh.</p>
-                <a href='/parent/vaccination-schedule' className='text-blue-500 font-medium hover:underline'>Xem lịch tiêm chủng →</a>
+                <p className='text-gray-600 mb-4'>
+                  Cập nhật lịch tiêm chủng và gửi thông báo nhắc nhở cho phụ huynh về các mũi tiêm sắp tới cho học sinh.
+                </p>
+                <a href='/parent/vaccination-schedule' className='text-blue-500 font-medium hover:underline'>
+                  Xem lịch tiêm chủng →
+                </a>
               </div>
             </div>
             <div className='bg-white rounded-xl shadow-sm overflow-hidden'>
               <div className='h-48 overflow-hidden'>
-                <img 
-                  src='https://img.freepik.com/free-photo/doctor-measuring-little-girl-s-height_23-2148775915.jpg' 
-                  alt='Khám sức khỏe' 
+                <img
+                  src='https://img.freepik.com/free-photo/doctor-measuring-little-girl-s-height_23-2148775915.jpg'
+                  alt='Khám sức khỏe'
                   className='w-full h-full object-cover'
                 />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-bold text-gray-900 mb-2'>Hồ sơ sức khỏe số</h3>
-                <p className='text-gray-600 mb-4'>Lưu trữ và theo dõi thông tin sức khỏe của học sinh như chiều cao, cân nặng, thị lực và các chỉ số quan trọng khác.</p>
-                <a href='/parent/medical-plan' className='text-blue-500 font-medium hover:underline'>Xem hồ sơ sức khỏe →</a>
+                <p className='text-gray-600 mb-4'>
+                  Lưu trữ và theo dõi thông tin sức khỏe của học sinh như chiều cao, cân nặng, thị lực và các chỉ số
+                  quan trọng khác.
+                </p>
+                <a href='/parent/medical-plan' className='text-blue-500 font-medium hover:underline'>
+                  Xem hồ sơ sức khỏe →
+                </a>
               </div>
             </div>
             <div className='bg-white rounded-xl shadow-sm overflow-hidden'>
               <div className='h-48 overflow-hidden'>
-                <img 
-                  src='https://img.freepik.com/free-photo/woman-consulting-with-doctor_23-2149211094.jpg' 
-                  alt='Tư vấn riêng' 
+                <img
+                  src='https://img.freepik.com/free-photo/woman-consulting-with-doctor_23-2149211094.jpg'
+                  alt='Tư vấn riêng'
                   className='w-full h-full object-cover'
                 />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-bold text-gray-900 mb-2'>Đăng ký tư vấn sức khỏe riêng</h3>
-                <p className='text-gray-600 mb-4'>Tạo kênh liên lạc trực tiếp giữa phụ huynh và y tá trường học để trao đổi về tình hình sức khỏe của học sinh.</p>
-                <a href='/parent/private-consultation' className='text-blue-500 font-medium hover:underline'>Liên hệ →</a>
+                <p className='text-gray-600 mb-4'>
+                  Tạo kênh liên lạc trực tiếp giữa phụ huynh và y tá trường học để trao đổi về tình hình sức khỏe của
+                  học sinh.
+                </p>
+                <a href='/parent/private-consultation' className='text-blue-500 font-medium hover:underline'>
+                  Liên hệ →
+                </a>
               </div>
             </div>
           </div>

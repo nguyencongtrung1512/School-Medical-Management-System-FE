@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { message } from 'antd'
 
 let isTokenExpired = false
 
@@ -39,14 +38,14 @@ axiosInstance.interceptors.response.use(
       console.log(error.response)
       if (data.message === null && data.errors && data.errors.length > 0) {
         data.errors.forEach((error: { field: string; message: string }) => {
-          message.error(`${error.field}: ${error.message}`)
+          console.log(`${error.field}: ${error.message}`)
         })
       } else {
         switch (error.response.status) {
           case 403: {
             if (!isTokenExpired) {
               isTokenExpired = true
-              message.error(data.message)
+              console.log(data.message)
               //   const user = getUserFromLocalStorage()
               //   setTimeout(() => {
               //     if (user) {
@@ -67,24 +66,24 @@ axiosInstance.interceptors.response.use(
           }
 
           case 404:
-            message.error(data.message)
+            console.log(data.message)
             // window.location.href = paths.NOTFOUND
             break
 
           case 500:
-            message.error(data.message)
+            console.log(data.message)
             // window.location.href = paths.INTERNAL_SERVER_ERROR
             break
 
           default:
-            message.error(data.message)
+            console.log(data.message)
             break
         }
       }
 
       return Promise.reject(error.response.data)
     } else {
-      message.error('Network error')
+      console.log('Network error')
       return Promise.reject(error)
     }
   }

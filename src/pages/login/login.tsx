@@ -42,14 +42,14 @@ const Login: React.FC = () => {
           // Lưu user vào context và localStorage
           login(userData, response.data)
 
-          toast.success('Đăng nhập thành công!')
+          toast.success('Đăng nhập thành công!', { autoClose: 1000 })
 
           // Chuyển hướng dựa vào role
           switch (decodedToken.role.toUpperCase()) {
             case 'ADMIN':
               navigate(path.DASHBOARD_ADMIN)
               break
-            case 'NURSE':
+            case 'SCHOOL-NURSE':
               navigate(path.BASE_NURSE)
               break
             case 'PARENT':
