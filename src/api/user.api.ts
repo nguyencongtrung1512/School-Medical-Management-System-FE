@@ -75,7 +75,11 @@ export const searchUsersAPI = (pageNum: number = 1, pageSize: number = 10, query
   return axiosInstance.get(url)
 }
 
-export const searchNurseUsersAPI = (pageNum: number = 1, pageSize: number = 10, query?: string): Promise<AxiosResponse<SearchNurseResponse>> => {
+export const searchNurseUsersAPI = (
+  pageNum: number = 1,
+  pageSize: number = 10,
+  query?: string
+): Promise<AxiosResponse<SearchNurseResponse>> => {
   let url = `/users/search/${pageNum}/${pageSize}?role=school-nurse`
   if (query) url += `&query=${encodeURIComponent(query)}`
   return axiosInstance.get(url)
@@ -108,6 +112,13 @@ export const changePasswordAPI = (data: ChangePasswordRequest): Promise<AxiosRes
   return axiosInstance.post('/users/change-password', data)
 }
 
-export const createUserAPI = (data: { fullName: string; phone: string; email: string; role: string; password?: string; image?: string }) => {
+export const createUserAPI = (data: {
+  fullName: string
+  phone: string
+  email: string
+  role: string
+  password?: string
+  image?: string
+}) => {
   return axiosInstance.post('/users/create', data)
 }

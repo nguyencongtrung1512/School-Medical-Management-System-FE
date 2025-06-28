@@ -88,10 +88,7 @@ function Header() {
             className='flex items-center space-x-2 focus:outline-none transition-all duration-200 hover:opacity-80'
             onClick={() => setOpen(!open)}
           >
-            <img
-              src={userProfile?.image}
-              className='w-10 h-10 rounded-full border-2 border-blue-400 object-cover'
-            />
+            <img src={userProfile?.image} className='w-10 h-10 rounded-full border-2 border-blue-400 object-cover' />
             <span className='font-semibold text-gray-800'>{userProfile?.fullName}</span>
           </button>
         ) : (

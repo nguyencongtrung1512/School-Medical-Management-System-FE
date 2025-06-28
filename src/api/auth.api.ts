@@ -69,3 +69,7 @@ export const decodeToken = (token: string) => {
     return null
   }
 }
+
+export const forgotPasswordAPI = (email: string) => {
+  return axiosInstance.post('/auth/forgot-password', { email })
+}
