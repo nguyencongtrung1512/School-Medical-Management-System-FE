@@ -66,12 +66,66 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
         form.resetFields()
         navigate(path.login)
       } else {
-        toast.error(response.message || 'Đăng ký thất bại!')
+        // Hiển thị lỗi trong form
+        const errorMessage = response.message || 'Đăng ký thất bại!'
+
+        // Kiểm tra nếu lỗi liên quan đến email
+        if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('tồn tại')) {
+          form.setFields([
+            {
+              name: 'email',
+              errors: [errorMessage]
+            }
+          ])
+        } else {
+          // Hiển thị lỗi chung
+          toast.error(errorMessage)
+        }
       }
     } catch (error) {
-      const axiosError = error as AxiosError
+      const axiosError = error as AxiosError<ErrorResponseData>
       console.error('Register error:', axiosError)
-      toast.error((axiosError.response?.data as ErrorResponseData)?.message || 'Đăng ký thất bại!')
+
+      // Xử lý lỗi từ server
+      if (axiosError) {
+        const errorMessage = axiosError.message || 'Đăng ký thất bại!'
+
+        // Kiểm tra nếu lỗi liên quan đến email đã tồn tại
+        if (errorMessage.toLowerCase().includes('email') ||
+          errorMessage.toLowerCase().includes('tồn tại') ||
+          errorMessage.toLowerCase().includes('exists')) {
+          form.setFields([
+            {
+              name: 'email',
+              errors: [errorMessage]
+            }
+          ])
+        } else if (errorMessage.toLowerCase().includes('phone') ||
+          errorMessage.toLowerCase().includes('số điện thoại')) {
+          // Lỗi liên quan đến số điện thoại
+          form.setFields([
+            {
+              name: 'phoneNumber',
+              errors: [errorMessage]
+            }
+          ])
+        } else if (errorMessage.toLowerCase().includes('password') ||
+          errorMessage.toLowerCase().includes('mật khẩu')) {
+          // Lỗi liên quan đến mật khẩu
+          form.setFields([
+            {
+              name: 'password',
+              errors: [errorMessage]
+            }
+          ])
+        } else {
+          // Lỗi chung
+          toast.error(errorMessage)
+        }
+      } else {
+        // Lỗi network hoặc lỗi khác
+        toast.error('Đăng ký thất bại! Vui lòng thử lại.')
+      }
     }
   }
 
@@ -245,9 +299,10 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
                       placeholder='Chọn vai trò'
                       size='large'
                       options={[
-                        { value: 'parent', label: 'Phụ huynh' },
-                        { value: 'student', label: 'Y tá' }
+                        { value: 'parent', label: 'Phụ huynh' }
                       ]}
+                      disabled
+                      value='parent'
                     />
                   </Form.Item>
                 </Col>

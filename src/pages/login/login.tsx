@@ -15,17 +15,22 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
   const [forgotForm] = Form.useForm()
+  const [loginForm] = Form.useForm()
   const navigate = useNavigate()
   const { login } = useAuth()
+
   const handleRegister = () => {
     navigate(path.register)
   }
+
   const handleForgotPassword = () => {
     setShowForgot(true)
   }
+
   const handleBackToLogin = () => {
     setShowForgot(false)
   }
+
   const handleForgotSubmit = async (values: { email: string }) => {
     try {
       setLoading(true)
@@ -33,11 +38,13 @@ const Login: React.FC = () => {
       toast.success('Vui lòng kiểm tra email để đặt lại mật khẩu!')
       setShowForgot(false)
     } catch (error) {
+      console.error('Forgot password error:', error)
       toast.error('Gửi yêu cầu thất bại!')
     } finally {
       setLoading(false)
     }
   }
+
   const formVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -82,11 +89,55 @@ const Login: React.FC = () => {
           }
         }
       } else {
-        console.log(response.data.message || 'Đăng nhập thất bại!')
+        // Hiển thị lỗi trong form
+        loginForm.setFields([
+          {
+            name: 'email',
+            errors: ['Email hoặc mật khẩu không đúng']
+          },
+          {
+            name: 'password',
+            errors: ['Email hoặc mật khẩu không đúng']
+          }
+        ])
+        toast.error(response.data.message || 'Đăng nhập thất bại!')
       }
     } catch (error) {
       const axiosError = error as AxiosError<LoginResponse>
       console.error('Login error:', axiosError)
+
+      // Xử lý lỗi từ server
+      if (axiosError.response?.data) {
+        const errorMessage = axiosError.response.data.message || 'Email hoặc mật khẩu không đúng'
+
+        // Hiển thị lỗi trong form
+        loginForm.setFields([
+          {
+            name: 'email',
+            errors: [errorMessage]
+          },
+          {
+            name: 'password',
+            errors: [errorMessage]
+          }
+        ])
+
+        toast.error(errorMessage)
+      } else {
+        // Lỗi network hoặc lỗi khác
+        const errorMessage = 'Email hoặc mật khẩu không đúng'
+        loginForm.setFields([
+          {
+            name: 'email',
+            errors: [errorMessage]
+          },
+          {
+            name: 'password',
+            errors: [errorMessage]
+          }
+        ])
+        toast.error('Đăng nhập thất bại! Vui lòng thử lại.')
+      }
     } finally {
       setLoading(false)
     }
@@ -131,7 +182,13 @@ const Login: React.FC = () => {
               variants={formVariants}
               className='mt-4 w-full'
             >
-              <Form name='login' onFinish={onFinish} layout='vertical' className='space-y-4'>
+              <Form
+                name='login'
+                onFinish={onFinish}
+                layout='vertical'
+                className='space-y-4'
+                form={loginForm}
+              >
                 <Form.Item
                   name='email'
                   rules={[
