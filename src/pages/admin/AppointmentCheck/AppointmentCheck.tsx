@@ -46,6 +46,7 @@ interface Appointment {
   studentName?: string
   parentName?: string
   phone?: string
+  schoolNurseName?: string
 }
 
 interface Nurse {
@@ -78,7 +79,8 @@ function AppointmentCheck() {
         studentCode: item.student?.studentCode || '',
         studentName: item.student?.fullName || '',
         parentName: item.parent?.fullName || '',
-        phone: item.parent?.phone || ''
+        phone: item.parent?.phone || '',
+        schoolNurseName: item.schoolNurse?.fullName || ''
       }))
       setAppointments(mapped)
     } catch {
@@ -342,6 +344,9 @@ function AppointmentCheck() {
                 {new Date(selectedAppointment.appointmentTime).toLocaleString('vi-VN')}
               </Descriptions.Item>
               <Descriptions.Item label='Trạng thái'>{getStatusTag(selectedAppointment.status)}</Descriptions.Item>
+              {selectedAppointment.schoolNurseName && (
+                <Descriptions.Item label='Y tá phụ trách'>{selectedAppointment.schoolNurseName}</Descriptions.Item>
+              )}
             </Descriptions>
 
             <Divider />

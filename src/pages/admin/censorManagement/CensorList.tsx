@@ -1,5 +1,3 @@
-'use client'
-
 import type React from 'react'
 
 import { useState, useEffect } from 'react'
@@ -19,8 +17,6 @@ import {
   Tooltip,
   Badge,
   Empty,
-  Dropdown,
-  type MenuProps,
   Input,
   DatePicker
 } from 'antd'
@@ -32,22 +28,24 @@ import {
   MedicineBoxOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
-  FilterOutlined,
   SearchOutlined,
   ReloadOutlined,
   ExportOutlined,
-  MoreOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
-  StopOutlined
+  StopOutlined,
+  PlusOutlined,
+  BookOutlined,
+  EditOutlined,
+  DeleteOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { getAllVaccineEvents, updateVaccineEventStatus, VaccineEventStatus } from '../../../api/vaccineEvent.api'
+import { getAllVaccineEvents, updateVaccineEventStatus, VaccineEventStatus, deleteVaccineEvent } from '../../../api/vaccineEvent.api'
 import { toast } from 'react-toastify'
+import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
-const { RangePicker } = DatePicker
 
 interface VaccineEvent {
   _id: string
@@ -62,6 +60,7 @@ interface VaccineEvent {
   startRegistrationDate: string
   endRegistrationDate: string
   isDeleted?: boolean
+  schoolYear: string
 }
 
 // Hàm format ngày giờ chuẩn dd/MM/yyyy HH:mm theo giờ Việt Nam (GMT+7)
@@ -87,7 +86,10 @@ const CensorList: React.FC = () => {
   const [pageSize, setPageSize] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
   const [searchKeyword, setSearchKeyword] = useState('')
-  const [statusFilter, setStatusFilter] = useState<VaccineEventStatus | undefined>(undefined)
+  const [statusFilter] = useState<VaccineEventStatus | undefined>(undefined)
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false)
+  const [editEvent, setEditEvent] = useState<VaccineEvent | null>(null)
 
   useEffect(() => {
     fetchVaccineEvents()
@@ -117,12 +119,12 @@ const CensorList: React.FC = () => {
     const configs = {
       [VaccineEventStatus.ONGOING]: {
         color: 'processing',
-        text: 'Chờ duyệt',
+        text: 'Đang diễn ra',
         icon: <ClockCircleOutlined />
       },
       [VaccineEventStatus.COMPLETED]: {
         color: 'success',
-        text: 'Đã duyệt',
+        text: 'Hoàn thành',
         icon: <CheckCircleOutlined />
       },
       [VaccineEventStatus.CANCELLED]: {
@@ -132,56 +134,6 @@ const CensorList: React.FC = () => {
       }
     }
     return configs[status] || { color: 'default', text: status, icon: <ExclamationCircleOutlined /> }
-  }
-
-  const getActionMenu = (record: VaccineEvent): MenuProps => ({
-    items: [
-      {
-        key: 'view',
-        label: 'Xem chi tiết',
-        icon: <EyeOutlined />
-      },
-      ...(record.status === VaccineEventStatus.ONGOING
-        ? [
-          {
-            type: 'divider' as const
-          },
-          {
-            key: 'approve',
-            label: 'Duyệt sự kiện',
-            icon: <CheckOutlined />,
-            style: { color: '#52c41a' }
-          },
-          {
-            key: 'cancel',
-            label: 'Hủy sự kiện',
-            icon: <CloseOutlined />,
-            danger: true
-          }
-        ]
-        : [])
-    ],
-    onClick: ({ key }) => handleMenuClick(key, record)
-  })
-
-  const handleMenuClick = (key: string, record: VaccineEvent) => {
-    switch (key) {
-      case 'view':
-        handleViewDetails(record)
-        break
-      case 'approve':
-        handleUpdateStatus(record._id, VaccineEventStatus.COMPLETED)
-        break
-      case 'cancel':
-        Modal.confirm({
-          title: 'Xác nhận hủy sự kiện',
-          content: `Bạn có chắc chắn muốn hủy sự kiện "${record.title}"?`,
-          okText: 'Xác nhận',
-          cancelText: 'Hủy',
-          onOk: () => handleUpdateStatus(record._id, VaccineEventStatus.CANCELLED)
-        })
-        break
-    }
   }
 
   const columns: ColumnsType<VaccineEvent> = [
@@ -209,13 +161,12 @@ const CensorList: React.FC = () => {
     {
       title: 'Thời gian & Địa điểm',
       key: 'schedule',
+      sorter: (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
       render: (_, record) => (
         <Space direction='vertical' size={0}>
           <Space size='small'>
             <CalendarOutlined className='text-blue-500' />
-            <Text className='text-sm'>
-              {record.eventDate ? formatDateTime(record.eventDate) : '-'}
-            </Text>
+            <Text className='text-sm'>{record.eventDate ? formatDateTime(record.eventDate) : '-'}</Text>
           </Space>
           <Space size='small'>
             <EnvironmentOutlined className='text-green-500' />
@@ -242,7 +193,7 @@ const CensorList: React.FC = () => {
             </Text>
           </Space>
         )
-      },
+      }
     },
     {
       title: 'Trạng thái',
@@ -262,8 +213,8 @@ const CensorList: React.FC = () => {
         )
       },
       filters: [
-        { text: 'Chờ duyệt', value: VaccineEventStatus.ONGOING },
-        { text: 'Đã duyệt', value: VaccineEventStatus.COMPLETED },
+        { text: 'Đang diễn ra', value: VaccineEventStatus.ONGOING },
+        { text: 'Hoàn thành', value: VaccineEventStatus.COMPLETED },
         { text: 'Đã hủy', value: VaccineEventStatus.CANCELLED }
       ],
       onFilter: (value, record) => record.status === value
@@ -275,48 +226,67 @@ const CensorList: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title='Xem chi tiết'>
-            <Button type='text' icon={<EyeOutlined />} onClick={() => handleViewDetails(record)} />
+            <Button
+              type='text'
+              icon={<EyeOutlined />}
+              onClick={(e) => {
+                e.stopPropagation() // Ngăn event bubble lên row
+                setSelectedPlan(record)
+                setIsModalVisible(true)
+              }}
+            />
           </Tooltip>
           {record.status === VaccineEventStatus.ONGOING && (
             <>
-              <Tooltip title='Duyệt sự kiện'>
+              <Tooltip title='Cập nhật'>
                 <Button
                   type='text'
-                  icon={<CheckOutlined />}
-                  onClick={() => handleUpdateStatus(record._id, VaccineEventStatus.COMPLETED)}
-                  className='text-green-600 hover:text-green-700'
+                  icon={<EditOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation() // Ngăn event bubble lên row
+                    setEditEvent(record)
+                    setIsEditModalVisible(true)
+                  }}
+                  className='text-blue-600 hover:text-blue-700'
                 />
               </Tooltip>
-              <Tooltip title='Hủy sự kiện'>
+              <Tooltip title='Xóa sự kiện'>
                 <Button
                   type='text'
-                  icon={<CloseOutlined />}
-                  onClick={() =>
+                  icon={<DeleteOutlined />}
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     Modal.confirm({
-                      title: 'Xác nhận hủy sự kiện',
-                      content: `Bạn có chắc chắn muốn hủy sự kiện "${record.title}"?`,
-                      okText: 'Xác nhận',
+                      title: 'Xác nhận xóa sự kiện',
+                      content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
+                      okText: 'Xóa',
+                      okType: 'danger',
                       cancelText: 'Hủy',
-                      onOk: () => handleUpdateStatus(record._id, VaccineEventStatus.CANCELLED)
-                    })
-                  }
+                      onOk: async () => {
+                        try {
+                          await deleteVaccineEvent(record._id);
+                          toast.success('Xóa sự kiện thành công!');
+                          fetchVaccineEvents();
+                        } catch {
+                          toast.error('Không thể xóa sự kiện!');
+                        }
+                      }
+                    });
+                  }}
                   className='text-red-600 hover:text-red-700'
                 />
               </Tooltip>
             </>
           )}
-          <Dropdown menu={getActionMenu(record)} trigger={['click']}>
-            <Button type='text' icon={<MoreOutlined />} />
-          </Dropdown>
         </Space>
       )
     }
   ]
 
-  const handleViewDetails = (plan: VaccineEvent) => {
-    setSelectedPlan(plan)
-    setIsModalVisible(true)
-  }
+  // const handleViewDetails = (plan: VaccineEvent) => {
+  //   setSelectedPlan(plan)
+  //   setIsModalVisible(true)
+  // }
 
   const handleUpdateStatus = async (id: string, newStatus: VaccineEventStatus) => {
     try {
@@ -347,6 +317,21 @@ const CensorList: React.FC = () => {
     return matchesSearch && matchesStatus
   })
 
+  // Callback khi tạo thành công
+  const handleCreateSuccess = () => {
+    setIsCreateModalVisible(false)
+    fetchVaccineEvents()
+    toast.success('Tạo sự kiện tiêm chủng thành công!')
+  }
+
+  // Callback khi cập nhật thành công
+  const handleEditSuccess = () => {
+    setIsEditModalVisible(false)
+    setEditEvent(null)
+    fetchVaccineEvents()
+    toast.success('Cập nhật sự kiện thành công!')
+  }
+
   return (
     <div className=''>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
@@ -364,6 +349,9 @@ const CensorList: React.FC = () => {
               <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
               <Button icon={<ReloadOutlined />} onClick={fetchVaccineEvents} loading={loading}>
                 Làm mới
+              </Button>
+              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+                Tạo sự kiện mới
               </Button>
             </Space>
           </div>
@@ -461,7 +449,7 @@ const CensorList: React.FC = () => {
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
                   description='Không có sự kiện tiêm chủng nào'
                   children={
-                    <Button type='primary' icon={<MedicineBoxOutlined />}>
+                    <Button type='primary' icon={<MedicineBoxOutlined />} onClick={() => setIsCreateModalVisible(true)}>
                       Tạo sự kiện mới
                     </Button>
                   }
@@ -474,9 +462,10 @@ const CensorList: React.FC = () => {
                 ? 'hover:bg-blue-50 transition-colors cursor-pointer'
                 : 'hover:bg-gray-50 transition-colors cursor-pointer'
             }
-            onRow={(record) => ({
-              onClick: () => handleViewDetails(record)
-            })}
+          // Bỏ onRow event handler để tránh conflict với button clicks
+          // onRow={(record) => ({
+          //   onClick: () => handleViewDetails(record)
+          // })}
           />
         </Card>
 
@@ -592,6 +581,15 @@ const CensorList: React.FC = () => {
                       ' - ' +
                       (selectedPlan.endRegistrationDate ? formatDateTime(selectedPlan.endRegistrationDate) : '-')}
                   </Descriptions.Item>
+                  <Descriptions.Item
+                    label={
+                      <Space>
+                        <BookOutlined /> Năm học
+                      </Space>
+                    }
+                  >
+                    {selectedPlan.schoolYear}
+                  </Descriptions.Item>
                 </Descriptions>
               </Card>
 
@@ -601,6 +599,41 @@ const CensorList: React.FC = () => {
               </Card>
             </div>
           )}
+        </Modal>
+
+        {/* Modal tạo mới sự kiện */}
+        <Modal
+          title={
+            <span>
+              <MedicineBoxOutlined /> Tạo sự kiện tiêm chủng mới
+            </span>
+          }
+          open={isCreateModalVisible}
+          onCancel={() => setIsCreateModalVisible(false)}
+          footer={null}
+          width={800}
+          destroyOnClose
+        >
+          <CreateVaccineEvent onSuccess={handleCreateSuccess} />
+        </Modal>
+
+        {/* Modal cập nhật sự kiện */}
+        <Modal
+          title={
+            <span>
+              <MedicineBoxOutlined /> Cập nhật sự kiện tiêm chủng
+            </span>
+          }
+          open={isEditModalVisible}
+          onCancel={() => {
+            setIsEditModalVisible(false)
+            setEditEvent(null)
+          }}
+          footer={null}
+          width={800}
+          destroyOnClose
+        >
+          {editEvent && <CreateVaccineEvent onSuccess={handleEditSuccess} eventData={editEvent} isEdit />}
         </Modal>
       </Space>
     </div>

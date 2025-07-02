@@ -7,7 +7,7 @@ import HealthRecord from './pages/parent/healthRecord/healthRecord'
 import ProfileParent from './pages/parent/profile/profileParent'
 import NurseLayout from './layouts/NurseLayout/NurseLayout'
 import HealthRecordCensorship from './pages/nurse/healthRecordCensorship/HealthRecordCensorship'
-import ScheduleVaccination from './pages/nurse/scheduleVaccination/ScheduleVaccination'
+// import ScheduleVaccination from './pages/nurse/scheduleVaccination/ScheduleVaccination'
 import ResultsAfterVaccination from './pages/nurse/resultsAfterVaccination'
 import ReceiveMedicine from './pages/nurse/receiveMedicine/ReceiveMedicine'
 import MedicalReport from './pages/nurse/medicalReport/MedicalReport'
@@ -115,10 +115,10 @@ export default function useRouteElements() {
               path: path.HEALTH_RECORD_CENSORSHIP,
               element: <HealthRecordCensorship />
             },
-            {
-              path: path.SCHEDULE_VACCINATION,
-              element: <ScheduleVaccination />
-            },
+            // {
+            //   path: path.SCHEDULE_VACCINATION,
+            //   element: <ScheduleVaccination />
+            // },
             {
               path: path.RESULTS_AFTER_VACCINATION,
               element: <ResultsAfterVaccination />

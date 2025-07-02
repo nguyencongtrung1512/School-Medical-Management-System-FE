@@ -19,8 +19,8 @@ const Sidebar: React.FC = () => {
     {
       key: path.CENSOR_LIST,
       icon: <FileSearchOutlined className='text-xl' />,
-      label: 'Danh sách kiểm duyệt'
-    }, 
+      label: 'Sự kiện tiêm chủng'
+    },
     {
       key: path.Appointment_Check,
       icon: <FileSearchOutlined className='text-xl' />,
