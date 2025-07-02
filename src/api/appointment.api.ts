@@ -23,50 +23,50 @@ export interface Appointment {
 }
 
 export interface AppointmentAPIResponse {
-  _id: string;
-  parentId: string;
-  studentId: string;
-  appointmentTime: string;
-  reason: string;
-  type: string;
-  status: string;
-  note: string;
-  isDeleted: boolean;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-  schoolNurse: unknown;
+  _id: string
+  parentId: string
+  studentId: string
+  appointmentTime: string
+  reason: string
+  type: string
+  status: string
+  note: string
+  isDeleted: boolean
+  createdAt: string
+  updatedAt: string
+  __v: number
+  schoolNurse: unknown
   student: {
-    _id: string;
-    fullName: string;
-    isDeleted: boolean;
-    gender: string;
-    dob: string;
-    classId: string;
-    studentCode: string;
-    studentIdCode: string;
+    _id: string
+    fullName: string
+    isDeleted: boolean
+    gender: string
+    dob: string
+    classId: string
+    studentCode: string
+    studentIdCode: string
     parents: Array<{
-      userId: string;
-      type: string;
-      email: string;
-    }>;
-    createdAt: string;
-    updatedAt: string;
-    __v: number;
-  };
+      userId: string
+      type: string
+      email: string
+    }>
+    createdAt: string
+    updatedAt: string
+    __v: number
+  }
   parent: {
-    _id: string;
-    password: string;
-    email: string;
-    fullName: string;
-    phone: string;
-    role: string;
-    studentIds: string[];
-    isDeleted: boolean;
-    createdAt: string;
-    updatedAt: string;
-    __v: number;
-  };
+    _id: string
+    password: string
+    email: string
+    fullName: string
+    phone: string
+    role: string
+    studentIds: string[]
+    isDeleted: boolean
+    createdAt: string
+    updatedAt: string
+    __v: number
+  }
 }
 
 export interface AppointmentListResponse {
@@ -116,6 +116,51 @@ export const getAppointmentById = async (id: string): Promise<{ success: boolean
 
 export const getAppointmentsNurse = async (params: GetAppointmentsParamsNurse): Promise<AppointmentListResponse> => {
   const { pageNum, pageSize, nurseId } = params
-  const queryParams = nurseId ? `?nurseId=${nurseId}` : ''
+  const queryParams = nurseId ? `?schoolNurseId=${nurseId}` : ''
   return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}${queryParams}`)
+}
+
+// ===================== NEW API METHODS =====================
+
+// Payload for updating appointment status (nurse / manager)
+export interface UpdateAppointmentStatusRequest {
+  status: string // e.g. 'approved' | 'cancelled' | 'done'
+  cancellationReason?: string
+  note?: string
+}
+
+// Update appointment status
+export const updateAppointmentStatus = async (
+  id: string,
+  data: UpdateAppointmentStatusRequest
+): Promise<CreateAppointmentResponse> => {
+  return axiosInstance.patch(`/appointments/${id}/status`, data)
+}
+
+// Search parameters with filtering support
+export interface SearchAppointmentsParams extends GetAppointmentsParamsNurse {
+  query?: string
+  parentId?: string
+  studentId?: string
+  managerId?: string
+  status?: string
+  type?: string
+}
+
+// Search appointments with advanced filters
+export const searchAppointments = async (params: SearchAppointmentsParams): Promise<AppointmentListResponse> => {
+  const { pageNum, pageSize, ...query } = params
+  return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}`, {
+    params: query
+  })
+}
+
+// Export appointments to Excel file (returns Blob)
+export const exportAppointmentsExcel = async (
+  params: Omit<SearchAppointmentsParams, 'pageNum' | 'pageSize'>
+): Promise<Blob> => {
+  return axiosInstance.get('/appointments/export/excel', {
+    params,
+    responseType: 'blob'
+  })
 }
