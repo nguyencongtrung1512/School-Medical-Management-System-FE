@@ -348,11 +348,11 @@ const CensorList: React.FC = () => {
   })
 
   return (
-    <div className='p-6 bg-gray-50 min-h-screen'>
+    <div className=''>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
         {/* Header */}
         <Card className='shadow-sm'>
-          <div className='flex justify-between items-center mb-6'>
+          <div className='flex justify-between items-center'>
             <div>
               <Title level={2} className='m-0 flex items-center gap-2'>
                 <MedicineBoxOutlined className='text-blue-600' />

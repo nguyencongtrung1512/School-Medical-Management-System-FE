@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Form, Input, Button, Row, Col, Alert, Select, Space } from 'antd'
 import {
   UserOutlined,
@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import path from '../../constants/path'
 import { toast } from 'react-toastify'
 import { AxiosError } from 'axios'
-import { registerAPI } from '../../api/auth.api'
+import { registerAPI, RegisterRequest } from '../../api/auth.api'
 
 interface RegisterFormValues {
   phoneNumber: string
@@ -21,11 +21,8 @@ interface RegisterFormValues {
   confirmPassword: string
   fullname: string
   email: string
-  role: 'parent' | 'school-nurse'
-  studentParents: {
-    studentCode: string
-    type: 'father' | 'mother' | 'guardian'
-  }[]
+  type: 'father' | 'mother' | 'guardian'
+  studentCodes: string[]
 }
 
 interface RegisterFormProps {
@@ -46,21 +43,28 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
   }
   const navigate = useNavigate()
 
+  useEffect(() => {
+    form.setFieldsValue({ role: 'parent' })
+  }, [form])
+
   const handleRegister = () => {
     navigate(path.login)
   }
 
   const handleSubmit = async (values: RegisterFormValues) => {
     try {
-      const response = await registerAPI({
-        email: values.email,
-        password: values.password,
-        fullName: values.fullname,
-        phone: values.phoneNumber,
-        role: values.role,
-        studentParents: values.studentParents,
+      const { type, studentCodes, email, password, fullname, phoneNumber } = values
+      const studentParents = (studentCodes || []).map((code) => ({ studentCode: code, type }))
+      const body : RegisterRequest = {
+        email,
+        password,
+        fullName: fullname,
+        phone: phoneNumber,
+        role: 'parent',
+        studentParents,
         isDeleted: false
-      })
+      }
+      const response = await registerAPI(body)
       if (response.success) {
         toast.success('Đăng ký thành công!')
         form.resetFields()
@@ -78,7 +82,6 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
             }
           ])
         } else {
-          // Hiển thị lỗi chung
           toast.error(errorMessage)
         }
       }
@@ -291,71 +294,46 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
               <Row gutter={24}>
                 <Col span={24}>
                   <Form.Item
-                    name='role'
-                    rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
+                    name='type'
+                    label='Danh tính'
+                    rules={[{ required: true, message: 'Vui lòng chọn danh tính!' }]}
                     className='mb-4'
                   >
                     <Select
-                      placeholder='Chọn vai trò'
-                      size='large'
+                      placeholder='Chọn danh tính'
                       options={[
-                        { value: 'parent', label: 'Phụ huynh' }
+                        { value: 'father', label: 'Cha' },
+                        { value: 'mother', label: 'Mẹ' },
+                        { value: 'guardian', label: 'Người giám hộ' }
                       ]}
-                      disabled
-                      value='parent'
                     />
                   </Form.Item>
                 </Col>
               </Row>
 
-              <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.role !== currentValues.role}>
-                {({ getFieldValue }) =>
-                  getFieldValue('role') === 'parent' && (
-                    <Row gutter={24}>
-                      <Col span={24}>
-                        <Form.List name='studentParents'>
-                          {(fields, { add, remove }) => (
-                            <>
-                              {fields.map(({ key, name, ...restField }) => (
-                                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align='baseline'>
-                                  <Form.Item
-                                    {...restField}
-                                    name={[name, 'studentCode']}
-                                    rules={[{ required: true, message: 'Vui lòng nhập mã học sinh!' }]}
-                                  >
-                                    <Input placeholder='Mã học sinh' />
-                                  </Form.Item>
-                                  <Form.Item
-                                    {...restField}
-                                    name={[name, 'type']}
-                                    rules={[{ required: true, message: 'Vui lòng chọn danh tính!' }]}
-                                  >
-                                    <Select
-                                      style={{ width: 120 }}
-                                      placeholder='Chọn danh tính'
-                                      options={[
-                                        { value: 'father', label: 'Cha' },
-                                        { value: 'mother', label: 'Mẹ' },
-                                        { value: 'guardian', label: 'Người giám hộ' }
-                                      ]}
-                                    />
-                                  </Form.Item>
-                                  <MinusCircleOutlined onClick={() => remove(name)} />
-                                </Space>
-                              ))}
-                              <Form.Item>
-                                <Button type='dashed' onClick={() => add()} block icon={<PlusOutlined />}>
-                                  Thêm danh tính
-                                </Button>
-                              </Form.Item>
-                            </>
-                          )}
-                        </Form.List>
-                      </Col>
-                    </Row>
-                  )
-                }
-              </Form.Item>
+              <Form.List name='studentCodes'>
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align='baseline'>
+                        <Form.Item
+                          {...restField}
+                          name={name}
+                          rules={[{ required: true, message: 'Vui lòng nhập mã học sinh!' }]}
+                        >
+                          <Input placeholder='Mã học sinh' />
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button type='dashed' onClick={() => add()} block icon={<PlusOutlined />}>
+                        Thêm mã học sinh
+                      </Button>
+                    </Form.Item>
+                  </>
+                )}
+              </Form.List>
 
               <Form.Item className='mb-0 mt-6'>
                 <Button

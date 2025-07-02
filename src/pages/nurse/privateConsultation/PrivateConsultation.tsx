@@ -1,257 +1,183 @@
-import React, { useState } from 'react'
-import {
-  Card,
-  Form,
-  Input,
-  Select,
-  DatePicker,
-  Button,
-  Table,
-  Typography,
-  Space,
-  Tag,
-  Radio,
-  message,
-  Row,
-  Col,
-  Modal
-} from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
+import { Card, List, Spin, Typography, Empty, Avatar, Space, Divider, Row, Col, DatePicker } from 'antd'
+import { UserOutlined, ClockCircleOutlined, PhoneOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 
-const { TextArea } = Input
-const { Title } = Typography
+import { getAppointmentsNurse, type AppointmentAPIResponse } from '../../../api/appointment.api'
+import { useAuth } from '../../../contexts/auth.context'
 
-interface Student {
-  id: string
-  name: string
-  class: string
-  grade: string
-}
+const { Title, Text } = Typography
 
-interface ConsultationRequest {
-  id: string
-  studentId: string
-  studentName: string
-  studentClass: string
-  reason: string
-  suggestedTime: string
-  consultationMethod: 'in_person' | 'phone' | 'online'
-  status: 'pending' | 'accepted' | 'rejected' | 'completed'
-  notes?: string
-  createdBy: string
-  createdAt: string
-  parentResponse?: string
-  parentResponseTime?: string
-}
+function PrivateConsultation() {
+  const { user } = useAuth()
+  const [appointments, setAppointments] = useState<AppointmentAPIResponse[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
 
-const PrivateConsultation: React.FC = () => {
-  const [form] = Form.useForm()
-  const [isModalVisible, setIsModalVisible] = useState(false)
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!user) return
 
-  // Mock data - sau này sẽ lấy từ API
-  const students: Student[] = [
-    { id: '1', name: 'Nguyễn Văn A', class: '5A', grade: '5' },
-    { id: '2', name: 'Trần Thị B', class: '3B', grade: '3' },
-    { id: '3', name: 'Lê Văn C', class: '2A', grade: '2' }
-  ]
-
-  const consultationRequests: ConsultationRequest[] = [
-    {
-      id: '1',
-      studentId: '1',
-      studentName: 'Nguyễn Văn A',
-      studentClass: '5A',
-      reason: 'Thị lực yếu, cần kiểm tra mắt',
-      suggestedTime: '2024-03-25 14:00',
-      consultationMethod: 'in_person',
-      status: 'pending',
-      createdBy: 'Y tá Nguyễn Thị H',
-      createdAt: '2024-03-20 10:00'
-    },
-    {
-      id: '2',
-      studentId: '2',
-      studentName: 'Trần Thị B',
-      studentClass: '3B',
-      reason: 'Chỉ số BMI bất thường',
-      suggestedTime: '2024-03-26 15:30',
-      consultationMethod: 'online',
-      status: 'accepted',
-      createdBy: 'Y tá Nguyễn Thị H',
-      createdAt: '2024-03-19 14:00',
-      parentResponse: 'Đồng ý tham gia tư vấn',
-      parentResponseTime: '2024-03-20 09:00'
+      setLoading(true)
+      try {
+        // Gọi API lấy danh sách lịch phỏng vấn theo nurseId
+        const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 10, nurseId: user.id })
+        setAppointments(res.pageData)
+      } catch {
+        setAppointments([])
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
 
-  const columns = [
-    {
-      title: 'Học sinh',
-      key: 'student',
-      render: (record: ConsultationRequest) => (
-        <div>
-          {record.studentName}
-          <br />
-          <small>Lớp {record.studentClass}</small>
+    fetchAppointments()
+  }, [user])
+
+  // Lọc danh sách theo ngày nếu có chọn
+  const filteredAppointments = appointments.filter((item) => dayjs(item.appointmentTime).isSame(selectedDate, 'day'))
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px 0' }}>
+        <Spin size='large' />
+        <div style={{ marginTop: 16 }}>
+          <Text>Đang tải dữ liệu...</Text>
         </div>
-      )
-    },
-    {
-      title: 'Lý do tư vấn',
-      dataIndex: 'reason',
-      key: 'reason'
-    },
-    {
-      title: 'Thời gian đề xuất',
-      dataIndex: 'suggestedTime',
-      key: 'suggestedTime'
-    },
-    {
-      title: 'Phương thức',
-      dataIndex: 'consultationMethod',
-      key: 'consultationMethod',
-      render: (method: string) => {
-        const methods = {
-          in_person: { color: 'blue', text: 'Gặp trực tiếp' },
-          phone: { color: 'green', text: 'Qua điện thoại' },
-          online: { color: 'purple', text: 'Online' }
-        }
-        const { color, text } = methods[method as keyof typeof methods]
-        return <Tag color={color}>{text}</Tag>
-      }
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const statuses = {
-          pending: { color: 'blue', text: 'Chờ phản hồi' },
-          accepted: { color: 'green', text: 'Đã chấp nhận' },
-          rejected: { color: 'red', text: 'Từ chối' },
-          completed: { color: 'gray', text: 'Đã hoàn thành' }
-        }
-        const { color, text } = statuses[status as keyof typeof statuses]
-        return <Tag color={color}>{text}</Tag>
-      }
-    }
-  ]
-
-  const handleCreateRequest = () => {
-    form.validateFields().then((values) => {
-      const newRequest: ConsultationRequest = {
-        id: Date.now().toString(),
-        studentId: values.studentId,
-        studentName: students.find((s) => s.id === values.studentId)?.name || '',
-        studentClass: students.find((s) => s.id === values.studentId)?.class || '',
-        reason: values.reason,
-        suggestedTime: values.suggestedTime.format('YYYY-MM-DD HH:mm'),
-        consultationMethod: values.consultationMethod,
-        status: 'pending',
-        notes: values.notes,
-        createdBy: 'Y tá Nguyễn Thị H',
-        createdAt: new Date().toLocaleString()
-      }
-
-      console.log('New consultation request:', newRequest)
-      message.success('Gửi lời mời tư vấn thành công!')
-      setIsModalVisible(false)
-      form.resetFields()
-    })
+      </div>
+    )
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        <Card>
-          <Row justify='space-between' align='middle'>
-            <Col>
-              <Title level={4}>Tư vấn riêng</Title>
-            </Col>
-            <Col>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>
-                Gửi lời mời tư vấn
-              </Button>
-            </Col>
-          </Row>
-        </Card>
+    <div style={{ padding: '2px', minHeight: '100vh' }}>
+      <Card>
+        <Title level={2} style={{ marginBottom: 24, color: '#1890ff' }}>
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          Lịch Tư Vấn
+        </Title>
+        <div style={{ marginBottom: 24 }}>
+          <DatePicker
+            format='DD/MM/YYYY'
+            value={selectedDate}
+            onChange={setSelectedDate}
+            allowClear
+            placeholder='Chọn ngày cần xem'
+            style={{ width: 220 }}
+          />
+        </div>
+        {filteredAppointments.length === 0 ? (
+          <Empty
+            description={selectedDate ? 'Không có lịch phỏng vấn cho ngày này' : 'Không có lịch phỏng vấn nào'}
+            style={{ padding: '50px 0' }}
+          />
+        ) : (
+          <List
+            itemLayout='vertical'
+            size='large'
+            dataSource={filteredAppointments}
+            renderItem={(item) => (
+              <List.Item key={item._id}>
+                <Card
+                  hoverable
+                  style={{
+                    marginBottom: 16,
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} lg={12}>
+                      <Space direction='vertical' size='middle' style={{ width: '100%' }}>
+                        <div>
+                          <Space align='center'>
+                            <Avatar size='large' icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
+                            <div>
+                              <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
+                                {item.student.fullName}
+                              </Title>
+                              <Text type='secondary'>Học sinh</Text>
+                            </div>
+                          </Space>
+                        </div>
 
-        <Card title='Danh sách lời mời tư vấn'>
-          <Table columns={columns} dataSource={consultationRequests} rowKey='id' pagination={{ pageSize: 10 }} />
-        </Card>
+                        <div>
+                          <Space>
+                            <ClockCircleOutlined style={{ color: '#52c41a' }} />
+                            <Text strong>Thời gian:</Text>
+                            <Text>{new Date(item.appointmentTime).toLocaleString('vi-VN')}</Text>
+                          </Space>
+                        </div>
 
-        <Modal
-          title='Tạo lời mời tư vấn'
-          open={isModalVisible}
-          onCancel={() => {
-            setIsModalVisible(false)
-            form.resetFields()
-          }}
-          footer={[
-            <Button
-              key='cancel'
-              onClick={() => {
-                setIsModalVisible(false)
-                form.resetFields()
-              }}
-            >
-              Hủy
-            </Button>,
-            <Button key='submit' type='primary' onClick={() => form.submit()}>
-              Gửi lời mời
-            </Button>
-          ]}
-          width={800}
-        >
-          <Form form={form} layout='vertical' onFinish={handleCreateRequest}>
-            <Form.Item
-              name='studentId'
-              label='Học sinh'
-              rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]}
-            >
-              <Select
-                placeholder='Chọn học sinh'
-                options={students.map((student) => ({
-                  value: student.id,
-                  label: `${student.name} - Lớp ${student.class}`
-                }))}
-              />
-            </Form.Item>
+                        <div>
+                          <Space align='start'>
+                            <FileTextOutlined style={{ color: '#faad14', marginTop: 4 }} />
+                            <div>
+                              <Text strong>Lý do:</Text>
+                              <div style={{ marginTop: 4 }}>
+                                <Text>{item.reason}</Text>
+                              </div>
+                            </div>
+                          </Space>
+                        </div>
+                      </Space>
+                    </Col>
 
-            <Form.Item
-              name='reason'
-              label='Lý do mời tư vấn'
-              rules={[{ required: true, message: 'Vui lòng nhập lý do!' }]}
-            >
-              <TextArea rows={4} placeholder='Nhập lý do mời tư vấn...' />
-            </Form.Item>
+                    <Col xs={24} lg={12}>
+                      <Space direction='vertical' size='middle' style={{ width: '100%' }}>
+                        {/* <div>
+                          <Space>
+                            <Text strong>Trạng thái:</Text>
+                            <Tag color={getStatusColor(item.status)} style={{ fontSize: '14px' }}>
+                              {getStatusText(item.status)}
+                            </Tag>
+                          </Space>
+                        </div> */}
 
-            <Form.Item
-              name='suggestedTime'
-              label='Thời gian gợi ý'
-              rules={[{ required: true, message: 'Vui lòng chọn thời gian!' }]}
-            >
-              <DatePicker showTime format='DD/MM/YYYY HH:mm' style={{ width: '100%' }} />
-            </Form.Item>
+                        {item.note && (
+                          <div>
+                            <Text strong>Ghi chú:</Text>
+                            <div
+                              style={{
+                                marginTop: 4,
+                                padding: 8,
+                                background: '#f6f6f6',
+                                borderRadius: 4,
+                                border: '1px solid #d9d9d9'
+                              }}
+                            >
+                              <Text>{item.note}</Text>
+                            </div>
+                          </div>
+                        )}
 
-            <Form.Item
-              name='consultationMethod'
-              label='Phương thức tư vấn'
-              rules={[{ required: true, message: 'Vui lòng chọn phương thức!' }]}
-            >
-              <Radio.Group>
-                <Radio value='in_person'>Gặp trực tiếp</Radio>
-                <Radio value='phone'>Qua điện thoại</Radio>
-                <Radio value='online'>Online (Zoom/Meet)</Radio>
-              </Radio.Group>
-            </Form.Item>
+                        <Divider style={{ margin: '12px 0' }} />
 
-            <Form.Item name='notes' label='Ghi chú thêm'>
-              <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
-            </Form.Item>
-          </Form>
-        </Modal>
-      </Space>
+                        <div>
+                          <Text strong style={{ color: '#722ed1' }}>
+                            Thông tin phụ huynh:
+                          </Text>
+                          <div style={{ marginTop: 8 }}>
+                            <Space direction='vertical' size='small'>
+                              <Space>
+                                <UserOutlined style={{ color: '#722ed1' }} />
+                                <Text>{item.parent.fullName}</Text>
+                              </Space>
+                              <Space>
+                                <PhoneOutlined style={{ color: '#722ed1' }} />
+                                <Text copyable>{item.parent.phone}</Text>
+                              </Space>
+                            </Space>
+                          </div>
+                        </div>
+                      </Space>
+                    </Col>
+                  </Row>
+                </Card>
+              </List.Item>
+            )}
+          />
+        )}
+      </Card>
     </div>
   )
 }

@@ -22,10 +22,65 @@ export interface Appointment {
   updatedAt: string
 }
 
+export interface AppointmentAPIResponse {
+  _id: string;
+  parentId: string;
+  studentId: string;
+  appointmentTime: string;
+  reason: string;
+  type: string;
+  status: string;
+  note: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  schoolNurse: unknown;
+  student: {
+    _id: string;
+    fullName: string;
+    isDeleted: boolean;
+    gender: string;
+    dob: string;
+    classId: string;
+    studentCode: string;
+    studentIdCode: string;
+    parents: Array<{
+      userId: string;
+      type: string;
+      email: string;
+    }>;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+  parent: {
+    _id: string;
+    password: string;
+    email: string;
+    fullName: string;
+    phone: string;
+    role: string;
+    studentIds: string[];
+    isDeleted: boolean;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+}
+
 export interface AppointmentListResponse {
   success: boolean
-  data: Appointment[]
-  total: number
+  data: {
+    pageData: AppointmentAPIResponse[]
+    total: number
+  }
+}
+
+export interface GetAppointmentsParamsNurse {
+  pageNum: number
+  pageSize: number
+  nurseId?: string
 }
 
 export interface CreateAppointmentResponse {
@@ -59,3 +114,8 @@ export const getAppointmentById = async (id: string): Promise<{ success: boolean
   return axiosInstance.get(`/appointments/${id}`)
 }
 
+export const getAppointmentsNurse = async (params: GetAppointmentsParamsNurse): Promise<AppointmentListResponse> => {
+  const { pageNum, pageSize, nurseId } = params
+  const queryParams = nurseId ? `?nurseId=${nurseId}` : ''
+  return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}${queryParams}`)
+}

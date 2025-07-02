@@ -76,7 +76,7 @@ const AppointmentList = ({ appointments }: AppointmentListProps) => {
               <div className='flex items-start justify-between'>
                 <div className='space-y-2'>
                   <div className='flex items-center space-x-2'>
-                    <h3 className='font-medium text-gray-900'>{appointment.studentId}</h3>
+                    <h3 className='font-medium text-gray-900'>{appointment.fullName}</h3>
                   </div>
                   <div className='flex items-center space-x-4 text-sm text-gray-600'>
                     <div className='flex items-center space-x-1'>

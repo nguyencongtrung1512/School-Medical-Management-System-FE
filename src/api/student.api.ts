@@ -27,7 +27,7 @@ export const createStudentAPI = (data: {
   fullName: string
   gender: 'male' | 'female' | 'other'
   dob: string
-  parentId: string
+  email: string
   classId: string
   avatar?: string
 }) => {

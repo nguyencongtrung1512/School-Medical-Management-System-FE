@@ -35,6 +35,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined)
 
   const handleAvatarUpload = async (file: File) => {
     try {
@@ -42,6 +43,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
       const url = await handleUploadFile(file, 'image')
       if (url) {
         form.setFieldsValue({ avatar: url })
+        setAvatarUrl(url)
         message.success('Tải ảnh lên thành công!')
       }
     } catch (error) {
@@ -73,7 +75,9 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
         ...student,
         dob: student.dob ? dayjs(student.dob) : null
       })
+      setAvatarUrl(undefined)
     }
+    if (!isEdit) setAvatarUrl(undefined)
   }, [student, isEdit, form])
 
   const handleSave = async () => {
@@ -110,7 +114,12 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
       ) : student ? (
         <div className='p-4'>
           <div className='flex items-center mb-6'>
-            <img alt={student.fullName} src={student.avatar} className='mr-4' style={{ width: 74, height: 94 }} />
+            <img
+              alt={student.fullName}
+              src={isEdit ? (avatarUrl || student.avatar) : student.avatar}
+              className='mr-4'
+              style={{ width: 74, height: 94 }}
+            />
             <div>
               <Title level={4}>{student.fullName}</Title>
             </div>
@@ -162,7 +171,17 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
                   {student.gender === 'male' ? 'Nam' : student.gender === 'female' ? 'Nữ' : 'Khác'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Phụ huynh'>
-                  {student.parentName ? student.parentName : 'Chưa cập nhật'}
+                  {Array.isArray(student.parentInfos) && student.parentInfos.length > 0 ? (
+                    <ul style={{ paddingLeft: 16, margin: 0 }}>
+                      {student.parentInfos.map((parent: any) => (
+                        <li key={parent._id}>
+                          <b>{parent.fullName}</b> ({parent.type === 'father' ? 'Bố' : parent.type === 'mother' ? 'Mẹ' : parent.type})<br />
+                          Email: {parent.email}<br />
+                          SĐT: {parent.phone}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : 'Chưa cập nhật'}
                 </Descriptions.Item>
               </Descriptions>
               <Button className='mt-4' type='primary' onClick={() => setIsEdit(true)}>

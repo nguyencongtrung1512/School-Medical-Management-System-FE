@@ -39,6 +39,7 @@ interface Appointment {
   _id: string
   studentId: string
   appointmentTime: string
+  studentCode: string
   reason: string
   note?: string
   status: string
@@ -72,7 +73,14 @@ function AppointmentCheck() {
     setLoading(true)
     try {
       const res = await getAppointments(1, 20)
-      setAppointments(res.pageData || [])
+      const mapped = (res.pageData || []).map((item: any) => ({
+        ...item,
+        studentCode: item.student?.studentCode || '',
+        studentName: item.student?.fullName || '',
+        parentName: item.parent?.fullName || '',
+        phone: item.parent?.phone || ''
+      }))
+      setAppointments(mapped)
     } catch {
       setAppointments([])
     } finally {
@@ -269,9 +277,9 @@ function AppointmentCheck() {
   const pendingCount = appointments.filter((apt) => apt.status === 'pending').length
 
   return (
-    <div className='p-6 bg-gray-50 min-h-screen'>
+    <div className=''>
       <Card className='shadow-sm'>
-        <div className='mb-6'>
+        <div className=''>
           <Space align='center' className='mb-4'>
             <MedicineBoxOutlined className='text-2xl text-blue-600' />
             <Title level={2} className='m-0'>
@@ -326,7 +334,7 @@ function AppointmentCheck() {
         {selectedAppointment && (
           <div>
             <Descriptions column={1} bordered size='small'>
-              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.studentId}</Descriptions.Item>
+              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.studentCode}</Descriptions.Item>
               <Descriptions.Item label='Tên học sinh'>{selectedAppointment.studentName}</Descriptions.Item>
               <Descriptions.Item label='Phụ huynh'>{selectedAppointment.parentName}</Descriptions.Item>
               <Descriptions.Item label='Số điện thoại'>{selectedAppointment.phone}</Descriptions.Item>

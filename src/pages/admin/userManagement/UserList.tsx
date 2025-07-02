@@ -295,7 +295,7 @@ const UserList: React.FC = () => {
   }
 
   return (
-    <div className='p-6 bg-gray-50 min-h-screen'>
+    <div className=''>
       <Space direction='vertical' size='large' style={{ width: '100%' }}>
         {/* Header */}
         <Card className='shadow-sm'>

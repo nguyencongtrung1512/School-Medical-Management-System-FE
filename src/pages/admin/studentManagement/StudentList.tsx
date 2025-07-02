@@ -66,6 +66,7 @@ const StudentList: React.FC = () => {
     try {
       const res = await getStudentByIdAPI(student._id)
       setStudentDetail(res.data)
+      console.log('res.data', res.data)
     } catch {
       setStudentDetail(null)
     }

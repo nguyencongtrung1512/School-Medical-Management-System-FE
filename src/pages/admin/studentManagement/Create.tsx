@@ -1,11 +1,11 @@
 import React from 'react'
-import { Modal, Form, Input, Select, DatePicker, Spin } from 'antd'
+import { Modal, Form, Input, Select, DatePicker, Upload, Button, message } from 'antd'
 import { useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { createStudentAPI } from '../../../api/student.api'
-import { searchUsersAPI } from '../../../api/user.api'
 import dayjs from 'dayjs'
-import { CalendarOutlined } from '@ant-design/icons'
+import { CalendarOutlined, UploadOutlined } from '@ant-design/icons'
+import { handleUploadFile } from '../../../utils/upload'
 
 interface CreateClassProps {
   isModalVisible: boolean
@@ -15,28 +15,10 @@ interface CreateClassProps {
 const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onOk }) => {
   const [form] = Form.useForm()
   const { classId } = useParams<{ classId: string }>()
-  const [parents, setParents] = React.useState<{ _id: string; fullName: string }[]>([])
-  const [loadingParents, setLoadingParents] = React.useState(false)
+  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>(undefined)
 
   const maxDate = dayjs().subtract(6, 'year')
   const minDate = dayjs().subtract(50, 'year')
-
-  const fetchParents = async (searchText = '') => {
-    setLoadingParents(true)
-    try {
-      const res = await searchUsersAPI(1, 10, searchText, 'parent')
-      setParents(res.data.pageData || [])
-    } catch (err) {
-      console.error('Error fetching parents:', err)
-      setParents([])
-    }
-    setLoadingParents(false)
-  }
-
-  // Fetch phụ huynh mặc định khi mở modal
-  React.useEffect(() => {
-    if (isModalVisible) fetchParents()
-  }, [isModalVisible])
 
   const handleOk = async () => {
     try {
@@ -51,8 +33,9 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         fullName: values.fullName,
         gender: values.gender,
         dob: values.dob,
-        parentId: values.parentId,
-        classId: classId
+        email: values.email,
+        classId: classId,
+        avatar: values.avatar
       }
 
       await createStudentAPI(data)
@@ -64,6 +47,39 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       toast.error('Không thể tạo học sinh mới')
     }
   }
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      const url = await handleUploadFile(file, 'image')
+      if (url) {
+        form.setFieldsValue({ avatar: url })
+        setAvatarUrl(url)
+        message.success('Tải ảnh lên thành công!')
+      }
+    } catch (error) {
+      message.error('Tải ảnh lên thất bại!')
+    }
+    return false
+  }
+
+  const beforeUpload = (file: File) => {
+    const isImage = file.type.startsWith('image/')
+    if (!isImage) {
+      message.error('Bạn chỉ được upload file ảnh!')
+      return false
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2
+    if (!isLt2M) {
+      message.error('Ảnh phải nhỏ hơn 2MB!')
+      return false
+    }
+    handleAvatarUpload(file)
+    return false
+  }
+
+  React.useEffect(() => {
+    if (!isModalVisible) setAvatarUrl(undefined)
+  }, [isModalVisible])
 
   return (
     <Modal
@@ -120,22 +136,32 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
             suffixIcon={<CalendarOutlined />}
           />
         </Form.Item>
-        <Form.Item name='parentId' label='Phụ huynh'>
-          <Select
-            showSearch
-            placeholder='Chọn phụ huynh'
-            onSearch={fetchParents}
-            filterOption={false}
-            loading={loadingParents}
-            allowClear
-            notFoundContent={loadingParents ? <Spin size='small' /> : null}
+        <Form.Item
+          name='email'
+          label='Email phụ huynh'
+          rules={[
+            { required: true, message: 'Vui lòng nhập email phụ huynh!' },
+            { type: 'email', message: 'Email không hợp lệ!' }
+          ]}
+        >
+          <Input placeholder='Nhập email phụ huynh' />
+        </Form.Item>
+        <Form.Item name='avatar' label='Avatar'>
+          <Upload
+            name='avatar'
+            listType='picture'
+            showUploadList={false}
+            beforeUpload={beforeUpload}
           >
-            {parents.map((parent) => (
-              <Select.Option key={parent._id} value={parent._id} label={parent.fullName}>
-                {parent.fullName}
-              </Select.Option>
-            ))}
-          </Select>
+            <Button icon={<UploadOutlined />}>Upload Avatar</Button>
+          </Upload>
+          {(avatarUrl || form.getFieldValue('avatar')) && (
+            <img
+              src={avatarUrl || form.getFieldValue('avatar')}
+              alt='avatar preview'
+              style={{ width: 74, height: 94, marginTop: 8 }}
+            />
+          )}
         </Form.Item>
       </Form>
     </Modal>

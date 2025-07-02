@@ -9,6 +9,7 @@ import { toast } from 'react-toastify'
 import { getMedicineSubmissionsByParentId, MedicineSubmissionData } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
+import MedicationNoData from '../../../components/nodata/medicationNodata'
 
 type PopulatedMedicineRequest = Omit<MedicineSubmissionData, 'studentId'> & {
   studentId: StudentProfile
@@ -164,6 +165,10 @@ function HistorySubmission() {
             <div className='flex items-center justify-center py-12'>
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
               <span className='ml-3 text-gray-600'>Đang tải...</span>
+            </div>
+          ) : medicineHistory.length === 0 ? (
+            <div className='flex items-center justify-center py-12'>
+              <MedicationNoData />
             </div>
           ) : (
             <div className='rounded-lg border border-gray-200 overflow-hidden'>
