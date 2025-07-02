@@ -20,7 +20,8 @@ import type { ColumnsType } from 'antd/es/table'
 import {
   updateMedicineSubmissionStatus,
   MedicineSubmissionData,
-  getMedicineSubmissionsByNurseId
+  getMedicineSubmissionsByNurseId,
+  UpdateMedicineSubmissionStatusRequest
 } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
@@ -95,7 +96,7 @@ const ReceiveMedicine: React.FC = () => {
           })
         )
         setMedicineRequests(requestsWithStudentInfo as PopulatedMedicineSubmissionData[])
-        setTotalItems(response.totalPage * pageSize)
+        setTotalItems(response.pageInfo.totalItems)
       } catch (error) {
         message.error('Không thể lấy danh sách yêu cầu thuốc!')
         console.error('Fetch medicine requests error:', error)
@@ -228,8 +229,20 @@ const ReceiveMedicine: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: MedicineSubmissionData['status']) => {
     try {
-      const response = await updateMedicineSubmissionStatus(id, newStatus)
-      console.log('trung đây', response)
+      let payload: UpdateMedicineSubmissionStatusRequest = {
+        status: newStatus as UpdateMedicineSubmissionStatusRequest['status']
+      }
+      if (newStatus === 'rejected') {
+        const reason = prompt('Nhập lý do từ chối:') || ''
+        if (!reason.trim()) {
+          message.warning('Bạn phải nhập lý do từ chối!')
+          return
+        }
+        payload = { status: 'rejected', cancellationReason: reason }
+      }
+
+      const response = await updateMedicineSubmissionStatus(id, payload)
+      console.log('update response', response)
       message.success('Cập nhật trạng thái thành công!')
       setMedicineRequests((prevRequests) =>
         prevRequests.map((req) => (req._id === id ? { ...req, status: newStatus } : req))
@@ -339,10 +352,17 @@ const ReceiveMedicine: React.FC = () => {
                   <Descriptions.Item label='Thời gian uống'>
                     {selectedRequest.medicines[0]?.usageInstructions}
                   </Descriptions.Item>
-                  <Descriptions.Item label='Thời gian sử dụng' span={2}>
-                    {new Date(selectedRequest.medicines[0].startDate).toLocaleDateString('vi-VN')} -{' '}
-                    {new Date(selectedRequest.medicines[0].endDate).toLocaleDateString('vi-VN')}
-                  </Descriptions.Item>
+                  {'startDate' in selectedRequest.medicines[0] && 'endDate' in selectedRequest.medicines[0] && (
+                    <Descriptions.Item label='Thời gian sử dụng' span={2}>
+                      {(() => {
+                        const med = selectedRequest.medicines[0] as { startDate?: string; endDate?: string }
+                        if (med.startDate && med.endDate) {
+                          return `${new Date(med.startDate).toLocaleDateString('vi-VN')} - ${new Date(med.endDate).toLocaleDateString('vi-VN')}`
+                        }
+                        return '—'
+                      })()}
+                    </Descriptions.Item>
+                  )}
                   <Descriptions.Item label='Lý do dùng thuốc' span={2}>
                     {selectedRequest.medicines[0]?.reason}
                   </Descriptions.Item>

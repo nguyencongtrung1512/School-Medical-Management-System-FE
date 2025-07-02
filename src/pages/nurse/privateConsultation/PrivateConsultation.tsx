@@ -69,16 +69,10 @@ function PrivateConsultation() {
     setLoading(true)
     try {
       const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 50, nurseId: user.id })
-      // Thử với schoolNurseId nếu nurseId không work
-      // const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 50, nurseId: user._id })
-      // Tạm thời test không filter theo nurse để xem tất cả data
-      // const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 50 })
-
-      // Kiểm tra cấu trúc response từ network tab
+      // axiosInstance trả về response.data, nên pageData nằm trong res.data
+      // Dùng any để tránh lỗi kiểu khi cấu trúc response thay đổi
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // API trả về array trực tiếp, không phải object có pageData
-      const pageData = Array.isArray(res) ? res : []
-
+      const pageData = (res as any).data?.pageData || (res as any).pageData || []
       setAppointments(pageData)
     } catch {
       setAppointments([])
