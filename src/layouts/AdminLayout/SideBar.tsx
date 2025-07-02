@@ -1,6 +1,11 @@
 import React from 'react'
 import { Layout, Menu } from 'antd'
-import { FileSearchOutlined } from '@ant-design/icons'
+import { DashboardOutlined,
+  MedicineBoxOutlined,
+  AuditOutlined,
+  EditOutlined,
+  TeamOutlined,
+  BookOutlined, } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import path from '../../constants/path'
 
@@ -13,32 +18,32 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     {
       key: path.DASHBOARD_ADMIN,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <DashboardOutlined className='text-xl' />,
       label: 'DashBoard'
     },
     {
       key: path.CENSOR_LIST,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <MedicineBoxOutlined className='text-xl' />,
       label: 'Sự kiện tiêm chủng'
     },
     {
       key: path.Appointment_Check,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <AuditOutlined className='text-xl' />,
       label: 'kiểm duyệt tư vấn'
     },
     {
       key: path.CATEGORY_MANAGEMENT,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <EditOutlined className='text-xl' />,
       label: 'Quản lí Blog'
     },
     {
       key: path.USER_MANAGEMENT,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <TeamOutlined className='text-xl' />,
       label: 'Quản lí User'
     },
     {
       key: path.GRADE_MANAGEMENT,
-      icon: <FileSearchOutlined className='text-xl' />,
+      icon: <BookOutlined  className='text-xl' />,
       label: 'Quản lí Student'
     }
   ]

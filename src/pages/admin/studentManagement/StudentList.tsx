@@ -1,6 +1,37 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Typography, Row, Col, Spin, Popconfirm, Space } from 'antd'
-import { PlusOutlined, UserOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+'use client'
+
+import type React from 'react'
+import { useState, useEffect } from 'react'
+import {
+  Card,
+  Table,
+  Button,
+  Tag,
+  Typography,
+  Row,
+  Col,
+  Spin,
+  Popconfirm,
+  Space,
+  Statistic,
+  Divider,
+  Tooltip,
+  Breadcrumb,
+  Avatar
+} from 'antd'
+import {
+  PlusOutlined,
+  UserOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  HomeOutlined,
+  BookOutlined,
+  TeamOutlined,
+  CalendarOutlined,
+  ManOutlined,
+  WomanOutlined,
+  IdcardOutlined
+} from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
 import { getClassByIdAPI } from '../../../api/classes.api'
 import { getStudentByIdAPI, deleteStudentAPI } from '../../../api/student.api'
@@ -9,7 +40,7 @@ import CreateClass from './Create'
 import { formatDate } from '../../../utils/utils'
 import { toast } from 'react-hot-toast'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 interface Student {
   _id: string
@@ -49,6 +80,7 @@ const StudentList: React.FC = () => {
 
   const fetchClassData = async () => {
     if (!classId) return
+
     try {
       const res = await getClassByIdAPI(classId)
       setCurrentClassroom(res.data)
@@ -101,50 +133,93 @@ const StudentList: React.FC = () => {
     }
   }
 
+  // Statistics
+  const stats = {
+    totalStudents: studentList.length,
+    maleStudents: studentList.filter((s) => s.gender === 'male').length,
+    femaleStudents: studentList.filter((s) => s.gender === 'female').length
+  }
+
   const columns = [
     {
-      title: 'Mã sinh viên',
-      dataIndex: 'studentCode',
-      key: 'studentCode',
-      className: 'text-base'
+      title: (
+        <Space>
+          <IdcardOutlined />
+          <span>Thông tin học sinh</span>
+        </Space>
+      ),
+      key: 'studentInfo',
+      render: (_, record: Student) => (
+        <div className='flex items-center space-x-3'>
+          <Avatar size={40} icon={<UserOutlined />} src={record.avatar} className='bg-blue-500' />
+          <div>
+            <div className='font-semibold text-gray-800'>{record.fullName}</div>
+            <Text type='secondary' className='text-sm'>
+              Mã SV: {record.studentCode}
+            </Text>
+          </div>
+        </div>
+      )
     },
     {
-      title: 'Họ và tên',
-      dataIndex: 'fullName',
-      key: 'fullName',
-      className: 'text-base'
-    },
-    {
-      title: 'Ngày sinh',
+      title: (
+        <Space>
+          <CalendarOutlined />
+          <span>Ngày sinh</span>
+        </Space>
+      ),
       dataIndex: 'dob',
       key: 'dob',
-      className: 'text-base',
-      render: (dob: string) => <span className='text-gray-700'>{formatDate(dob)}</span>
+      width: 140,
+      render: (dob: string) => (
+        <div className='text-center'>
+          <div className='text-sm font-medium'>{formatDate(dob)}</div>
+        </div>
+      )
     },
     {
-      title: 'Giới tính',
+      title: (
+        <Space>
+          <TeamOutlined />
+          <span>Giới tính</span>
+        </Space>
+      ),
       dataIndex: 'gender',
-      className: 'text-base',
       key: 'gender',
+      width: 140,
       render: (gender: string) => (
-        <Tag color={gender === 'male' ? 'blue' : 'pink'}>{gender === 'male' ? 'Nam' : 'Nữ'}</Tag>
-      )
+        <Tag color={gender === 'male' ? 'blue' : 'pink'} icon={gender === 'male' ? <ManOutlined /> : <WomanOutlined />}>
+          {gender === 'male' ? 'Nam' : 'Nữ'}
+        </Tag>
+      ),
+      filters: [
+        { text: 'Nam', value: 'male' },
+        { text: 'Nữ', value: 'female' }
+      ],
+      onFilter: (value, record) => record.gender === value
     },
     {
       title: 'Thao tác',
       key: 'action',
-      className: 'text-base',
+      width: 150,
       render: (_: unknown, record: Student) => (
         <Space>
-          <Button type='primary' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} />
-
+          <Tooltip title='Xem chi tiết học sinh'>
+            <Button type='primary' size='small' icon={<EyeOutlined />} onClick={() => handleViewDetail(record)}>
+              Chi tiết
+            </Button>
+          </Tooltip>
           <Popconfirm
-            title='Bạn có chắc chắn muốn xóa học sinh này không?'
+            title='Xác nhận xóa học sinh'
+            description='Bạn có chắc chắn muốn xóa học sinh này không?'
             onConfirm={() => handleDeleteStudent(record._id)}
-            okText='Có'
-            cancelText='Không'
+            okText='Xóa'
+            cancelText='Hủy'
+            okType='danger'
           >
-            <Button type='link' danger icon={<DeleteOutlined />} />
+            <Tooltip title='Xóa học sinh'>
+              <Button type='primary' danger size='small' icon={<DeleteOutlined />} />
+            </Tooltip>
           </Popconfirm>
         </Space>
       )
@@ -154,58 +229,146 @@ const StudentList: React.FC = () => {
   if (!currentClassroom) {
     return (
       <div className='flex items-center justify-center min-h-[400px]'>
-        <Spin tip='Loading...' size='large' />
+        <Spin tip='Đang tải thông tin lớp học...' size='large' />
       </div>
     )
   }
 
   return (
-    <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br  p-8 rounded-xl shadow-lg'>
-        <div className='flex justify-between items-center mb-8'>
-          <div className='space-y-1'>
-            <Title level={3} className=' text-base !mb-0 text-gray-800'>
-              Danh sách học sinh
-            </Title>
-            <p className='text-gray-500 text-lg'>{currentClassroom.name}</p>
-          </div>
-          <Button
-            type='primary'
-            icon={<PlusOutlined />}
-            onClick={() => setIsCreateModalVisible(true)}
-            className='h-10 px-6 flex items-center text-base hover:scale-105 transition-transform'
-          >
-            Thêm học sinh
-          </Button>
-        </div>
+    <div className='p-6'>
+      {/* Breadcrumb */}
+      <Card className='mb-4 shadow-sm' style={{ borderRadius: '8px' }}>
+        <Breadcrumb
+          items={[
+            {
+              href: '/admin/student-management/grades',
+              title: (
+                <Space>
+                  <BookOutlined />
+                  <span>Quản lý khối</span>
+                </Space>
+              )
+            },
+            {
+              href: `/admin/student-management/grades/${currentClassroom.gradeId}/classes`,
+              title: (
+                <Space>
+                  <HomeOutlined />
+                  <span>Quản lý lớp</span>
+                </Space>
+              )
+            },
+            {
+              title: (
+                <Space>
+                  <UserOutlined />
+                  <span>{currentClassroom.name}</span>
+                </Space>
+              )
+            }
+          ]}
+        />
+      </Card>
 
-        <Row gutter={[24, 24]} className='mb-8'>
-          <Col span={8}>
-            <div className='bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow border border-blue-100'>
-              <div className='flex items-center space-x-4'>
-                <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
-                  <UserOutlined className='text-2xl text-blue-600' />
-                </div>
-                <div>
-                  <div className='text-gray-500 text-sm font-medium'>Tổng số học sinh</div>
-                  <div className='text-3xl font-bold text-blue-600'>{studentList.length}</div>
-                </div>
-              </div>
+      {/* Header Section */}
+      <Card className='mb-6 shadow-sm' style={{ borderRadius: '12px' }}>
+        <Row gutter={[24, 16]} align='middle'>
+          <Col xs={24} md={16}>
+            <div>
+              <Title level={2} className='mb-2'>
+                <UserOutlined className='mr-3 text-blue-500' />
+                Quản lý Học sinh - {currentClassroom.name}
+              </Title>
+              <Text type='secondary' className='text-base'>
+                Quản lý danh sách học sinh trong lớp {currentClassroom.name}
+              </Text>
             </div>
           </Col>
+          <Col xs={24} md={8} className='text-right'>
+            <Button
+              type='primary'
+              icon={<PlusOutlined />}
+              size='large'
+              onClick={() => setIsCreateModalVisible(true)}
+              className='shadow-sm'
+              style={{ borderRadius: '8px' }}
+            >
+              Thêm học sinh
+            </Button>
+          </Col>
         </Row>
+      </Card>
 
-        <Card className='shadow-md rounded-xl border-0'>
-          <Table
-            columns={columns}
-            dataSource={studentList}
-            rowKey='_id'
-            pagination={false}
-            className='custom-table'
-            rowClassName='hover:bg-blue-50 transition-colors'
-          />
-        </Card>
-      </div>
+      {/* Statistics Section */}
+      <Row gutter={[16, 16]} className='mb-6'>
+        <Col xs={12} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Tổng số học sinh'
+              value={stats.totalStudents}
+              valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<UserOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Học sinh nam'
+              value={stats.maleStudents}
+              valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<ManOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Học sinh nữ'
+              value={stats.femaleStudents}
+              valueStyle={{ color: '#eb2f96', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<WomanOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Table Section */}
+      <Card className='shadow-sm' style={{ borderRadius: '12px' }}>
+        <div className='mb-4'>
+          <Title level={4} className='mb-2'>
+            <UserOutlined className='mr-2' />
+            Danh sách học sinh
+          </Title>
+          <Divider className='mt-2 mb-4' />
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={studentList}
+          rowKey='_id'
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} học sinh`,
+            pageSizeOptions: ['5', '10', '20', '50']
+          }}
+          className='custom-table'
+          scroll={{ x: 800 }}
+          locale={{
+            emptyText: (
+              <div className='py-8'>
+                <UserOutlined className='text-4xl text-gray-300 mb-4' />
+                <div className='text-gray-500'>Chưa có học sinh nào trong lớp này</div>
+                <Button type='link' onClick={() => setIsCreateModalVisible(true)} className='mt-2'>
+                  Thêm học sinh đầu tiên
+                </Button>
+              </div>
+            )
+          }}
+        />
+      </Card>
 
       <StudentDetail
         open={isDetailModalVisible}
@@ -214,11 +377,72 @@ const StudentList: React.FC = () => {
         loading={loadingDetail}
         onUpdated={handleStudentUpdated}
       />
+
       <CreateClass
         isModalVisible={isCreateModalVisible}
         onCancel={() => setIsCreateModalVisible(false)}
         onOk={handleCreateOk}
       />
+
+      <style jsx global>{`
+        .custom-table .ant-table-thead > tr > th {
+          background-color: #fafafa;
+          font-weight: 600;
+          border-bottom: 2px solid #f0f0f0;
+        }
+
+        .custom-table .ant-table-tbody > tr:hover > td {
+          background-color: #f0f9ff;
+        }
+
+        .custom-table .ant-table-tbody > tr > td {
+          padding: 16px;
+        }
+
+        /* Custom scrollbar */
+        .ant-table-body::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+
+        /* Breadcrumb styling */
+        .ant-breadcrumb {
+          font-size: 14px;
+        }
+
+        .ant-breadcrumb-link {
+          color: #666;
+        }
+
+        .ant-breadcrumb-link:hover {
+          color: #1890ff;
+        }
+
+        /* Popconfirm styling */
+        .ant-popover-inner-content {
+          padding: 16px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .ant-statistic-content {
+            font-size: 18px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

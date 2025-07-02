@@ -1,15 +1,44 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Select } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+'use client'
+
+import type React from 'react'
+import { useState, useEffect } from 'react'
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Typography,
+  Row,
+  Col,
+  Statistic,
+  message,
+  Select,
+  Divider,
+  Tag,
+  Tooltip,
+  Breadcrumb
+} from 'antd'
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  HomeOutlined,
+  TeamOutlined,
+  BookOutlined,
+  CalendarOutlined,
+  UserOutlined,
+  FilterOutlined
+} from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
 import { getClassesAPI } from '../../../api/classes.api'
 import CreateClass from './Create'
 import DeleteClass from './Delete'
 import UpdateClass from './Update'
-import { TablePaginationConfig } from 'antd/lib/table/interface'
+import type { TablePaginationConfig } from 'antd/lib/table/interface'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 interface Classes {
   _id: string
@@ -31,13 +60,13 @@ interface Classes {
 }
 
 interface Grade {
-  _id: string;
-  name: string;
-  positionOrder: number;
-  isDeleted: boolean;
-  classIds: string[];
-  createdAt: string;
-  updatedAt: string;
+  _id: string
+  name: string
+  positionOrder: number
+  isDeleted: boolean
+  classIds: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 const ClassList: React.FC = () => {
@@ -80,15 +109,21 @@ const ClassList: React.FC = () => {
       setLoading(true)
       const response = await getClassesAPI(10, 1, gradeId, selectedYear || undefined)
       const classesData = response.pageData || []
+
       console.log('ttt', response.pageData)
-      const years = Array.from(new Set((classesData as Classes[]).map((c: Classes) => c.schoolYear).filter(Boolean))) as string[]
+
+      const years = Array.from(
+        new Set((classesData as Classes[]).map((c: Classes) => c.schoolYear).filter(Boolean))
+      ) as string[]
       setSchoolYears(years)
+
       if (Array.isArray(classesData)) {
         const transformedClasses: Classes[] = classesData.map((classItem: Classes) => ({
           ...classItem,
           totalStudents: classItem.totalStudents || 0,
           status: classItem.isDeleted ? 'Đã xóa' : 'Hoạt động'
         }))
+
         setClassList(transformedClasses)
         setPagination((prev) => ({
           ...prev,
@@ -157,106 +192,277 @@ const ClassList: React.FC = () => {
     fetchClasses() // Refresh lại danh sách lớp
   }
 
+  // Statistics
+  const stats = {
+    totalClasses: classList.length,
+    totalStudents: classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0),
+    averageStudentsPerClass:
+      classList.length > 0
+        ? Math.round(
+          (classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0) / classList.length) * 10
+        ) / 10
+        : 0,
+    activeClasses: classList.filter((c) => !c.isDeleted).length
+  }
+
   const columns = [
     {
-      title: 'Tên lớp',
-      dataIndex: 'name',
-      key: 'name'
+      title: (
+        <Space>
+          <HomeOutlined />
+          <span>Thông tin lớp</span>
+        </Space>
+      ),
+      key: 'classInfo',
+      render: (_, record: Classes) => (
+        <div>
+          <div className='font-semibold text-gray-800 mb-1'>Lớp {record.name}</div>
+          <Text type='secondary' className='text-sm'>
+            Năm học: {record.schoolYear || 'Chưa xác định'}
+          </Text>
+        </div>
+      )
     },
     {
-      title: 'Số học sinh',
+      title: (
+        <Space>
+          <UserOutlined />
+          <span>Số học sinh</span>
+        </Space>
+      ),
       dataIndex: 'totalStudents',
-      key: 'totalStudents'
+      key: 'totalStudents',
+      width: 160,
+      render: (totalStudents: number) => (
+        <div className='text-center'>
+          <div className='text-lg font-semibold text-blue-600'>{totalStudents || 0}</div>
+          <div className='text-xs text-gray-500'>học sinh</div>
+        </div>
+      ),
+      sorter: (a: Classes, b: Classes) => (a.totalStudents || 0) - (b.totalStudents || 0)
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
-      key: 'status'
+      key: 'status',
+      width: 120,
+      render: (status: string, record: Classes) => <Tag color={record.isDeleted ? 'red' : 'green'}>{status}</Tag>,
+      filters: [
+        { text: 'Hoạt động', value: 'Hoạt động' },
+        { text: 'Đã xóa', value: 'Đã xóa' }
+      ],
+      onFilter: (value, record) => record.status === value
     },
     {
       title: 'Thao tác',
       key: 'action',
+      width: 200,
       render: (_: unknown, record: Classes) => (
         <Space>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)} />
-
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditClass(record)} />
-
-          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteClass(record)} />
-
+          <Tooltip title='Xem danh sách học sinh'>
+            <Button type='primary' size='small' icon={<EyeOutlined />} onClick={() => handleViewStudents(record)}>
+              Học sinh
+            </Button>
+          </Tooltip>
+          <Tooltip title='Chỉnh sửa lớp'>
+            <Button type='default' size='small' icon={<EditOutlined />} onClick={() => handleEditClass(record)}>
+              Sửa
+            </Button>
+          </Tooltip>
+          <Tooltip title='Xóa lớp'>
+            <Button
+              type='primary'
+              danger
+              size='small'
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteClass(record)}
+            >
+              Xóa
+            </Button>
+          </Tooltip>
         </Space>
       )
     }
   ]
 
   if (!gradeId) {
-    return <div>Không tìm thấy ID khối</div>
+    return (
+      <div className='p-6'>
+        <Card className='text-center py-8'>
+          <Text type='danger'>Không tìm thấy ID khối</Text>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br  p-6 rounded-lg shadow-md'>
-        <div className='flex justify-between items-center mb-6'>
-          <div>
-            <Title level={3} className='text-2xl'>
-              Danh sách lớp - {currentGrade?.name || 'Đang tải...'}
-            </Title>
-          </div>
-          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddClass} className='text-base h-10 px-6'>
-            Thêm lớp mới
-          </Button>
-        </div>
+    <div className='p-6'>
+      {/* Breadcrumb */}
+      <Card className='mb-4 shadow-sm' style={{ borderRadius: '8px' }}>
+        <Breadcrumb
+          items={[
+            {
+              href: '/admin/student-management/grades',
+              title: (
+                <Space>
+                  <BookOutlined />
+                  <span>Quản lý khối</span>
+                </Space>
+              )
+            },
+            {
+              title: (
+                <Space>
+                  <HomeOutlined />
+                  <span>Khối {currentGrade?.name || '...'}</span>
+                </Space>
+              )
+            }
+          ]}
+        />
+      </Card>
 
-        <div className='mb-4'>
-          <Select
-            style={{ width: 200 }}
-            placeholder='Chọn năm học'
-            allowClear
-            value={selectedYear || undefined}
-            onChange={value => setSelectedYear(value || '')}
-          >
-            {schoolYears.map(year => (
-              <Select.Option key={year} value={year}>{year}</Select.Option>
-            ))}
-          </Select>
-        </div>
-
-        <Row gutter={[16, 16]} className='mb-6'>
-          <Col span={8}>
-            <Card className='bg-blue-100'>
-              <Statistic
-                title={<span className='text-base'>Tổng số lớp</span>}
-                value={classList.length}
-                valueStyle={{ color: '#1890ff', fontSize: '24px' }}
-              />
-            </Card>
+      {/* Header Section */}
+      <Card className='mb-6 shadow-sm' style={{ borderRadius: '12px' }}>
+        <Row gutter={[24, 16]} align='middle'>
+          <Col xs={24} md={16}>
+            <div>
+              <Title level={2} className='mb-2'>
+                <HomeOutlined className='mr-3 text-blue-500' />
+                Quản lý Lớp học - Khối {currentGrade?.name || 'Đang tải...'}
+              </Title>
+              <Text type='secondary' className='text-base'>
+                Quản lý các lớp học trong khối {currentGrade?.name}
+              </Text>
+            </div>
           </Col>
-          <Col span={8}>
-            <Card className='bg-green-50'>
-              <Statistic
-                title={<span className='text-base'>Tổng số học sinh</span>}
-                value={classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0)}
-                valueStyle={{ color: '#3f8600', fontSize: '24px' }}
-              />
-            </Card>
+          <Col xs={24} md={8} className='text-right'>
+            <Button
+              type='primary'
+              icon={<PlusOutlined />}
+              size='large'
+              onClick={handleAddClass}
+              className='shadow-sm'
+              style={{ borderRadius: '8px' }}
+            >
+              Thêm lớp mới
+            </Button>
           </Col>
         </Row>
+      </Card>
 
-        <Card className='shadow-md'>
-          <Table
-            columns={columns}
-            dataSource={classList}
-            rowKey='_id'
-            loading={loading}
-            pagination={{
-              ...pagination
-            }}
-            onChange={handleTableChange}
-            className='custom-table'
-            rowClassName='hover:bg-blue-50 transition-colors'
-          />
-        </Card>
-      </div>
+      {/* Filter Section */}
+
+
+      {/* Statistics Section */}
+      <Row gutter={[16, 16]} className='mb-6'>
+        <Col xs={12} sm={6} md={6}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Tổng số lớp'
+              value={stats.totalClasses}
+              valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<HomeOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6} md={6}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Tổng học sinh'
+              value={stats.totalStudents}
+              valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<UserOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6} md={6}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='TB HS/lớp'
+              value={stats.averageStudentsPerClass}
+              precision={1}
+              valueStyle={{ color: '#722ed1', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<TeamOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6} md={6}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Lớp hoạt động'
+              value={stats.activeClasses}
+              valueStyle={{ color: '#13c2c2', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<BookOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Card className='mb-6 shadow-sm' style={{ borderRadius: '8px' }}>
+        <Row gutter={[16, 16]} align='middle'>
+          <Col>
+            <Space>
+              <FilterOutlined className='text-gray-500' />
+              <Text strong>Năm học: </Text>
+            </Space>
+          </Col>
+          <Col>
+            <Select
+              style={{ width: 200 }}
+              placeholder='Chọn năm học'
+              allowClear
+              value={selectedYear || undefined}
+              onChange={(value) => setSelectedYear(value || '')}
+              suffixIcon={<CalendarOutlined />}
+            >
+              {schoolYears.map((year) => (
+                <Select.Option key={year} value={year}>
+                  {year}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Table Section */}
+      <Card className='shadow-sm' style={{ borderRadius: '12px' }}>
+        <div className='mb-4'>
+          <Title level={4} className='mb-2'>
+            <HomeOutlined className='mr-2' />
+            Danh sách lớp học
+          </Title>
+          <Divider className='mt-2 mb-4' />
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={classList}
+          rowKey='_id'
+          loading={loading}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lớp`,
+            pageSizeOptions: ['5', '10', '20', '50']
+          }}
+          onChange={handleTableChange}
+          className='custom-table'
+          scroll={{ x: 800 }}
+          locale={{
+            emptyText: (
+              <div className='py-8'>
+                <HomeOutlined className='text-4xl text-gray-300 mb-4' />
+                <div className='text-gray-500'>Chưa có lớp học nào trong khối này</div>
+                <Button type='link' onClick={handleAddClass} className='mt-2'>
+                  Tạo lớp học đầu tiên
+                </Button>
+              </div>
+            )
+          }}
+        />
+      </Card>
 
       <CreateClass
         isModalVisible={isCreateModalVisible}
@@ -277,6 +483,61 @@ const ClassList: React.FC = () => {
         onOk={handleUpdateOk}
         editingClass={editingClass}
       />
+
+      <style jsx global>{`
+        .custom-table .ant-table-thead > tr > th {
+          background-color: #fafafa;
+          font-weight: 600;
+          border-bottom: 2px solid #f0f0f0;
+        }
+
+        .custom-table .ant-table-tbody > tr:hover > td {
+          background-color: #f0f9ff;
+        }
+
+        .custom-table .ant-table-tbody > tr > td {
+          padding: 16px;
+        }
+
+        /* Custom scrollbar */
+        .ant-table-body::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+
+        /* Breadcrumb styling */
+        .ant-breadcrumb {
+          font-size: 14px;
+        }
+
+        .ant-breadcrumb-link {
+          color: #666;
+        }
+
+        .ant-breadcrumb-link:hover {
+          color: #1890ff;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .ant-statistic-content {
+            font-size: 18px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+'use client'
+
+import type React from 'react'
+
+import { useState, useEffect } from 'react'
+import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Divider, Tag, Tooltip } from 'antd'
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  BookOutlined,
+  TeamOutlined,
+  HomeOutlined,
+  NumberOutlined
+} from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import CreateGrade from './Create'
 import UpdateGrade from './Update'
 import DeleteGrade from './Delete'
 import { getGradesAPI } from '../../../api/grade.api'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 interface Grade {
   _id: string
@@ -39,7 +52,6 @@ const GradeList: React.FC = () => {
     try {
       setLoading(true)
       const response = await getGradesAPI(pagination.pageSize, pagination.current)
-
       const responseData = response?.pageData || {}
 
       if (!responseData || !Array.isArray(responseData)) {
@@ -51,24 +63,26 @@ const GradeList: React.FC = () => {
         setGrades([])
         return
       }
+
       const gradesData = responseData
 
       const transformedGrades = gradesData.map((grade: Grade) => ({
         ...grade,
-        positionOrder: typeof grade.positionOrder === 'string' ? parseInt(grade.positionOrder) : grade.positionOrder,
+        positionOrder:
+          typeof grade.positionOrder === 'string' ? Number.parseInt(grade.positionOrder) : grade.positionOrder,
         totalClasses: grade.classIds ? grade.classIds.length : 0,
-        description: grade.description || `Khối ${grade.name}`,
-
+        description: grade.description || `Khối ${grade.name}`
       }))
 
       // Filter out grades where isDeleted is true
-      const activeGrades = transformedGrades.filter(grade => !grade.isDeleted);
-      setGrades(activeGrades);
+      const activeGrades = transformedGrades.filter((grade) => !grade.isDeleted)
+
+      setGrades(activeGrades)
 
       if (response.pageInfo) {
         setPagination({
-          current: parseInt(response.pageInfo.pageNum) || 1,
-          pageSize: parseInt(response.pageInfo.pageSize) || 10,
+          current: Number.parseInt(response.pageInfo.pageNum) || 1,
+          pageSize: Number.parseInt(response.pageInfo.pageSize) || 10,
           total: response.pageInfo.totalItems || transformedGrades.length
         })
       } else {
@@ -129,88 +143,201 @@ const GradeList: React.FC = () => {
     }))
   }
 
+  // Statistics
+  const stats = {
+    totalGrades: grades.length,
+    totalClasses: grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0),
+    averageClassesPerGrade:
+      grades.length > 0
+        ? Math.round((grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0) / grades.length) * 10) / 10
+        : 0
+  }
+
   const columns = [
     {
-      title: 'Tên khối',
-      dataIndex: 'name',
-      key: 'name',
-      className: 'text-base'
+      title: (
+        <Space>
+          <BookOutlined />
+          <span>Thông tin khối</span>
+        </Space>
+      ),
+      key: 'gradeInfo',
+      render: (_, record: Grade) => (
+        <div>
+          <div className='font-semibold text-gray-800 mb-1'>Khối {record.name}</div>
+        </div>
+      )
     },
     {
-      title: 'Thứ tự',
+      title: (
+        <Space>
+          <NumberOutlined />
+          <span>Thứ tự</span>
+        </Space>
+      ),
       dataIndex: 'positionOrder',
       key: 'positionOrder',
-      className: 'text-base'
+      width: 140,
+      render: (order: number) => (
+        <Tag color='blue' className='text-center min-w-[40px]'>
+          {order}
+        </Tag>
+      ),
+      sorter: (a: Grade, b: Grade) => a.positionOrder - b.positionOrder
     },
     {
-      title: 'Số lớp',
-      className: 'text-base',
+      title: (
+        <Space>
+          <HomeOutlined />
+          <span>Số lớp</span>
+        </Space>
+      ),
       dataIndex: 'totalClasses',
-      key: 'totalClasses'
+      key: 'totalClasses',
+      width: 140,
+      render: (totalClasses: number) => (
+        <div className='text-center'>
+          <div className='text-lg font-semibold text-blue-600'>{totalClasses || 0}</div>
+        </div>
+      ),
+      sorter: (a: Grade, b: Grade) => (a.totalClasses || 0) - (b.totalClasses || 0)
     },
     {
       title: 'Thao tác',
-      className: 'text-base',
       key: 'action',
+      width: 200,
       render: (_: unknown, record: Grade) => (
         <Space>
-          <Button type='link' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}/>
-          <Button type='link' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}/>
-           
-          <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDeleteGrade(record)}/>
-            
+          <Tooltip title='Xem danh sách lớp'>
+            <Button type='primary' size='small' icon={<EyeOutlined />} onClick={() => handleViewClasses(record)}>
+              Xem lớp
+            </Button>
+          </Tooltip>
+          <Tooltip title='Chỉnh sửa khối'>
+            <Button type='default' size='small' icon={<EditOutlined />} onClick={() => handleEditGrade(record)}>
+              Sửa
+            </Button>
+          </Tooltip>
+          <Tooltip title='Xóa khối'>
+            <Button
+              type='primary'
+              danger
+              size='small'
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteGrade(record)}
+            >
+              Xóa
+            </Button>
+          </Tooltip>
         </Space>
       )
     }
   ]
 
   return (
-    <div className='p-6 space-y-6'>
-      <div className='bg-gradient-to-br p-6 rounded-lg shadow-md'>
-        <div className='flex justify-between items-center mb-6'>
-          <Title level={3} className='text-2xl'>Quản lý khối</Title>
-          <Button type='primary' icon={<PlusOutlined />} onClick={handleAddGrade} className='text-base h-10 px-6'>
-            Thêm khối mới
-          </Button>
-        </div>
-
-        <Row gutter={[16, 16]} className='mb-6'>
-          <Col span={8}>
-            <Card className='bg-blue-100'>
-              <Statistic
-                title={<span className='text-base'>Tổng số khối</span>}
-                value={grades.length}
-                valueStyle={{ color: '#1890ff', fontSize: '24px' }}
-              />
-            </Card>
+    <div className='p-6'>
+      {/* Header Section */}
+      <Card className='mb-6 shadow-sm' style={{ borderRadius: '12px' }}>
+        <Row gutter={[24, 16]} align='middle'>
+          <Col xs={24} md={16}>
+            <div>
+              <Title level={2} className='mb-2'>
+                <BookOutlined className='mr-3 text-blue-500' />
+                Quản lý Khối học
+              </Title>
+              <Text type='secondary' className='text-base'>
+                Quản lý các khối học và lớp học trong hệ thống
+              </Text>
+            </div>
           </Col>
-          <Col span={8}>
-            <Card className='bg-green-100'>
-              <Statistic
-                title={<span className='text-base'>Tổng số lớp</span>}
-                value={grades.reduce((sum, grade) => sum + (grade.totalClasses || 0), 0)}
-                valueStyle={{ color: '#3f8600', fontSize: '24px' }}
-              />
-            </Card>
+          <Col xs={24} md={8} className='text-right'>
+            <Button
+              type='primary'
+              icon={<PlusOutlined />}
+              size='large'
+              onClick={handleAddGrade}
+              className='shadow-sm'
+              style={{ borderRadius: '8px' }}
+            >
+              Thêm khối mới
+            </Button>
           </Col>
         </Row>
+      </Card>
 
-        <Card className='shadow-md'>
-          <Table
-            columns={columns}
-            dataSource={grades}
-            rowKey='_id'
-            loading={loading}
-            pagination={{
-              ...pagination,
-              className: 'text-base'
-            }}
-            onChange={handleTableChange}
-            className='custom-table'
-            rowClassName='hover:bg-blue-50 transition-colors'
-          />
-        </Card>
-      </div>
+      {/* Statistics Section */}
+      <Row gutter={[16, 16]} className='mb-6'>
+        <Col xs={12} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Tổng số khối'
+              value={stats.totalGrades}
+              valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<BookOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='Tổng số lớp'
+              value={stats.totalClasses}
+              valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<HomeOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8} md={8}>
+          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
+            <Statistic
+              title='TB lớp/khối'
+              value={stats.averageClassesPerGrade}
+              precision={1}
+              valueStyle={{ color: '#722ed1', fontSize: '24px', fontWeight: 'bold' }}
+              prefix={<TeamOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Table Section */}
+      <Card className='shadow-sm' style={{ borderRadius: '12px' }}>
+        <div className='mb-4'>
+          <Title level={4} className='mb-2'>
+            <BookOutlined className='mr-2' />
+            Danh sách khối học
+          </Title>
+          <Divider className='mt-2 mb-4' />
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={grades}
+          rowKey='_id'
+          loading={loading}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khối`,
+            pageSizeOptions: ['5', '10', '20', '50']
+          }}
+          onChange={handleTableChange}
+          className='custom-table'
+          scroll={{ x: 800 }}
+          locale={{
+            emptyText: (
+              <div className='py-8'>
+                <BookOutlined className='text-4xl text-gray-300 mb-4' />
+                <div className='text-gray-500'>Chưa có khối học nào</div>
+                <Button type='link' onClick={handleAddGrade} className='mt-2'>
+                  Tạo khối học đầu tiên
+                </Button>
+              </div>
+            )
+          }}
+        />
+      </Card>
 
       <CreateGrade
         isModalVisible={isCreateModalVisible}
@@ -229,6 +356,48 @@ const GradeList: React.FC = () => {
       />
 
       <DeleteGrade grade={deletingGrade} onOk={handleDeleteOk} onCancel={() => setDeletingGrade(null)} />
+
+      <style jsx global>{`
+        .custom-table .ant-table-thead > tr > th {
+          background-color: #fafafa;
+          font-weight: 600;
+          border-bottom: 2px solid #f0f0f0;
+        }
+
+        .custom-table .ant-table-tbody > tr:hover > td {
+          background-color: #f0f9ff;
+        }
+
+        .custom-table .ant-table-tbody > tr > td {
+          padding: 16px;
+        }
+
+        /* Custom scrollbar */
+        .ant-table-body::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+
+        .ant-table-body::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .ant-statistic-content {
+            font-size: 18px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
