@@ -23,7 +23,8 @@ function PrivateConsultation() {
       try {
         // Gọi API lấy danh sách lịch phỏng vấn theo nurseId
         const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 10, nurseId: user.id })
-        setAppointments(res.pageData)
+        setAppointments(res)
+        console.log('trung', res)
       } catch {
         setAppointments([])
       } finally {
@@ -35,7 +36,9 @@ function PrivateConsultation() {
   }, [user])
 
   // Lọc danh sách theo ngày nếu có chọn
-  const filteredAppointments = appointments.filter((item) => dayjs(item.appointmentTime).isSame(selectedDate, 'day'))
+  const filteredAppointments = (appointments ?? []).filter((item) =>
+    dayjs(item.appointmentTime).isSame(selectedDate, 'day')
+  )
 
   if (loading) {
     return (

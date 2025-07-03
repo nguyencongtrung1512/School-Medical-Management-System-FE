@@ -92,3 +92,15 @@ export const updateMedicineSubmissionStatus = async (
   return axiosInstance.patch(`/medicine-submissions/${id}/status`, { status })
 }
 
+export const updateMedicineSlotStatus = async (
+  id: string,
+  data: {
+    medicineDetailId: string
+    time: string
+    status: 'taken' | 'missed' | 'compensated'
+    note?: string
+    image?: string
+  }
+) => {
+  return axiosInstance.put(`/medicine-submissions/${id}/update-slot-status`, data)
+}

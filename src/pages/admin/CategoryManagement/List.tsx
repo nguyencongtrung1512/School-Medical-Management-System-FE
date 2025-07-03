@@ -196,22 +196,22 @@ function CategoryList() {
         </Paragraph>
       )
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'isDeleted',
-      key: 'isDeleted',
-      width: 120,
-      render: (isDeleted: boolean) => (
-        <Tag color={isDeleted ? 'red' : 'green'} icon={isDeleted ? <ExclamationCircleOutlined /> : undefined}>
-          {isDeleted ? 'Đã ẩn' : 'Hoạt động'}
-        </Tag>
-      ),
-      filters: [
-        { text: 'Hoạt động', value: false },
-        { text: 'Đã ẩn', value: true }
-      ],
-      onFilter: (value, record) => record.isDeleted === value
-    },
+    // {
+    //   title: 'Trạng thái',
+    //   dataIndex: 'isDeleted',
+    //   key: 'isDeleted',
+    //   width: 120,
+    //   render: (isDeleted: boolean) => (
+    //     <Tag color={isDeleted ? 'red' : 'green'} icon={isDeleted ? <ExclamationCircleOutlined /> : undefined}>
+    //       {isDeleted ? 'Đã ẩn' : 'Hoạt động'}
+    //     </Tag>
+    //   ),
+    //   filters: [
+    //     { text: 'Hoạt động', value: false },
+    //     { text: 'Đã ẩn', value: true }
+    //   ],
+    //   onFilter: (value, record) => record.isDeleted === value
+    // },
     {
       title: 'Thao tác',
       key: 'action',

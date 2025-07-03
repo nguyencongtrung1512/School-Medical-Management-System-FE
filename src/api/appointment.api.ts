@@ -119,3 +119,17 @@ export const getAppointmentsNurse = async (params: GetAppointmentsParamsNurse): 
   const queryParams = nurseId ? `?nurseId=${nurseId}` : ''
   return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}${queryParams}`)
 }
+
+export interface UpdateAppointmentStatusRequest {
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'done'
+  schoolNurseId: string
+  cancellationReason?: string
+  note?: string
+}
+
+export const updateAppointmentStatus = async (
+  id: string,
+  data: UpdateAppointmentStatusRequest
+): Promise<CreateAppointmentResponse> => {
+  return axiosInstance.patch(`/appointments/${id}/status`, data)
+}

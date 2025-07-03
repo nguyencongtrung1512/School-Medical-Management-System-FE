@@ -1,6 +1,5 @@
-'use client'
 import { useEffect, useState } from 'react'
-import { Table, Button, Modal, Space, Card, Typography, Divider, Tooltip, Row, Col, Statistic } from 'antd'
+import { Table, Button, Modal, Space, Card, Typography, Divider, Tooltip, Row, Col } from 'antd'
 import type { TableProps } from 'antd'
 import { PlusOutlined, EyeOutlined, FileTextOutlined, EditOutlined, BookOutlined } from '@ant-design/icons'
 import { blogApi, type Blog } from '../../../api/blog.api'
@@ -167,30 +166,6 @@ function BlogList() {
           </Col>
         </Row>
       </Card>
-
-      {/* Statistics Section */}
-      {/* <Row gutter={[16, 16]} className='mb-6'>
-        <Col xs={12} sm={8} md={6}>
-          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
-            <Statistic
-              title='Tổng số Blog'
-              value={blogs.length}
-              valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 'bold' }}
-              prefix={<FileTextOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={6}>
-          <Card className='text-center shadow-sm' style={{ borderRadius: '8px' }}>
-            <Statistic
-              title='Đã xuất bản'
-              value={blogs.length}
-              valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 'bold' }}
-              prefix={<BookOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row> */}
 
       {/* Table Section */}
       <Card className='shadow-sm' style={{ borderRadius: '12px' }}>
