@@ -31,7 +31,7 @@ import Register from './pages/register'
 import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
 import MedicinesList from './pages/nurse/medicines/MedicinesList'
 import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
-import MedicalCheckEvent from './pages/nurse/medicalCheckEvent'
+import MedicalCheckEvent from './pages/admin/medicalCheckEvent'
 import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
 import AppointmentCheck from './pages/admin/AppointmentCheck/AppointmentCheck'
 
