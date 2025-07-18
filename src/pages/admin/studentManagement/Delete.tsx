@@ -1,6 +1,5 @@
+import { message, Modal } from 'antd'
 import React from 'react'
-import { Modal } from 'antd'
-import { toast } from 'react-toastify'
 import { deleteStudentAPI } from '../../../api/student.api'
 
 interface Student {
@@ -21,11 +20,16 @@ const DeleteStudent: React.FC<DeleteStudentProps> = ({ isModalVisible, onCancel,
       if (!deletingStudent) return
 
       await deleteStudentAPI(deletingStudent._id)
-      toast.success('Xóa học sinh thành công')
+      message.success('Xóa học sinh thành công')
       onOk()
-    } catch (error) {
-      console.error('Error deleting student:', error)
-      toast.error('Không thể xóa học sinh')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể xóa học sinh')
+      }
     }
   }
 

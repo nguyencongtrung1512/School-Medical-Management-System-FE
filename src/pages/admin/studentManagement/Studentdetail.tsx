@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react'
+import { UploadOutlined } from '@ant-design/icons'
 import {
-  Modal,
+  Button,
+  DatePicker,
   Descriptions,
-  Space,
-  Typography,
-  Spin,
   Form,
   Input,
+  Modal,
   Select,
-  DatePicker,
-  Button,
+  Space,
+  Spin,
+  Typography,
   Upload,
   message
 } from 'antd'
-import { UploadOutlined } from '@ant-design/icons'
-import { updateStudentAPI } from '../../../api/student.api'
-import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
-import { formatDate } from '../../../utils/utils'
+import React, { useEffect, useState } from 'react'
+import { updateStudentAPI } from '../../../api/student.api'
 import { handleUploadFile } from '../../../utils/upload'
+import { formatDate } from '../../../utils/utils'
 
 const { Title } = Typography
 
@@ -46,9 +45,14 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
         setAvatarUrl(url)
         message.success('Tải ảnh lên thành công!')
       }
-    } catch (error) {
-      console.error('Error uploading avatar:', error)
-      message.error('Tải ảnh lên thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Tải ảnh lên thất bại!')
+      }
     } finally {
       setUploading(false)
     }
@@ -89,13 +93,20 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
         ...values,
         dob: values.dob ? values.dob.format('YYYY-MM-DD') : undefined
       })
-      toast.success('Cập nhật học sinh thành công')
+      message.success('Cập nhật học sinh thành công')
       setIsEdit(false)
       if (onUpdated && student) onUpdated(student._id)
-    } catch (err) {
-      toast.error('Không thể cập nhật học sinh')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật học sinh')
+      }
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   return (
@@ -116,7 +127,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
           <div className='flex items-center mb-6'>
             <img
               alt={student.fullName}
-              src={isEdit ? (avatarUrl || student.avatar) : student.avatar}
+              src={isEdit ? avatarUrl || student.avatar : student.avatar}
               className='mr-4'
               style={{ width: 74, height: 94 }}
             />
@@ -175,13 +186,17 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
                     <ul style={{ paddingLeft: 16, margin: 0 }}>
                       {student.parentInfos.map((parent: any) => (
                         <li key={parent._id}>
-                          <b>{parent.fullName}</b> ({parent.type === 'father' ? 'Bố' : parent.type === 'mother' ? 'Mẹ' : parent.type})<br />
-                          Email: {parent.email}<br />
+                          <b>{parent.fullName}</b> (
+                          {parent.type === 'father' ? 'Bố' : parent.type === 'mother' ? 'Mẹ' : parent.type})<br />
+                          Email: {parent.email}
+                          <br />
                           SĐT: {parent.phone}
                         </li>
                       ))}
                     </ul>
-                  ) : 'Chưa cập nhật'}
+                  ) : (
+                    'Chưa cập nhật'
+                  )}
                 </Descriptions.Item>
               </Descriptions>
               <Button className='mt-4' type='primary' onClick={() => setIsEdit(true)}>

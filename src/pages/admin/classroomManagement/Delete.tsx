@@ -1,7 +1,7 @@
 import React from 'react'
 import { Modal } from 'antd'
 import { deleteClassAPI } from '../../../api/classes.api'
-import { toast } from 'react-toastify'
+import { message } from 'antd'
 
 interface Class {
   _id: string
@@ -21,11 +21,16 @@ const DeleteClass: React.FC<DeleteClassProps> = ({ isModalVisible, onCancel, onO
       if (!deletingClass) return
 
       await deleteClassAPI(deletingClass._id)
-      toast.success('Xóa lớp thành công')
+      message.success('Xóa lớp thành công')
       onOk()
-    } catch (error) {
-      console.error('Error deleting class:', error)
-      toast.error('Không thể xóa lớp')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể xóa lớp')
+      }
     }
   }
 

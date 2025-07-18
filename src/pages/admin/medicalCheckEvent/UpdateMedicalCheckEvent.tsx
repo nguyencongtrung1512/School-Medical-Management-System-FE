@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { Form, Select, DatePicker, Button, Card, Input, message, Space } from 'antd'
-import { getMedicalCheckEventDetail, updateMedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
-import { getGradesAPI } from '../../../api/grade.api'
+import { Button, Card, DatePicker, Form, Input, message, Select, Space } from 'antd'
 import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
+import React, { useEffect, useState } from 'react'
+import { getGradesAPI } from '../../../api/grade.api'
+import { medicalCheckEventApi, UpdateMedicalCheckEventDTO } from '../../../api/medicalCheckEvent.api'
 
 const { Option } = Select
 
@@ -34,10 +33,10 @@ interface FormValues {
   eventName: string
   gradeId: string
   location: string
-  dateRange: [dayjs.Dayjs, dayjs.Dayjs]
-  registrationRange: [dayjs.Dayjs, dayjs.Dayjs]
   description: string
   schoolYear: string
+  dateRange: [Date, Date]
+  registrationRange: [Date, Date]
 }
 
 const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ eventId, onSuccess, onCancel }) => {
@@ -55,24 +54,36 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
   const fetchGrades = async () => {
     try {
       const response = await getGradesAPI()
-      setGrades(response.data.pageData)
-    } catch {
-      message.error('Không thể tải danh sách khối lớp')
+      setGrades(response.data?.pageData || [])
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối lớp')
+      }
     }
   }
 
   const fetchEventDetails = async (id: string) => {
     try {
       setLoading(true)
-      const response = await getMedicalCheckEventDetail(id)
+      const response = await medicalCheckEventApi.getById(id)
       const eventData = response.data as MedicalCheckEventDetail
       form.setFieldsValue({
         ...eventData,
         dateRange: [dayjs(eventData.eventDate), dayjs(eventData.eventDate)],
         registrationRange: [dayjs(eventData.startRegistrationDate), dayjs(eventData.endRegistrationDate)]
       })
-    } catch {
-      message.error('Không thể tải chi tiết sự kiện')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải chi tiết sự kiện')
+      }
     } finally {
       setLoading(false)
     }
@@ -82,7 +93,7 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
     try {
       setLoading(true)
       const { dateRange, registrationRange, ...rest } = values
-      const data = {
+      const data: UpdateMedicalCheckEventDTO = {
         eventName: rest.eventName,
         gradeId: rest.gradeId,
         location: rest.location,
@@ -90,13 +101,19 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
         schoolYear: rest.schoolYear,
         eventDate: dateRange[0].toISOString(),
         startRegistrationDate: registrationRange[0].toISOString(),
-        endRegistrationDate: registrationRange[1].toISOString(),
+        endRegistrationDate: registrationRange[1].toISOString()
       }
-      await updateMedicalCheckEvent(eventId, data)
-      toast.success('Cập nhật sự kiện khám sức khỏe thành công')
+      await medicalCheckEventApi.update(eventId, data)
+      message.success('Cập nhật sự kiện khám sức khỏe thành công')
       onSuccess()
-    } catch {
-      message.error('Không thể cập nhật sự kiện khám sức khỏe')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật sự kiện khám sức khỏe')
+      }
     } finally {
       setLoading(false)
     }
@@ -105,7 +122,11 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
   return (
     <Card className='max-w-3xl'>
       <Form form={form} layout='vertical' onFinish={handleSubmit} className='space-y-4'>
-        <Form.Item name='eventName' label='Tên sự kiện' rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện' }]}>
+        <Form.Item
+          name='eventName'
+          label='Tên sự kiện'
+          rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện' }]}
+        >
           <Input placeholder='Nhập tên sự kiện' />
         </Form.Item>
 
@@ -127,11 +148,19 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
           <Input placeholder='Nhập năm học (VD: 2024-2025)' />
         </Form.Item>
 
-        <Form.Item name='dateRange' label='Thời gian diễn ra sự kiện' rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}>
+        <Form.Item
+          name='dateRange'
+          label='Thời gian diễn ra sự kiện'
+          rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
+        >
           <DatePicker.RangePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
         </Form.Item>
 
-        <Form.Item name='registrationRange' label='Thời gian đăng ký' rules={[{ required: true, message: 'Vui lòng chọn thời gian đăng ký' }]}>
+        <Form.Item
+          name='registrationRange'
+          label='Thời gian đăng ký'
+          rules={[{ required: true, message: 'Vui lòng chọn thời gian đăng ký' }]}
+        >
           <DatePicker.RangePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
         </Form.Item>
 

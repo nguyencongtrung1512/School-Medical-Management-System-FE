@@ -1,24 +1,21 @@
-'use client'
-
 import type React from 'react'
-
-import { useState, useEffect } from 'react'
-import { Card, Table, Button, Space, Typography, Row, Col, Statistic, message, Divider, Tag, Tooltip } from 'antd'
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
   BookOutlined,
-  TeamOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
   HomeOutlined,
-  NumberOutlined
+  NumberOutlined,
+  PlusOutlined,
+  TeamOutlined
 } from '@ant-design/icons'
+import { Button, Card, Col, Divider, Row, Space, Statistic, Table, Tag, Tooltip, Typography, message } from 'antd'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import CreateGrade from './Create'
-import UpdateGrade from './Update'
-import DeleteGrade from './Delete'
 import { getGradesAPI } from '../../../api/grade.api'
+import CreateGrade from './Create'
+import DeleteGrade from './Delete'
+import UpdateGrade from './Update'
 
 const { Title, Text } = Typography
 
@@ -52,13 +49,9 @@ const GradeList: React.FC = () => {
     try {
       setLoading(true)
       const response = await getGradesAPI(pagination.pageSize, pagination.current)
-      const responseData = response?.pageData || {}
+      const responseData = response?.pageData || []
 
       if (!responseData || !Array.isArray(responseData)) {
-        console.error(
-          'Invalid API response structure: Expected responseData and responseData.pageData to be an array.',
-          responseData
-        )
         message.error('API response format is invalid')
         setGrades([])
         return
@@ -88,9 +81,14 @@ const GradeList: React.FC = () => {
       } else {
         console.warn('API response did not contain pageInfo')
       }
-    } catch (error) {
-      console.error('Error fetching grades:', error)
-      message.error('Không thể tải danh sách khối')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối')
+      }
       setGrades([])
     } finally {
       setLoading(false)

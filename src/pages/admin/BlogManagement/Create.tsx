@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'
-import { Form, Input, Button, message, Select, Upload } from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
-import { blogApi } from '../../../api/blog.api'
-import { categoryApi } from '../../../api/category.api'
-import { useNavigate } from 'react-router-dom'
+import { Button, Form, Input, message, Select, Upload } from 'antd'
+import { useEffect, useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { UploadOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
+import { blogApi } from '../../../api/blog.api'
+import { categoryApi } from '../../../api/category.api'
 import { customUploadHandler } from '../../../utils/upload'
 
 interface Category {
@@ -38,16 +38,21 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
     const fetchCategories = async () => {
       try {
         const response = await categoryApi.searchCategoryApi({
-          page: 1,
-          size: 100,
-          search: ''
+          pageNum: 1,
+          pageSize: 100,
+          query: ''
         })
-        if (response.pageData) {
-          setCategories(response.pageData)
+        if (response.data.pageData) {
+          setCategories(response.data.pageData)
         }
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-        message.error('Không thể tải danh sách danh mục')
+      } catch (error: unknown) {
+        console.log('error', error)
+        const err = error as { message?: string }
+        if (err.message) {
+          message.error(err.message)
+        } else {
+          message.error('Không thể tải danh sách danh mục')
+        }
       }
     }
 
@@ -78,9 +83,14 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
         }
         navigate(-1)
       }
-    } catch (error) {
-      console.error('Error creating blog:', error)
-      message.error('Tạo blog thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Tạo blog thất bại!')
+      }
     } finally {
       setLoading(false)
     }

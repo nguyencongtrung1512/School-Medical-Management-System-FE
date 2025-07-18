@@ -1,40 +1,38 @@
-'use client'
-
-import type React from 'react'
-import { useState, useEffect, useMemo } from 'react'
 import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-  message,
-  Divider,
-  Tag,
-  Tooltip,
-  Breadcrumb,
-  Select
-} from 'antd'
-import {
-  PlusOutlined,
-  EditOutlined,
+  BookOutlined,
   DeleteOutlined,
+  EditOutlined,
   EyeOutlined,
   HomeOutlined,
+  PlusOutlined,
   TeamOutlined,
-  BookOutlined,
   UserOutlined
 } from '@ant-design/icons'
+import {
+  Breadcrumb,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Row,
+  Select,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  message
+} from 'antd'
+import type React from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
 // Đã bỏ getClassesAPI vì chỉ lấy lớp từ currentGrade
+import type { Key } from 'react'
 import CreateClass from './Create'
 import DeleteClass from './Delete'
 import UpdateClass from './Update'
-import type { Key } from 'react'
 
 const { Title, Text } = Typography
 
@@ -95,9 +93,14 @@ const ClassList: React.FC = () => {
           }))
         )
       }
-    } catch (e) {
-      console.error('Error fetching grade info:', e)
-      message.error('Không thể tải thông tin khối')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải thông tin khối')
+      }
     }
   }
 
@@ -147,8 +150,8 @@ const ClassList: React.FC = () => {
     averageStudentsPerClass:
       classList.length > 0
         ? Math.round(
-          (classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0) / classList.length) * 10
-        ) / 10
+            (classList.reduce((sum, classItem) => sum + (classItem.totalStudents || 0), 0) / classList.length) * 10
+          ) / 10
         : 0,
     activeClasses: classList.filter((c) => !c.isDeleted).length
   }

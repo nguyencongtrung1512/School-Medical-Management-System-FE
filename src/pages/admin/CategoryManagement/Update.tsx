@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { Form, Input, Button, message, Spin } from 'antd' // Import Spin
+import { Button, Form, Input, message, Spin } from 'antd' // Import Spin
+import { useEffect, useState } from 'react'
 import { categoryApi } from '../../../api/category.api' // Xóa import Category không sử dụng
-import { toast } from 'react-toastify'
 
 interface EditCategoryFormValues {
   name: string
@@ -26,30 +25,35 @@ function EditCategory({ categoryId, onCategoryUpdated }: EditCategoryProps) {
         try {
           const response = await categoryApi.getByIdCategoryApi(categoryId)
           // LOG CHI TIẾT RESPONSE ĐỂ DEBUG CẤU TRÚC DỮ LIỆU
-          console.log('Full getById response:', response);
-          console.log('Data in getById response:', response.data);
+          console.log('Full getById response:', response)
+          console.log('Data in getById response:', response.data)
 
           // Giả định cấu trúc data giống với API tìm kiếm (response.pageData.content[0])
           // Nếu API getById trả về trực tiếp đối tượng category ở response.data, dùng response.data
           if (response && response.data) {
             // Thử truy cập data trực tiếp nếu API getById trả về đối tượng ở response.data
-            const categoryData = response.data;
+            const categoryData = response.data
             if (categoryData) {
               form.setFieldsValue({
                 name: categoryData.name,
-                description: categoryData.description,
-              });
+                description: categoryData.description
+              })
             } else {
-              console.error('Category data is null or undefined in response.data', response);
-              message.error('Dữ liệu danh mục không hợp lệ.');
+              console.error('Category data is null or undefined in response.data', response)
+              message.error('Dữ liệu danh mục không hợp lệ.')
             }
           } else {
             console.error('Invalid category fetch response:', response)
             message.error('Không thể tải dữ liệu danh mục để sửa.')
           }
-        } catch (error) {
-          console.error('Error fetching category for edit:', error)
-          message.error('Lỗi khi tải dữ liệu danh mục để sửa.')
+        } catch (error: unknown) {
+          console.log('error', error)
+          const err = error as { message?: string }
+          if (err.message) {
+            message.error(err.message)
+          } else {
+            message.error('Không thể tải dữ liệu danh mục để sửa.')
+          }
         } finally {
           setFetchingCategory(false)
         }
@@ -72,20 +76,21 @@ function EditCategory({ categoryId, onCategoryUpdated }: EditCategoryProps) {
       const response = await categoryApi.updateCategoryApi(categoryId, values)
       console.log('Update category response:', response)
       // KIỂM TRA RESPONSE TỪ API UPDATE CÓ THÀNH CÔNG KHÔNG
-      if (response) { // Kiểm tra response có tồn tại (API call thành công ở mức transport) và có thể thêm kiểm tra status code cụ thể nếu cần
-        toast.success('Cập nhật danh mục thành công!')
+      if (response) {
+        // Kiểm tra response có tồn tại (API call thành công ở mức transport) và có thể thêm kiểm tra status code cụ thể nếu cần
+        message.success('Cập nhật danh mục thành công!')
         onCategoryUpdated() // Gọi callback để List.tsx fetch lại dữ liệu
       } else {
-        console.error('Update category API call failed or returned invalid response:', response);
-        toast.error('Cập nhật danh mục thất bại: Phản hồi không hợp lệ từ server.');
+        console.error('Update category API call failed or returned invalid response:', response)
+        message.error('Cập nhật danh mục thất bại: Phản hồi không hợp lệ từ server.')
       }
-    } catch (error) {
-      console.error('Error updating category:', error)
-      // Axois error có thể có response.response để lấy thông tin lỗi từ server
-      if (error.response && error.response.data && error.response.data.message) {
-        toast.error(`Cập nhật danh mục thất bại: ${error.response.data.message}`);
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
       } else {
-        toast.error('Cập nhật danh mục thất bại: Lỗi không xác định.');
+        message.error('Cập nhật danh mục thất bại: Lỗi không xác định.')
       }
     } finally {
       setLoading(false)

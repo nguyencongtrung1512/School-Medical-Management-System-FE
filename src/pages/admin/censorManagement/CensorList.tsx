@@ -28,6 +28,7 @@ import {
   Descriptions,
   Empty,
   Input,
+  message,
   Modal,
   Row,
   Space,
@@ -39,7 +40,6 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import {
   deleteVaccineEvent,
   getAllVaccineEvents,
@@ -105,8 +105,14 @@ const CensorList: React.FC = () => {
       const response = await getAllVaccineEvents(currentPage, pageSize)
       setVaccineEvents(response.pageData)
       setTotalItems(response.totalPage * pageSize)
-    } catch (error) {
-      console.error('Fetch vaccine events error:', error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách sự kiện tiêm chủng')
+      }
     } finally {
       setLoading(false)
     }
@@ -269,10 +275,10 @@ const CensorList: React.FC = () => {
                       onOk: async () => {
                         try {
                           await deleteVaccineEvent(record._id)
-                          toast.success('Xóa sự kiện thành công!')
+                          message.success('Xóa sự kiện thành công!')
                           fetchVaccineEvents()
                         } catch {
-                          toast.error('Không thể xóa sự kiện!')
+                          message.error('Không thể xóa sự kiện!')
                         }
                       }
                     })
@@ -295,10 +301,16 @@ const CensorList: React.FC = () => {
   const handleUpdateStatus = async (id: string, newStatus: VaccineEventStatus) => {
     try {
       await updateVaccineEventStatus(id, newStatus)
-      toast.success('Cập nhật trạng thái thành công!')
+      message.success('Cập nhật trạng thái thành công!')
       fetchVaccineEvents() // Refresh danh sách
-    } catch (error) {
-      console.error('Update status error:', error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật trạng thái')
+      }
     }
   }
 
@@ -325,7 +337,6 @@ const CensorList: React.FC = () => {
   const handleCreateSuccess = () => {
     setIsCreateModalVisible(false)
     fetchVaccineEvents()
-    toast.success('Tạo sự kiện tiêm chủng thành công!')
   }
 
   // Callback khi cập nhật thành công
@@ -333,7 +344,6 @@ const CensorList: React.FC = () => {
     setIsEditModalVisible(false)
     setEditEvent(null)
     fetchVaccineEvents()
-    toast.success('Cập nhật sự kiện thành công!')
   }
 
   return (

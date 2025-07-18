@@ -2,10 +2,10 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  DownloadOutlined,
   EyeOutlined,
   MedicineBoxOutlined,
-  UserOutlined,
-  DownloadOutlined
+  UserOutlined
 } from '@ant-design/icons'
 import {
   Avatar,
@@ -17,6 +17,7 @@ import {
   Empty,
   Form,
   Input,
+  message,
   Modal,
   Select,
   Space,
@@ -27,7 +28,6 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import { appointmentApi, ParentNurseAppointment, ParentNurseAppointmentStatus } from '../../../api/appointment.api'
 import { searchNurseUsersAPI } from '../../../api/user.api'
 
@@ -128,12 +128,18 @@ function AppointmentCheck() {
         status: ParentNurseAppointmentStatus.Approved,
         schoolNurseId: selectedNurse
       })
-      toast.success('Giao y tá thành công!')
+      message.success('Giao y tá thành công!')
       setModalOpen(false)
       setSelectedNurse('')
       fetchAppointments()
-    } catch (error) {
-      console.log(error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể giao y tá!')
+      }
     } finally {
       setAssigning(false)
     }
@@ -148,7 +154,7 @@ function AppointmentCheck() {
 
   const handleCancel = async () => {
     if (!selectedAppointment || !cancelReason.trim()) {
-      toast.error('Vui lòng nhập lý do hủy!')
+      message.error('Vui lòng nhập lý do hủy!')
       return
     }
     setAssigning(true)
@@ -159,11 +165,17 @@ function AppointmentCheck() {
         cancellationReason: cancelReason,
         note: cancelNote
       })
-      toast.success('Hủy lịch thành công!')
+      message.success('Hủy lịch thành công!')
       setCancelModalOpen(false)
       fetchAppointments()
-    } catch {
-      toast.error('Hủy lịch thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Hủy lịch thất bại!')
+      }
     } finally {
       setAssigning(false)
     }
@@ -180,9 +192,15 @@ function AppointmentCheck() {
       document.body.appendChild(link)
       link.click()
       link.parentNode?.removeChild(link)
-      toast.success('Xuất file Excel thành công!')
-    } catch {
-      toast.error('Xuất file Excel thất bại!')
+      message.success('Xuất file Excel thành công!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Xuất file Excel thất bại!')
+      }
     } finally {
       setExporting(false)
     }

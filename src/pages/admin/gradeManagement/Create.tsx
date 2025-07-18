@@ -1,7 +1,6 @@
+import { Form, Input, message, Modal } from 'antd'
 import React, { useState } from 'react'
-import { Modal, Form, Input, message } from 'antd'
 import { createGradeAPI } from '../../../api/grade.api'
-import { toast } from 'react-toastify'
 
 interface CreateGradeProps {
   isModalVisible: boolean
@@ -19,21 +18,22 @@ const CreateGrade: React.FC<CreateGradeProps> = ({ isModalVisible, onCancel, onO
       const values = await form.validateFields()
       const gradeData = {
         name: values.name,
-        positionOrder: values.positionOrder.toString(),
+        positionOrder: values.positionOrder.toString()
       }
 
-      console.log('Sending grade data:', gradeData)
+      await createGradeAPI(gradeData)
 
-      // Call the API
-      const response = await createGradeAPI(gradeData)
-      console.log('API response:', response)
-
-      toast.success('Tạo khối thành công!')
+      message.success('Tạo khối thành công!')
       form.resetFields()
       onOk()
-    } catch (error: any) {
-      console.error('Error creating grade:', error)
-      message.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo khối!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi tạo khối!')
+      }
     } finally {
       setLoading(false)
     }

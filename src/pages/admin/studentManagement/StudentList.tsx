@@ -1,44 +1,44 @@
 'use client'
 
-import type React from 'react'
-import { useState, useEffect } from 'react'
 import {
-  Card,
-  Table,
-  Button,
-  Tag,
-  Typography,
-  Row,
-  Col,
-  Spin,
-  Popconfirm,
-  Space,
-  Statistic,
-  Divider,
-  Tooltip,
-  Breadcrumb,
-  Avatar
-} from 'antd'
-import {
-  PlusOutlined,
-  UserOutlined,
+  BookOutlined,
+  CalendarOutlined,
   DeleteOutlined,
   EyeOutlined,
   HomeOutlined,
-  BookOutlined,
-  TeamOutlined,
-  CalendarOutlined,
+  IdcardOutlined,
   ManOutlined,
-  WomanOutlined,
-  IdcardOutlined
+  PlusOutlined,
+  TeamOutlined,
+  UserOutlined,
+  WomanOutlined
 } from '@ant-design/icons'
+import {
+  Avatar,
+  Breadcrumb,
+  Button,
+  Card,
+  Col,
+  Divider,
+  message,
+  Popconfirm,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd'
+import type React from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getClassByIdAPI } from '../../../api/classes.api'
-import { getStudentByIdAPI, deleteStudentAPI } from '../../../api/student.api'
-import StudentDetail from './Studentdetail'
-import CreateClass from './Create'
+import { deleteStudentAPI, getStudentByIdAPI } from '../../../api/student.api'
 import { formatDate } from '../../../utils/utils'
-import { toast } from 'react-hot-toast'
+import CreateClass from './Create'
+import StudentDetail from './Studentdetail'
 
 const { Title, Text } = Typography
 
@@ -86,7 +86,14 @@ const StudentList: React.FC = () => {
       setCurrentClassroom(res.data)
       const activeStudents = (res.data.students || []).filter((student: Student) => !student.isDeleted)
       setStudentList(activeStudents)
-    } catch {
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải lại thông tin lớp học.')
+      }
       setCurrentClassroom(null)
       setStudentList([])
     }
@@ -98,8 +105,14 @@ const StudentList: React.FC = () => {
     try {
       const res = await getStudentByIdAPI(student._id)
       setStudentDetail(res.data)
-      console.log('res.data', res.data)
-    } catch {
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải lại thông tin học sinh sau cập nhật.')
+      }
       setStudentDetail(null)
     }
     setLoadingDetail(false)
@@ -110,8 +123,14 @@ const StudentList: React.FC = () => {
     try {
       const res = await getStudentByIdAPI(updatedStudentId)
       setStudentDetail(res.data)
-    } catch {
-      toast.error('Không thể tải lại thông tin học sinh sau cập nhật.')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải lại thông tin học sinh sau cập nhật.')
+      }
     } finally {
       setLoadingDetail(false)
     }
@@ -127,9 +146,14 @@ const StudentList: React.FC = () => {
       await deleteStudentAPI(studentId)
       toast.success('Xóa học sinh thành công!')
       fetchClassData() // Refresh the list
-    } catch (error) {
-      console.error('Error deleting student:', error)
-      toast.error('Không thể xóa học sinh.')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể xóa học sinh.')
+      }
     }
   }
 

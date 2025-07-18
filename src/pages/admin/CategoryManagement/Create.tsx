@@ -1,7 +1,5 @@
-import React from 'react'
-import { Form, Input, Button, message } from 'antd'
+import { Button, Form, Input, message } from 'antd'
 import { categoryApi } from '../../../api/category.api'
-import { toast } from 'react-toastify'
 
 interface CreateCategoryFormValues {
   name: string
@@ -10,7 +8,7 @@ interface CreateCategoryFormValues {
 
 // Định nghĩa props cho component CreateCategory
 interface CreateCategoryProps {
-  onCategoryCreated: () => void; // Thêm prop onCategoryCreated
+  onCategoryCreated: () => void // Thêm prop onCategoryCreated
 }
 
 // Cập nhật function component để nhận props
@@ -19,16 +17,18 @@ function CreateCategory({ onCategoryCreated }: CreateCategoryProps) {
 
   const onFinish = async (values: CreateCategoryFormValues) => {
     try {
-      // Gọi API tạo category mới
-      const response = await categoryApi.createCategoryApi(values)
-      console.log('ok',response)
-      toast.success('Tạo danh mục thành công!')
-      form.resetFields() // Reset form sau khi tạo thành công
-      onCategoryCreated(); // Gọi hàm callback sau khi tạo thành công
-    } catch (error) {
-      console.error('Error creating category:', error)
-      message.error('Tạo danh mục thất bại.')
-      // Xử lý lỗi cụ thể hơn nếu cần
+      await categoryApi.createCategoryApi(values)
+      message.success('Tạo danh mục thành công!')
+      form.resetFields()
+      onCategoryCreated()
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Tạo danh mục thất bại.')
+      }
     }
   }
 

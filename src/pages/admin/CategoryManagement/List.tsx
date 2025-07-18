@@ -1,25 +1,21 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { Table, Input, Space, Button, Modal, Dropdown, Card, Typography, Divider, Tag, Row, Col, Statistic } from 'antd'
-import type { TableProps, MenuProps } from 'antd'
 import {
-  SearchOutlined,
-  PlusOutlined,
-  MoreOutlined,
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  FolderOutlined,
   AppstoreOutlined,
-  ExclamationCircleOutlined
+  DeleteOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined,
+  EyeOutlined,
+  FolderOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  SearchOutlined
 } from '@ant-design/icons'
+import type { MenuProps, TableProps } from 'antd'
+import { Button, Card, Col, Divider, Dropdown, Input, message, Modal, Row, Space, Table, Tag, Typography } from 'antd'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { categoryApi, type Category } from '../../../api/category.api'
 import CreateCategory from './Create'
 import EditCategory from './Update'
-import { toast } from 'react-hot-toast'
-import { message } from 'antd'
-import { useNavigate } from 'react-router-dom'
 
 const { Search } = Input
 const { Title, Text, Paragraph } = Typography
@@ -41,9 +37,9 @@ function CategoryList() {
     try {
       setLoading(true)
       const response = await categoryApi.searchCategoryApi({
-        page: 1,
-        size: 10,
-        search: searchText
+        pageNum: 1,
+        pageSize: 10,
+        query: searchText
       })
       if (response.pageData) {
         setCategories(response.pageData)
@@ -51,8 +47,14 @@ function CategoryList() {
         console.error('Invalid category search response:', response)
         setCategories([])
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách danh mục')
+      }
     } finally {
       setLoading(false)
     }
@@ -134,11 +136,16 @@ function CategoryList() {
     if (categoryIdToDelete) {
       try {
         await categoryApi.deleteCategoryApi(categoryIdToDelete)
-        toast.success('Ẩn danh mục thành công!')
+        message.success('Ẩn danh mục thành công!')
         fetchCategories()
-      } catch (error) {
-        console.error('Error deleting category:', error)
-        message.error('Xóa danh mục thất bại.')
+      } catch (error: unknown) {
+        console.log('error', error)
+        const err = error as { message?: string }
+        if (err.message) {
+          message.error(err.message)
+        } else {
+          message.error('Không thể xóa danh mục')
+        }
       } finally {
         setIsDeleteModalVisible(false)
         setCategoryIdToDelete(null)
@@ -149,13 +156,6 @@ function CategoryList() {
   const handleDeleteCancel = () => {
     setIsDeleteModalVisible(false)
     setCategoryIdToDelete(null)
-  }
-
-  // Statistics
-  const stats = {
-    total: categories.length,
-    active: categories.filter((cat) => !cat.isDeleted).length,
-    hidden: categories.filter((cat) => cat.isDeleted).length
   }
 
   const columns: TableProps<Category>['columns'] = [
@@ -174,7 +174,7 @@ function CategoryList() {
             {name}
           </Text>
           {record.isDeleted && (
-            <Tag color='red' size='small' className='ml-2'>
+            <Tag color='red' className='ml-2'>
               Đã ẩn
             </Tag>
           )}
@@ -414,7 +414,7 @@ function CategoryList() {
         </div>
       </Modal>
 
-      <style jsx global>{`
+      <style>{`
         .custom-table .ant-table-thead > tr > th {
           background-color: #fafafa;
           font-weight: 600;

@@ -26,7 +26,6 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log(response)
     if (response.status === 200 || response.status === 201) {
       return response.data
     }
@@ -35,7 +34,6 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { data } = error.response
-      console.log(error.response)
       if (data.message === null && data.errors && data.errors.length > 0) {
         data.errors.forEach((error: { field: string; message: string }) => {
           console.log(`${error.field}: ${error.message}`)

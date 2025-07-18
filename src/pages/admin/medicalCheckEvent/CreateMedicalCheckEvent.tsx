@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { Form, Select, DatePicker, Button, Card, Input, message } from 'antd'
-import { createMedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
+import { Button, Card, DatePicker, Form, Input, message, Select } from 'antd'
+import React, { useEffect, useState } from 'react'
 import { getGradesAPI } from '../../../api/grade.api'
-import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
+import { CreateMedicalCheckEventDTO, medicalCheckEventApi } from '../../../api/medicalCheckEvent.api'
 
 const { Option } = Select
 
@@ -20,10 +18,10 @@ interface FormValues {
   eventName: string
   gradeId: string
   location: string
-  dateRange: [dayjs.Dayjs, dayjs.Dayjs]
-  registrationRange: [dayjs.Dayjs, dayjs.Dayjs]
   description: string
   schoolYear: string
+  dateRange: [Date, Date]
+  registrationRange: [Date, Date]
 }
 
 const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuccess }) => {
@@ -38,9 +36,15 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
   const fetchGrades = async () => {
     try {
       const response = await getGradesAPI()
-      setGrades(response.pageData)
-    } catch {
-      message.error('Không thể tải danh sách khối')
+      setGrades(response.data?.pageData || [])
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối')
+      }
     }
   }
 
@@ -48,7 +52,7 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
     try {
       setLoading(true)
       const { dateRange, registrationRange, ...rest } = values
-      const data = {
+      const data: CreateMedicalCheckEventDTO = {
         eventName: rest.eventName,
         gradeId: rest.gradeId,
         location: rest.location,
@@ -58,12 +62,18 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
         startRegistrationDate: registrationRange[0].toISOString(),
         endRegistrationDate: registrationRange[1].toISOString()
       }
-      await createMedicalCheckEvent(data)
-      toast.success('Tạo sự kiện khám sức khỏe thành công')
+      await medicalCheckEventApi.create(data)
+      message.success('Tạo sự kiện khám sức khỏe thành công')
       form.resetFields()
       onSuccess()
-    } catch {
-      message.error('Không thể tạo sự kiện khám sức khỏe')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tạo sự kiện khám sức khỏe')
+      }
     } finally {
       setLoading(false)
     }

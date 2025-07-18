@@ -1,7 +1,6 @@
+import { message, Modal } from 'antd'
 import React, { useState } from 'react'
-import { Modal } from 'antd'
 import { deleteGradeAPI } from '../../../api/grade.api'
-import { toast } from 'react-toastify'
 
 interface Grade {
   _id: string
@@ -22,16 +21,20 @@ const DeleteGrade: React.FC<DeleteGradeProps> = ({ grade, onOk, onCancel }) => {
     try {
       setLoading(true)
       const response = await deleteGradeAPI(grade._id)
-      console.log('Delete response:', response) // Add this to debug
       if (response && response.status === 200) {
-        toast.success('Xóa khối thành công!')
+        message.success('Xóa khối thành công!')
         onOk()
       } else {
         throw new Error('Delete operation failed')
       }
-    } catch (error: any) {
-      console.error('Delete error:', error)
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa khối!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi xóa khối!')
+      }
     } finally {
       setLoading(false)
     }

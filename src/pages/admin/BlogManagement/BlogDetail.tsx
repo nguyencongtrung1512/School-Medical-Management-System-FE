@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { blogApi, Blog } from '../../../api/blog.api'
-import { Card, Spin, Button, message, Space, Modal } from 'antd'
-import { ArrowLeftOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import UpdateBlog from './Update'
-import DeleteBlog from './Delete'
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { Button, Card, message, Modal, Space, Spin } from 'antd'
 import DOMPurify from 'dompurify'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Blog, blogApi } from '../../../api/blog.api'
+import DeleteBlog from './Delete'
+import UpdateBlog from './Update'
 
 function BlogDetail() {
   const { _id } = useParams()
@@ -18,25 +18,27 @@ function BlogDetail() {
   const fetchBlogDetail = async () => {
     try {
       setLoading(true)
-      console.log('BlogDetail - _id from params:', _id)
 
       if (!_id) {
         message.error('ID blog không hợp lệ')
         return
       }
 
-      console.log('BlogDetail - Calling API with _id:', _id)
       const response = await blogApi.getBlogByIdApi(_id)
-      console.log('BlogDetail - API Response:', response)
 
       if (response.data) {
         setBlog(response.data)
       } else {
-        message.error('Không tìm thấy thông tin blog nha')
+        message.error('Không tìm thấy thông tin blog')
       }
-    } catch (error) {
-      console.error('BlogDetail - Error fetching blog detail:', error)
-      message.error('Không thể tải thông tin blog')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải thông tin blog')
+      }
     } finally {
       setLoading(false)
     }
@@ -79,7 +81,7 @@ function BlogDetail() {
   if (!blog) {
     return (
       <div style={{ textAlign: 'center', padding: '20px' }}>
-        <h2>Không tìm thấy thông tin blog nha</h2>
+        <h2>Không tìm thấy thông tin blog</h2>
         <Button type='primary' onClick={handleBack} icon={<ArrowLeftOutlined />}>
           Quay lại
         </Button>
@@ -106,7 +108,7 @@ function BlogDetail() {
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
             <img
               src={blog.image}
-              alt="Ảnh bìa blog"
+              alt='Ảnh bìa blog'
               style={{
                 maxWidth: '100%',
                 maxHeight: '400px',

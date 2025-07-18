@@ -1,8 +1,7 @@
+import { Form, Input, message, Modal } from 'antd'
 import React from 'react'
-import { Modal, Form, Input } from 'antd'
-import { createClassAPI } from '../../../api/classes.api'
 import { useParams } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { createClassAPI } from '../../../api/classes.api'
 
 interface CreateClassProps {
   isModalVisible: boolean
@@ -17,7 +16,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
     try {
       const values = await form.validateFields()
       if (!gradeId || gradeId === 'undefined' || gradeId === 'null') {
-        toast.error('Không tìm thấy ID khối. Vui lòng chọn khối trước khi tạo lớp!')
+        message.error('Không tìm thấy ID khối. Vui lòng chọn khối trước khi tạo lớp!')
         return
       }
 
@@ -28,12 +27,17 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       }
 
       await createClassAPI(data)
-      toast.success('Tạo lớp thành công')
+      message.success('Tạo lớp thành công')
       form.resetFields()
       onOk()
-    } catch (error) {
-      console.error('Error creating class:', error)
-      toast.error('Không thể tạo lớp mới')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tạo lớp mới')
+      }
     }
   }
 

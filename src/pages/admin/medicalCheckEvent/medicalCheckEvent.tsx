@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react'
 import {
   BookOutlined,
   CalendarOutlined,
@@ -27,6 +26,7 @@ import {
   Descriptions,
   Empty,
   Input,
+  message,
   Modal,
   Row,
   Space,
@@ -37,43 +37,14 @@ import {
   Typography
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { toast } from 'react-toastify'
+import React, { useEffect, useState } from 'react'
+import type { MedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
+import { medicalCheckEventApi } from '../../../api/medicalCheckEvent.api'
 import CreateMedicalCheckEvent from './CreateMedicalCheckEvent'
 import UpdateMedicalCheckEvent from './UpdateMedicalCheckEvent'
-import {
-  searchMedicalCheckEvents,
-  patchMedicalCheckEventStatus,
-  deleteMedicalCheckEvent
-} from '../../../api/medicalCheckEvent.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
-
-interface MedicalCheckEvent {
-  _id: string
-  eventName: string
-  gradeId: string
-  description: string
-  location: string
-  eventDate: string
-  startRegistrationDate: string
-  endRegistrationDate: string
-  schoolYear: string
-  isDeleted?: boolean
-  status?: string
-}
-
-const formatDateTime = (dateString: string = ''): string => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  date.setHours(date.getHours() + 7)
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${day}/${month}/${year} ${hour}:${minute}`
-}
 
 const MedicalCheckEvent: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<MedicalCheckEvent | null>(null)
@@ -95,11 +66,17 @@ const MedicalCheckEvent: React.FC = () => {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const response = await searchMedicalCheckEvents({ schoolYear: '', pageSize, pageNum: currentPage })
-      setEvents(response.pageData)
-      setTotalItems(response.pageInfo.totalItems)
-    } catch {
-      toast.error('Không thể tải danh sách sự kiện')
+      const response = await medicalCheckEventApi.search({ pageSize, pageNum: currentPage })
+      setEvents(response?.pageData || [])
+      setTotalItems(response?.pageInfo?.totalItems || 0)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách sự kiện')
+      }
     } finally {
       setLoading(false)
     }
@@ -244,7 +221,7 @@ const MedicalCheckEvent: React.FC = () => {
                   className='text-blue-600 hover:text-blue-700'
                 />
               </Tooltip>
-              <Tooltip title='Xóa sự kiện'>
+              <Tooltip title='Xóa'>
                 <Button
                   type='text'
                   icon={<DeleteOutlined />}
@@ -258,11 +235,17 @@ const MedicalCheckEvent: React.FC = () => {
                       cancelText: 'Hủy',
                       onOk: async () => {
                         try {
-                          await deleteMedicalCheckEvent(record._id)
-                          toast.success('Xóa sự kiện thành công!')
+                          await medicalCheckEventApi.delete(record._id)
+                          message.success('Xóa sự kiện thành công!')
                           fetchEvents()
-                        } catch {
-                          toast.error('Không thể xóa sự kiện!')
+                        } catch (error: unknown) {
+                          console.log('error', error)
+                          const err = error as { message?: string }
+                          if (err.message) {
+                            message.error(err.message)
+                          } else {
+                            message.error('Không thể xóa sự kiện!')
+                          }
                         }
                       }
                     })
@@ -297,7 +280,6 @@ const MedicalCheckEvent: React.FC = () => {
   const handleCreateSuccess = () => {
     setIsCreateModalVisible(false)
     fetchEvents()
-    toast.success('Tạo sự kiện khám sức khỏe thành công!')
   }
 
   // Callback khi cập nhật thành công
@@ -305,325 +287,333 @@ const MedicalCheckEvent: React.FC = () => {
     setIsEditModalVisible(false)
     setEditEvent(null)
     fetchEvents()
-    toast.success('Cập nhật sự kiện thành công!')
   }
 
   const handleUpdateStatus = async (id: string = '', newStatus: string = '') => {
     try {
-      await patchMedicalCheckEventStatus(id, newStatus)
-      toast.success('Cập nhật trạng thái thành công!')
+      await medicalCheckEventApi.updateStatus(id, newStatus)
+      message.success('Cập nhật trạng thái thành công!')
       fetchEvents()
-    } catch {
-      toast.error('Không thể cập nhật trạng thái!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật trạng thái!')
+      }
     }
+  }
+
+  function formatDateTime(dateString: string) {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleString('vi-VN', { hour12: false })
   }
 
   return (
     <div className=''>
-      <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        {/* Header */}
-        <Card className='shadow-sm'>
-          <div className='flex justify-between items-center'>
-            <div>
-              <Title level={2} className='m-0 flex items-center gap-2'>
-                <MedicineBoxOutlined className='text-blue-600' />
-                Quản lý sự kiện khám sức khỏe
-              </Title>
-              <Text type='secondary'>Duyệt và quản lý các sự kiện khám sức khỏe trong trường</Text>
-            </div>
-            <Space>
-              <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchEvents} loading={loading}>
-                Làm mới
-              </Button>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-                Tạo sự kiện mới
-              </Button>
-            </Space>
+      <Card className='shadow-sm'>
+        <div className='flex justify-between items-center'>
+          <div>
+            <Title level={2} className='m-0 flex items-center gap-2'>
+              <MedicineBoxOutlined className='text-blue-600' />
+              Quản lý sự kiện khám sức khỏe
+            </Title>
+            <Text type='secondary'>Duyệt và quản lý các sự kiện khám sức khỏe trong trường</Text>
           </div>
+          <Space>
+            <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
+            <Button icon={<ReloadOutlined />} onClick={fetchEvents} loading={loading}>
+              Làm mới
+            </Button>
+            <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+              Tạo sự kiện mới
+            </Button>
+          </Space>
+        </div>
 
-          {/* Statistics */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={6}>
-              <Card size='small' className='text-center'>
-                <Statistic
-                  title='Tổng số sự kiện'
-                  value={stats.total}
-                  prefix={<MedicineBoxOutlined />}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card size='small' className='text-center'>
-                <Statistic
-                  title='Chờ duyệt'
-                  value={stats.ongoing}
-                  prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card size='small' className='text-center'>
-                <Statistic
-                  title='Đã duyệt'
-                  value={stats.completed}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card size='small' className='text-center'>
-                <Statistic
-                  title='Đã hủy'
-                  value={stats.cancelled}
-                  prefix={<StopOutlined />}
-                  valueStyle={{ color: '#ff4d4f' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-        </Card>
-
-        {/* Filters */}
-        <Card className='shadow-sm'>
-          <Row gutter={[16, 16]} align='middle'>
-            <Col xs={24} sm={12} md={10}>
-              <Search
-                placeholder='Tìm kiếm tên sự kiện, mô tả, địa điểm...'
-                allowClear
-                enterButton={<SearchOutlined />}
-                size='large'
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
+        {/* Statistics */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Tổng số sự kiện'
+                value={stats.total}
+                prefix={<MedicineBoxOutlined />}
+                valueStyle={{ color: '#1890ff' }}
               />
-            </Col>
-            <Col xs={24} sm={24} md={8}>
-              <div className='flex justify-end'>
-                <Space>
-                  <Text type='secondary'>
-                    Hiển thị {filteredEvents.length} / {stats.total} sự kiện
-                  </Text>
-                </Space>
-              </div>
-            </Col>
-          </Row>
-        </Card>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Chờ duyệt'
+                value={stats.ongoing}
+                prefix={<ClockCircleOutlined />}
+                valueStyle={{ color: '#faad14' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Đã duyệt'
+                value={stats.completed}
+                prefix={<CheckCircleOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Đã hủy'
+                value={stats.cancelled}
+                prefix={<StopOutlined />}
+                valueStyle={{ color: '#ff4d4f' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      </Card>
 
-        {/* Main Table */}
-        <Card className='shadow-sm'>
-          <Table
-            columns={columns}
-            dataSource={filteredEvents}
-            rowKey='_id'
-            loading={loading}
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalItems,
-              onChange: handleTableChange,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
-              pageSizeOptions: ['5', '10', '20', '50']
-            }}
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description='Không có sự kiện khám sức khỏe nào'
-                  children={
-                    <Button type='primary' icon={<MedicineBoxOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-                      Tạo sự kiện mới
-                    </Button>
-                  }
-                />
-              )
-            }}
-            scroll={{ x: 1200 }}
-            rowClassName={(record) =>
-              record.status === 'ongoing'
-                ? 'hover:bg-blue-50 transition-colors cursor-pointer'
-                : 'hover:bg-gray-50 transition-colors cursor-pointer'
-            }
-          />
-        </Card>
-
-        {/* Detail Modal */}
-        <Modal
-          title={
-            <Space>
-              <MedicineBoxOutlined />
-              Chi tiết sự kiện khám sức khỏe
-            </Space>
-          }
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          width={900}
-          footer={
-            selectedEvent?.status === 'ongoing'
-              ? [
-                  <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                    Đóng
-                  </Button>,
-                  <Button
-                    key='reject'
-                    danger
-                    icon={<CloseOutlined />}
-                    onClick={() => {
-                      Modal.confirm({
-                        title: 'Xác nhận hủy sự kiện',
-                        content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
-                        okText: 'Xác nhận',
-                        cancelText: 'Hủy',
-                        onOk: () => {
-                          handleUpdateStatus(selectedEvent?._id || '', 'cancelled')
-                          setIsModalVisible(false)
-                        }
-                      })
-                    }}
-                  >
-                    Hủy sự kiện
-                  </Button>,
-                  <Button
-                    key='approve'
-                    type='primary'
-                    icon={<CheckOutlined />}
-                    onClick={() => {
-                      handleUpdateStatus(selectedEvent?._id || '', 'completed')
-                      setIsModalVisible(false)
-                    }}
-                  >
-                    Duyệt sự kiện
-                  </Button>
-                ]
-              : [
-                  <Button key='close' onClick={() => setIsModalVisible(false)}>
-                    Đóng
-                  </Button>
-                ]
-          }
-        >
-          {selectedEvent && (
-            <div className='space-y-6'>
-              {/* Event Header */}
-              <Card className='bg-gradient-to-r from-blue-50 to-green-50'>
-                <Row gutter={[24, 24]} align='middle'>
-                  <Col>
-                    <Avatar size={64} icon={<MedicineBoxOutlined />} className='bg-blue-500' />
-                  </Col>
-                  <Col flex='auto'>
-                    <Space direction='vertical' size={0}>
-                      <Title level={3} className='m-0'>
-                        {selectedEvent.eventName}
-                      </Title>
-                      <Text type='secondary' className='text-lg'>
-                        {selectedEvent.description}
-                      </Text>
-                      <div className='mt-2'>{getStatusConfig(selectedEvent.status).icon}</div>
-                    </Space>
-                  </Col>
-                </Row>
-              </Card>
-
-              {/* Event Details */}
-              <Card title='Thông tin chi tiết' size='small'>
-                <Descriptions column={2} size='small'>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <CalendarOutlined />
-                        Thời gian bắt đầu
-                      </Space>
-                    }
-                  >
-                    {selectedEvent.eventDate ? formatDateTime(selectedEvent.eventDate) : '-'}
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <EnvironmentOutlined />
-                        Địa điểm
-                      </Space>
-                    }
-                  >
-                    {selectedEvent.location}
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <ClockCircleOutlined />
-                        Hạn đăng ký
-                      </Space>
-                    }
-                  >
-                    {(selectedEvent.startRegistrationDate ? formatDateTime(selectedEvent.startRegistrationDate) : '-') +
-                      ' - ' +
-                      (selectedEvent.endRegistrationDate ? formatDateTime(selectedEvent.endRegistrationDate) : '-')}
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <BookOutlined /> Năm học
-                      </Space>
-                    }
-                  >
-                    {selectedEvent.schoolYear}
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-
-              {/* Description */}
-              <Card title='Mô tả chi tiết' size='small'>
-                <Paragraph>{selectedEvent.description}</Paragraph>
-              </Card>
-            </div>
-          )}
-        </Modal>
-
-        {/* Modal tạo mới sự kiện */}
-        <Modal
-          title={
-            <span>
-              <MedicineBoxOutlined /> Tạo sự kiện khám sức khỏe mới
-            </span>
-          }
-          open={isCreateModalVisible}
-          onCancel={() => setIsCreateModalVisible(false)}
-          footer={null}
-          width={800}
-          destroyOnClose
-        >
-          <CreateMedicalCheckEvent onSuccess={handleCreateSuccess} />
-        </Modal>
-
-        {/* Modal cập nhật sự kiện */}
-        <Modal
-          title={
-            <span>
-              <MedicineBoxOutlined /> Cập nhật sự kiện khám sức khỏe
-            </span>
-          }
-          open={isEditModalVisible}
-          onCancel={() => {
-            setIsEditModalVisible(false)
-            setEditEvent(null)
-          }}
-          footer={null}
-          width={800}
-          destroyOnClose
-        >
-          {editEvent && (
-            <UpdateMedicalCheckEvent
-              eventId={editEvent._id}
-              onSuccess={handleEditSuccess}
-              onCancel={() => setIsEditModalVisible(false)}
+      {/* Filters */}
+      <Card className='shadow-sm'>
+        <Row gutter={[16, 16]} align='middle'>
+          <Col xs={24} sm={12} md={10}>
+            <Search
+              placeholder='Tìm kiếm tên sự kiện, mô tả, địa điểm...'
+              allowClear
+              enterButton={<SearchOutlined />}
+              size='large'
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
             />
-          )}
-        </Modal>
-      </Space>
+          </Col>
+          <Col xs={24} sm={24} md={8}>
+            <div className='flex justify-end'>
+              <Space>
+                <Text type='secondary'>
+                  Hiển thị {filteredEvents.length} / {stats.total} sự kiện
+                </Text>
+              </Space>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Main Table */}
+      <Card className='shadow-sm'>
+        <Table
+          columns={columns}
+          dataSource={filteredEvents}
+          rowKey='_id'
+          loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalItems,
+            onChange: handleTableChange,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
+            pageSizeOptions: ['5', '10', '20', '50']
+          }}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description='Không có sự kiện khám sức khỏe nào'
+                children={
+                  <Button type='primary' icon={<MedicineBoxOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+                    Tạo sự kiện mới
+                  </Button>
+                }
+              />
+            )
+          }}
+          scroll={{ x: 1200 }}
+          rowClassName={(record) =>
+            record.status === 'ongoing'
+              ? 'hover:bg-blue-50 transition-colors cursor-pointer'
+              : 'hover:bg-gray-50 transition-colors cursor-pointer'
+          }
+        />
+      </Card>
+
+      {/* Detail Modal */}
+      <Modal
+        title={
+          <Space>
+            <MedicineBoxOutlined />
+            Chi tiết sự kiện khám sức khỏe
+          </Space>
+        }
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        width={900}
+        footer={
+          selectedEvent?.status === 'ongoing'
+            ? [
+                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>,
+                <Button
+                  key='reject'
+                  danger
+                  icon={<CloseOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Xác nhận hủy sự kiện',
+                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
+                      okText: 'Xác nhận',
+                      cancelText: 'Hủy',
+                      onOk: () => {
+                        handleUpdateStatus(selectedEvent?._id || '', 'cancelled')
+                        setIsModalVisible(false)
+                      }
+                    })
+                  }}
+                >
+                  Hủy sự kiện
+                </Button>,
+                <Button
+                  key='approve'
+                  type='primary'
+                  icon={<CheckOutlined />}
+                  onClick={() => {
+                    handleUpdateStatus(selectedEvent?._id || '', 'completed')
+                    setIsModalVisible(false)
+                  }}
+                >
+                  Duyệt sự kiện
+                </Button>
+              ]
+            : [
+                <Button key='close' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>
+              ]
+        }
+      >
+        {selectedEvent && (
+          <div className='space-y-6'>
+            {/* Event Header */}
+            <Card className='bg-gradient-to-r from-blue-50 to-green-50'>
+              <Row gutter={[24, 24]} align='middle'>
+                <Col>
+                  <Avatar size={64} icon={<MedicineBoxOutlined />} className='bg-blue-500' />
+                </Col>
+                <Col flex='auto'>
+                  <Space direction='vertical' size={0}>
+                    <Title level={3} className='m-0'>
+                      {selectedEvent.eventName}
+                    </Title>
+                    <Text type='secondary' className='text-lg'>
+                      {selectedEvent.description}
+                    </Text>
+                    <div className='mt-2'>{getStatusConfig(selectedEvent.status).icon}</div>
+                  </Space>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* Event Details */}
+            <Card title='Thông tin chi tiết' size='small'>
+              <Descriptions column={2} size='small'>
+                <Descriptions.Item
+                  label={
+                    <Space>
+                      <CalendarOutlined />
+                      Thời gian bắt đầu
+                    </Space>
+                  }
+                >
+                  {selectedEvent.eventDate ? formatDateTime(selectedEvent.eventDate) : '-'}
+                </Descriptions.Item>
+                <Descriptions.Item
+                  label={
+                    <Space>
+                      <EnvironmentOutlined />
+                      Địa điểm
+                    </Space>
+                  }
+                >
+                  {selectedEvent.location}
+                </Descriptions.Item>
+                <Descriptions.Item
+                  label={
+                    <Space>
+                      <ClockCircleOutlined />
+                      Hạn đăng ký
+                    </Space>
+                  }
+                >
+                  {(selectedEvent.startRegistrationDate ? formatDateTime(selectedEvent.startRegistrationDate) : '-') +
+                    ' - ' +
+                    (selectedEvent.endRegistrationDate ? formatDateTime(selectedEvent.endRegistrationDate) : '-')}
+                </Descriptions.Item>
+                <Descriptions.Item
+                  label={
+                    <Space>
+                      <BookOutlined /> Năm học
+                    </Space>
+                  }
+                >
+                  {selectedEvent.schoolYear}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+
+            {/* Description */}
+            <Card title='Mô tả chi tiết' size='small'>
+              <Paragraph>{selectedEvent.description}</Paragraph>
+            </Card>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal tạo mới sự kiện */}
+      <Modal
+        title={
+          <span>
+            <MedicineBoxOutlined /> Tạo sự kiện khám sức khỏe mới
+          </span>
+        }
+        open={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        footer={null}
+        width={800}
+        destroyOnClose
+      >
+        <CreateMedicalCheckEvent onSuccess={handleCreateSuccess} />
+      </Modal>
+
+      {/* Modal cập nhật sự kiện */}
+      <Modal
+        title={
+          <span>
+            <MedicineBoxOutlined /> Cập nhật sự kiện khám sức khỏe
+          </span>
+        }
+        open={isEditModalVisible}
+        onCancel={() => {
+          setIsEditModalVisible(false)
+          setEditEvent(null)
+        }}
+        footer={null}
+        width={800}
+        destroyOnClose
+      >
+        {editEvent && (
+          <UpdateMedicalCheckEvent
+            eventId={editEvent._id}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setIsEditModalVisible(false)}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

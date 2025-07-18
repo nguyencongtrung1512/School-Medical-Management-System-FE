@@ -1,7 +1,6 @@
+import { Form, Input, Modal, message } from 'antd'
 import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input } from 'antd'
 import { updateGradeAPI } from '../../../api/grade.api'
-import { toast } from 'react-toastify'
 
 interface Grade {
   _id: string
@@ -48,12 +47,18 @@ const UpdateGrade: React.FC<UpdateGradeProps> = ({
           name: values.name,
           positionOrder: values.positionOrder
         })
-        toast.success('Cập nhật khối thành công!')
+        message.success('Cập nhật khối thành công!')
         form.resetFields()
         onOk()
       }
-    } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật khối!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi cập nhật khối!')
+      }
     } finally {
       setLoading(false)
     }

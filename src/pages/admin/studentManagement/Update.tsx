@@ -1,7 +1,5 @@
+import { DatePicker, Form, Input, message, Modal, Select, Spin } from 'antd'
 import React, { useEffect } from 'react'
-import { Modal, Form, Input, Select, DatePicker, Spin } from 'antd'
-import { useParams } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import { updateStudentAPI } from '../../../api/student.api'
 import { searchUsersAPI } from '../../../api/user.api'
 
@@ -29,11 +27,18 @@ const UpdateStudent: React.FC<UpdateStudentProps> = ({ isModalVisible, onCancel,
     try {
       const res = await searchUsersAPI(1, 10, searchText, 'parent')
       setParents(res.data.pageData || [])
-    } catch (err) {
-      console.error('Error fetching parents:', err)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách phụ huynh')
+      }
       setParents([])
+    } finally {
+      setLoadingParents(false)
     }
-    setLoadingParents(false)
   }
 
   useEffect(() => {
@@ -61,12 +66,17 @@ const UpdateStudent: React.FC<UpdateStudentProps> = ({ isModalVisible, onCancel,
         avatar: values.avatar
       }
       await updateStudentAPI(editingStudent._id, data)
-      toast.success('Cập nhật học sinh thành công')
+      message.success('Cập nhật học sinh thành công')
       form.resetFields()
       onOk()
-    } catch (error) {
-      console.error('Error updating student:', error)
-      toast.error('Không thể cập nhật học sinh')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật học sinh')
+      }
     }
   }
 

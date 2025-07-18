@@ -1,8 +1,6 @@
+import { Form, Input, message, Modal } from 'antd'
 import React from 'react'
-import { Modal, Form, Input } from 'antd'
-import { updateUserAPI, createUserAPI } from '../../../api/user.api'
-import { toast } from 'react-toastify'
-
+import { createUserAPI, updateUserAPI } from '../../../api/user.api'
 
 interface UpdateProps {
   isModalVisible: boolean
@@ -28,17 +26,22 @@ const Update: React.FC<UpdateProps> = ({ isModalVisible, setIsModalVisible, user
       const values = await form.validateFields()
       if (user && user._id) {
         await updateUserAPI(user._id, values)
-        toast.success('Cập nhật thông tin người dùng thành công!')
+        message.success('Cập nhật thông tin người dùng thành công!')
       } else {
         await createUserAPI(values)
-        toast.success('Thêm người dùng thành công!')
+        message.success('Thêm người dùng thành công!')
       }
       setIsModalVisible(false)
       onUpdated()
       form.resetFields()
-    } catch (err) {
-      toast.error('Cập nhật thất bại!')
-      console.error('Update error:', err)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Cập nhật thất bại!')
+      }
     }
   }
 

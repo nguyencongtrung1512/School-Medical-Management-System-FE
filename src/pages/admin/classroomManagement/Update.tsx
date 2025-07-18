@@ -1,7 +1,6 @@
+import { Form, Input, message, Modal } from 'antd'
 import React, { useEffect } from 'react'
-import { Modal, Form, Input } from 'antd'
 import { updateClassAPI } from '../../../api/classes.api'
-import { toast } from 'react-toastify'
 
 interface Class {
   _id: string
@@ -40,12 +39,17 @@ const UpdateClass: React.FC<UpdateClassProps> = ({ isModalVisible, onCancel, onO
       }
 
       await updateClassAPI(editingClass._id, data)
-      toast.success('Cập nhật lớp thành công')
+      message.success('Cập nhật lớp thành công')
       form.resetFields()
       onOk()
-    } catch (error) {
-      console.error('Error updating class:', error)
-      toast.error('Không thể cập nhật lớp')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật lớp')
+      }
     }
   }
 

@@ -1,7 +1,6 @@
+import { Form, Input, message, Modal } from 'antd'
 import React from 'react'
-import { Modal, Form, Input } from 'antd'
 import { registerAPI } from '../../../api/auth.api'
-import { toast } from 'react-toastify'
 
 interface RegisterNurseProps {
   open: boolean
@@ -28,15 +27,21 @@ const RegisterNurse: React.FC<RegisterNurseProps> = ({ open, onClose, onSuccess 
         studentParents: []
       })
       if (response.success) {
-        toast.success('Đăng ký y tá thành công!')
+        message.success('Đăng ký y tá thành công!')
         form.resetFields()
         onClose()
         onSuccess?.()
       } else {
-        toast.error(response.message || 'Đăng ký thất bại!')
+        message.error(response.message || 'Đăng ký thất bại!')
       }
-    } catch (err) {
-      console.log('Lỗi validate:', err)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Đăng ký thất bại!')
+      }
       // Nếu là lỗi validate của form thì không hiển thị toast, AntD sẽ tự hiển thị lỗi
     } finally {
       setLoading(false)

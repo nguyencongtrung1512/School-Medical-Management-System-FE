@@ -1,5 +1,5 @@
+import { Descriptions, Modal, Spin, Typography } from 'antd'
 import React from 'react'
-import { Modal, Descriptions, Spin, Typography } from 'antd'
 
 const { Title } = Typography
 
@@ -18,7 +18,6 @@ const formatDate = (dateString: string) => {
   })
 }
 const Detail: React.FC<DetailProps> = ({ open, onCancel, user, loading }) => (
-
   <Modal title='Thông tin chi tiết người dùng' open={open} onCancel={onCancel} footer={null} width={600}>
     {loading ? (
       <Spin />
@@ -29,9 +28,7 @@ const Detail: React.FC<DetailProps> = ({ open, onCancel, user, loading }) => (
           <Descriptions.Item label='Email'>{user.email}</Descriptions.Item>
           <Descriptions.Item label='Số điện thoại'>{user.phone}</Descriptions.Item>
           <Descriptions.Item label='Vai trò'>{user.role}</Descriptions.Item>
-          <Descriptions.Item label='Trạng thái'>
-            {user.isDeleted === false ? 'Hoạt động' : 'Đã khóa'}
-          </Descriptions.Item>
+          <Descriptions.Item label='Trạng thái'>{user.isDeleted === false ? 'Hoạt động' : 'Đã khóa'}</Descriptions.Item>
           <Descriptions.Item label='Ngày tạo'>{formatDate(user.createdAt)}</Descriptions.Item>
         </Descriptions>
       </div>

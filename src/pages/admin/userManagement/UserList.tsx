@@ -1,47 +1,46 @@
-'use client'
-
 import type React from 'react'
 
-import { useState, useEffect } from 'react'
-import {
-  Card,
-  Table,
-  Typography,
-  Space,
-  Tag,
-  Button,
-  Row,
-  Col,
-  Statistic,
-  Input,
-  Select,
-  Avatar,
-  Badge,
-  Empty,
-  Modal,
-  Dropdown,
-  Menu
-} from 'antd'
 import {
   DeleteOutlined,
   EditOutlined,
+  ExportOutlined,
   EyeOutlined,
-  UserOutlined,
-  SearchOutlined,
   FilterOutlined,
+  MoreOutlined,
+  ReloadOutlined,
+  SearchOutlined,
   TeamOutlined,
   UserAddOutlined,
-  ReloadOutlined,
-  ExportOutlined,
-  MoreOutlined
+  UserOutlined
 } from '@ant-design/icons'
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Dropdown,
+  Empty,
+  Input,
+  Menu,
+  message,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography
+} from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
-import { searchUsersAPI, getUserByIdAPI, deleteUserAPI } from '../../../api/user.api'
-import Update from './Update'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
+import { deleteUserAPI, getUserByIdAPI, searchUsersAPI } from '../../../api/user.api'
 import Detail from './Detail'
 import RegisterNurse from './registerNurse'
-import { toast } from 'react-toastify'
+import Update from './Update'
 
 const { Title, Text } = Typography
 const { Search } = Input
@@ -112,11 +111,18 @@ const UserList: React.FC = () => {
           total: total
         }
       })
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách người dùng')
+      }
       setUsers([])
       console.log('Không thể tải danh sách người dùng')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const getRoleConfig = (role: string) => {
@@ -213,19 +219,25 @@ const UserList: React.FC = () => {
       render: (_, record) => {
         const menu = (
           <Menu
-            onClick={e => {
-              e.domEvent.stopPropagation();
-              handleMenuClick(e.key, record);
+            onClick={(e) => {
+              e.domEvent.stopPropagation()
+              handleMenuClick(e.key, record)
             }}
           >
-            <Menu.Item key='view' icon={<EyeOutlined />}>Xem chi tiết</Menu.Item>
-            <Menu.Item key='edit' icon={<EditOutlined />} disabled={record.isDeleted}>Sửa</Menu.Item>
-            <Menu.Item key='delete' icon={<DeleteOutlined />} danger disabled={record.isDeleted}>Khóa</Menu.Item>
+            <Menu.Item key='view' icon={<EyeOutlined />}>
+              Xem chi tiết
+            </Menu.Item>
+            <Menu.Item key='edit' icon={<EditOutlined />} disabled={record.isDeleted}>
+              Sửa
+            </Menu.Item>
+            <Menu.Item key='delete' icon={<DeleteOutlined />} danger disabled={record.isDeleted}>
+              Khóa
+            </Menu.Item>
           </Menu>
         )
         return (
           <Dropdown overlay={menu} trigger={['click']}>
-            <Button type='text' icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
+            <Button type='text' icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
           </Dropdown>
         )
       }
@@ -249,7 +261,7 @@ const UserList: React.FC = () => {
       setUserDetail(res.data)
     } catch {
       setUserDetail(null)
-     console.log('Không thể tải thông tin chi tiết')
+      console.log('Không thể tải thông tin chi tiết')
     }
     setLoadingDetail(false)
   }
@@ -267,7 +279,7 @@ const UserList: React.FC = () => {
           toast.success('Đã khóa người dùng thành công!')
           fetchUsers()
         } catch {
-         console.log('khóa người dùng thất bại!')
+          console.log('khóa người dùng thất bại!')
         }
       }
     })

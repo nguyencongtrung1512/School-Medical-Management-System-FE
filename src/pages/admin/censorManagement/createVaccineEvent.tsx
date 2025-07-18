@@ -10,7 +10,6 @@ import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Sele
 import dayjs from 'dayjs'
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import { getGradesAPI } from '../../../api/grade.api'
 import {
   createVaccineEvent,
@@ -80,8 +79,14 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
     try {
       const response = (await getGradesAPI()) as unknown as { pageData: Grade[] }
       setGrades(response.pageData)
-    } catch {
-      message.error('Không thể tải danh sách khối')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối')
+      }
     }
   }
 
@@ -98,15 +103,21 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
       }
       if (isEdit && eventData) {
         await updateVaccineEvent(eventData._id, data)
-        toast.success('Cập nhật kế hoạch tiêm chủng thành công')
+        message.success('Cập nhật kế hoạch tiêm chủng thành công')
       } else {
         await createVaccineEvent({ ...data, status: VaccineEventStatus.ONGOING })
-        toast.success('Tạo kế hoạch tiêm chủng thành công')
+        message.success('Tạo kế hoạch tiêm chủng thành công')
       }
       form.resetFields()
       onSuccess()
-    } catch {
-      message.error(isEdit ? 'Không thể cập nhật kế hoạch tiêm chủng' : 'Không thể tạo kế hoạch tiêm chủng')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error(isEdit ? 'Không thể cập nhật kế hoạch tiêm chủng' : 'Không thể tạo kế hoạch tiêm chủng')
+      }
     } finally {
       setLoading(false)
     }

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Table, Button, Modal, Space, Card, Typography, Divider, Tooltip, Row, Col } from 'antd'
+import { BookOutlined, EditOutlined, EyeOutlined, FileTextOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
-import { PlusOutlined, EyeOutlined, FileTextOutlined, EditOutlined, BookOutlined } from '@ant-design/icons'
-import { blogApi, type Blog } from '../../../api/blog.api'
+import { Button, Card, Col, Divider, message, Modal, Row, Space, Table, Tooltip, Typography } from 'antd'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { blogApi, type Blog } from '../../../api/blog.api'
 import path from '../../../constants/path'
 import CreateBlog from './Create'
 
@@ -25,12 +25,17 @@ function BlogList() {
           pageSize: 10,
           categoryId: categoryId
         })
-        console.log('res bloglist', response)
         if (response.pageData) {
           setBlogs(response.pageData)
         }
-      } catch (error) {
-        console.error('Error fetching blogs:', error)
+      } catch (error: unknown) {
+        console.log('error', error)
+        const err = error as { message?: string }
+        if (err.message) {
+          message.error(err.message)
+        } else {
+          message.error('Không thể tải danh sách blog')
+        }
       } finally {
         setLoading(false)
       }
@@ -64,8 +69,14 @@ function BlogList() {
           if (response.pageData) {
             setBlogs(response.pageData)
           }
-        } catch (error) {
-          console.error('Error fetching blogs:', error)
+        } catch (error: unknown) {
+          console.log('error', error)
+          const err = error as { message?: string }
+          if (err.message) {
+            message.error(err.message)
+          } else {
+            message.error('Không thể tải danh sách blog')
+          }
         } finally {
           setLoading(false)
         }

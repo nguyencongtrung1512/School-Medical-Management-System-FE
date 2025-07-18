@@ -1,10 +1,9 @@
-import React from 'react'
-import { Modal, Form, Input, Select, DatePicker, Upload, Button, message } from 'antd'
-import { useParams } from 'react-router-dom'
-import { toast } from 'react-toastify'
-import { createStudentAPI } from '../../../api/student.api'
-import dayjs from 'dayjs'
 import { CalendarOutlined, UploadOutlined } from '@ant-design/icons'
+import { Button, DatePicker, Form, Input, message, Modal, Select, Upload } from 'antd'
+import dayjs from 'dayjs'
+import React from 'react'
+import { useParams } from 'react-router-dom'
+import { createStudentAPI } from '../../../api/student.api'
 import { handleUploadFile } from '../../../utils/upload'
 
 interface CreateClassProps {
@@ -25,7 +24,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       const values = await form.validateFields()
 
       if (!classId) {
-        toast.error('Không tìm thấy ID lớp')
+        message.error('Không tìm thấy ID lớp')
         return
       }
 
@@ -44,12 +43,17 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
       }
 
       await createStudentAPI(data)
-      toast.success('Tạo học sinh thành công')
+      message.success('Tạo học sinh thành công')
       form.resetFields()
       onOk()
-    } catch (error) {
-      console.error('Error creating class:', error)
-      toast.error('Không thể tạo học sinh mới')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tạo học sinh mới')
+      }
     }
   }
 
@@ -61,8 +65,14 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         setAvatarUrl(url)
         message.success('Tải ảnh lên thành công!')
       }
-    } catch (error) {
-      message.error('Tải ảnh lên thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Tải ảnh lên thất bại!')
+      }
     }
     return false
   }
