@@ -1,44 +1,40 @@
-import { useEffect, useState } from 'react'
 import {
-  Card,
-  Table,
-  Badge,
-  Dropdown,
-  Menu,
-  Spin,
-  Typography,
-  Empty,
-  Avatar,
-  Space,
-  Row,
-  Col,
-  DatePicker,
-  Select,
-  Tag,
-  Button,
-  Modal,
-  Input,
-  Tooltip
-} from 'antd'
-import {
-  UserOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   EyeOutlined,
+  FilterOutlined,
   MoreOutlined,
-  FilterOutlined
+  UserOutlined
 } from '@ant-design/icons'
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Dropdown,
+  Empty,
+  Input,
+  Menu,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import type { ColumnsType } from 'antd/es/table'
 
-import {
-  getAppointmentsNurse,
-  updateAppointmentStatus,
-  type AppointmentAPIResponse
-} from '../../../api/appointment.api'
+import { appointmentApi, ParentNurseAppointment, ParentNurseAppointmentStatus } from '../../../api/appointment.api'
 import { useAuth } from '../../../contexts/auth.context'
 
 const { Title, Text } = Typography
@@ -47,11 +43,11 @@ const { Option } = Select
 
 function PrivateConsultation() {
   const { user } = useAuth()
-  const [appointments, setAppointments] = useState<AppointmentAPIResponse[]>([])
+  const [appointments, setAppointments] = useState<ParentNurseAppointment[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // NEW: actions & modal states
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentAPIResponse | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<ParentNurseAppointment | null>(null)
   const [doneModalOpen, setDoneModalOpen] = useState(false)
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
@@ -68,11 +64,8 @@ function PrivateConsultation() {
     if (!user) return
     setLoading(true)
     try {
-      const res = await getAppointmentsNurse({ pageNum: 1, pageSize: 50, nurseId: user.id })
-      // axiosInstance trả về response.data, nên pageData nằm trong res.data
-      // Dùng any để tránh lỗi kiểu khi cấu trúc response thay đổi
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pageData = (res as any).data?.pageData || (res as any).pageData || []
+      const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
+      const pageData = res.data?.pageData || []
       setAppointments(pageData)
     } catch {
       setAppointments([])
@@ -111,7 +104,7 @@ function PrivateConsultation() {
   }
 
   // Action menu for each appointment
-  const getActionMenu = (record: AppointmentAPIResponse) => (
+  const getActionMenu = (record: ParentNurseAppointment) => (
     <Menu>
       <Menu.Item key='view' icon={<EyeOutlined />} onClick={() => handleDetailClick(record)}>
         Xem chi tiết
@@ -130,7 +123,7 @@ function PrivateConsultation() {
   )
 
   // Table columns
-  const columns: ColumnsType<AppointmentAPIResponse> = [
+  const columns: ColumnsType<ParentNurseAppointment> = [
     {
       title: 'Học sinh',
       dataIndex: 'student',
@@ -217,18 +210,18 @@ function PrivateConsultation() {
   ]
 
   // ====== Action handlers ======
-  const handleDetailClick = (appt: AppointmentAPIResponse) => {
+  const handleDetailClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setDetailModalOpen(true)
   }
 
-  const handleDoneClick = (appt: AppointmentAPIResponse) => {
+  const handleDoneClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setDoneModalOpen(true)
     setDoneNote('')
   }
 
-  const handleCancelClick = (appt: AppointmentAPIResponse) => {
+  const handleCancelClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setCancelModalOpen(true)
     setCancelReason('')
@@ -238,7 +231,10 @@ function PrivateConsultation() {
     if (!selectedAppointment) return
     setUpdating(true)
     try {
-      await updateAppointmentStatus(selectedAppointment._id, { status: 'done', note: doneNote })
+      await appointmentApi.updateStatus(selectedAppointment._id, {
+        status: ParentNurseAppointmentStatus.Done,
+        note: doneNote
+      })
       toast.success('Đánh dấu hoàn thành thành công!')
       setDoneModalOpen(false)
       fetchAppointments()
@@ -256,8 +252,8 @@ function PrivateConsultation() {
     }
     setUpdating(true)
     try {
-      await updateAppointmentStatus(selectedAppointment._id, {
-        status: 'cancelled',
+      await appointmentApi.updateStatus(selectedAppointment._id, {
+        status: ParentNurseAppointmentStatus.Cancelled,
         cancellationReason: cancelReason
       })
       toast.success('Hủy lịch hẹn thành công!')
@@ -402,15 +398,15 @@ function PrivateConsultation() {
                   <Space direction='vertical' style={{ width: '100%' }}>
                     <div>
                       <Text strong>Họ tên: </Text>
-                      <Text>{selectedAppointment.student.fullName}</Text>
+                      <Text>{selectedAppointment.student?.fullName}</Text>
                     </div>
                     <div>
                       <Text strong>Mã HS: </Text>
-                      <Text>{selectedAppointment.student.studentCode}</Text>
+                      <Text>{selectedAppointment.student?.studentCode}</Text>
                     </div>
                     <div>
                       <Text strong>Giới tính: </Text>
-                      <Text>{selectedAppointment.student.gender === 'male' ? 'Nam' : 'Nữ'}</Text>
+                      <Text>{selectedAppointment.student?.gender === 'male' ? 'Nam' : 'Nữ'}</Text>
                     </div>
                   </Space>
                 </Card>
@@ -420,15 +416,15 @@ function PrivateConsultation() {
                   <Space direction='vertical' style={{ width: '100%' }}>
                     <div>
                       <Text strong>Họ tên: </Text>
-                      <Text>{selectedAppointment.parent.fullName}</Text>
+                      <Text>{selectedAppointment.parent?.fullName}</Text>
                     </div>
                     <div>
                       <Text strong>Điện thoại: </Text>
-                      <Text copyable>{selectedAppointment.parent.phone}</Text>
+                      <Text copyable>{selectedAppointment.parent?.phone}</Text>
                     </div>
                     <div>
                       <Text strong>Email: </Text>
-                      <Text>{selectedAppointment.parent.email}</Text>
+                      <Text>{selectedAppointment.parent?.email}</Text>
                     </div>
                   </Space>
                 </Card>

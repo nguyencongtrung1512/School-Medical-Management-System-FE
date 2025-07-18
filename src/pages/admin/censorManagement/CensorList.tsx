@@ -1,47 +1,51 @@
 import type React from 'react'
 
-import { useState, useEffect } from 'react'
 import {
-  Card,
-  Table,
-  Typography,
-  Space,
-  Tag,
-  Button,
-  Modal,
-  Row,
-  Col,
-  Statistic,
-  Descriptions,
+  BookOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  CheckOutlined,
+  ClockCircleOutlined,
+  CloseOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EnvironmentOutlined,
+  ExclamationCircleOutlined,
+  ExportOutlined,
+  EyeOutlined,
+  MedicineBoxOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  StopOutlined
+} from '@ant-design/icons'
+import {
   Avatar,
-  Tooltip,
   Badge,
+  Button,
+  Card,
+  Col,
+  Descriptions,
   Empty,
   Input,
-  DatePicker
+  Modal,
+  Row,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
 } from 'antd'
-import {
-  CheckOutlined,
-  CloseOutlined,
-  EyeOutlined,
-  CalendarOutlined,
-  MedicineBoxOutlined,
-  EnvironmentOutlined,
-  ClockCircleOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  ExportOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  StopOutlined,
-  PlusOutlined,
-  BookOutlined,
-  EditOutlined,
-  DeleteOutlined
-} from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { getAllVaccineEvents, updateVaccineEventStatus, VaccineEventStatus, deleteVaccineEvent } from '../../../api/vaccineEvent.api'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import {
+  deleteVaccineEvent,
+  getAllVaccineEvents,
+  updateVaccineEventStatus,
+  VaccineEventStatus
+} from '../../../api/vaccineEvent.api'
 import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
@@ -255,7 +259,7 @@ const CensorList: React.FC = () => {
                   type='text'
                   icon={<DeleteOutlined />}
                   onClick={async (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation()
                     Modal.confirm({
                       title: 'Xác nhận xóa sự kiện',
                       content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
@@ -264,14 +268,14 @@ const CensorList: React.FC = () => {
                       cancelText: 'Hủy',
                       onOk: async () => {
                         try {
-                          await deleteVaccineEvent(record._id);
-                          toast.success('Xóa sự kiện thành công!');
-                          fetchVaccineEvents();
+                          await deleteVaccineEvent(record._id)
+                          toast.success('Xóa sự kiện thành công!')
+                          fetchVaccineEvents()
                         } catch {
-                          toast.error('Không thể xóa sự kiện!');
+                          toast.error('Không thể xóa sự kiện!')
                         }
                       }
-                    });
+                    })
                   }}
                   className='text-red-600 hover:text-red-700'
                 />
@@ -308,8 +312,8 @@ const CensorList: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+        event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -462,10 +466,10 @@ const CensorList: React.FC = () => {
                 ? 'hover:bg-blue-50 transition-colors cursor-pointer'
                 : 'hover:bg-gray-50 transition-colors cursor-pointer'
             }
-          // Bỏ onRow event handler để tránh conflict với button clicks
-          // onRow={(record) => ({
-          //   onClick: () => handleViewDetails(record)
-          // })}
+            // Bỏ onRow event handler để tránh conflict với button clicks
+            // onRow={(record) => ({
+            //   onClick: () => handleViewDetails(record)
+            // })}
           />
         </Card>
 
@@ -483,45 +487,45 @@ const CensorList: React.FC = () => {
           footer={
             selectedPlan?.status === VaccineEventStatus.ONGOING
               ? [
-                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>,
-                <Button
-                  key='reject'
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Xác nhận hủy sự kiện',
-                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedPlan?.title}"?`,
-                      okText: 'Xác nhận',
-                      cancelText: 'Hủy',
-                      onOk: () => {
-                        handleUpdateStatus(selectedPlan._id, VaccineEventStatus.CANCELLED)
-                        setIsModalVisible(false)
-                      }
-                    })
-                  }}
-                >
-                  Hủy sự kiện
-                </Button>,
-                <Button
-                  key='approve'
-                  type='primary'
-                  icon={<CheckOutlined />}
-                  onClick={() => {
-                    handleUpdateStatus(selectedPlan._id, VaccineEventStatus.COMPLETED)
-                    setIsModalVisible(false)
-                  }}
-                >
-                  Duyệt sự kiện
-                </Button>
-              ]
+                  <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                    Đóng
+                  </Button>,
+                  <Button
+                    key='reject'
+                    danger
+                    icon={<CloseOutlined />}
+                    onClick={() => {
+                      Modal.confirm({
+                        title: 'Xác nhận hủy sự kiện',
+                        content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedPlan?.title}"?`,
+                        okText: 'Xác nhận',
+                        cancelText: 'Hủy',
+                        onOk: () => {
+                          handleUpdateStatus(selectedPlan._id, VaccineEventStatus.CANCELLED)
+                          setIsModalVisible(false)
+                        }
+                      })
+                    }}
+                  >
+                    Hủy sự kiện
+                  </Button>,
+                  <Button
+                    key='approve'
+                    type='primary'
+                    icon={<CheckOutlined />}
+                    onClick={() => {
+                      handleUpdateStatus(selectedPlan._id, VaccineEventStatus.COMPLETED)
+                      setIsModalVisible(false)
+                    }}
+                  >
+                    Duyệt sự kiện
+                  </Button>
+                ]
               : [
-                <Button key='close' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>
-              ]
+                  <Button key='close' onClick={() => setIsModalVisible(false)}>
+                    Đóng
+                  </Button>
+                ]
           }
         >
           {selectedPlan && (

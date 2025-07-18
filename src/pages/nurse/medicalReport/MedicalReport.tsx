@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, Typography, Table, Button, Space } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { getMedicalEvents } from '../../../api/medicalEvent.api'
-import type { MedicalEvent } from '../../../api/medicalEvent.api'
+import { medicalEventApi, MedicalEvent } from '../../../api/medicalEvent.api'
 import CreateMedicalEventForm from './Create'
 import Detail from './Detail'
 
@@ -19,8 +18,9 @@ const MedicalReport: React.FC = () => {
   const fetchMedicalEvents = async () => {
     try {
       setLoading(true)
-      const response = await getMedicalEvents()
-      setMedicalEvents(response.pageData)
+      const response = await medicalEventApi.search({})
+      // response.data.pageData is correct if backend returns { pageData, ... }
+      setMedicalEvents(response.data && response.data.pageData ? response.data.pageData : [])
     } catch (error) {
       console.error('Error fetching medical events:', error)
     } finally {
@@ -57,11 +57,9 @@ const MedicalReport: React.FC = () => {
     },
     {
       title: 'Mức độ nghiêm trọng',
-      dataIndex: 'isSerious',
-      key: 'isSerious',
-      render: (isSerious: boolean) => (
-        <span style={{ color: isSerious ? 'red' : 'green' }}>{isSerious ? 'Nghiêm trọng' : 'Không nghiêm trọng'}</span>
-      )
+      dataIndex: 'severityLevel',
+      key: 'severityLevel',
+      render: (severityLevel: string) => <span>{severityLevel || 'Không xác định'}</span>
     },
     {
       title: 'Người tạo',

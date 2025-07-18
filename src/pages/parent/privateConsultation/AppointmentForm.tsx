@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Button } from '../../../components/ui/button'
-import { Label } from '../../../components/ui/label'
-import { Textarea } from '../../../components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
-import { Calendar } from '../../../components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
-import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { CalendarIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Button } from '../../../components/ui/button'
+import { Calendar } from '../../../components/ui/calendar'
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
+import { Label } from '../../../components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
+import { Textarea } from '../../../components/ui/textarea'
 
-import { createAppointment } from '../../../api/appointment.api'
-import { getCurrentUserAPI } from '../../../api/user.api'
+import { appointmentApi, AppointmentType, CreateAppointmentRequest } from '../../../api/appointment.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
+import { getCurrentUserAPI } from '../../../api/user.api'
 import Loading from '../../../components/Loading/Loading'
 import SuccessModal from './successModal'
 
@@ -43,8 +43,8 @@ const AppointmentForm = ({ onSuccess }: AppointmentFormProps) => {
     const fetchStudents = async () => {
       try {
         const userResponse = await getCurrentUserAPI()
-        if (userResponse.data.studentIds && userResponse.data.studentIds.length > 0) {
-          const studentPromises = userResponse.data.studentIds.map((studentId: string) => getStudentByIdAPI(studentId))
+        if (userResponse.studentIds && userResponse.studentIds.length > 0) {
+          const studentPromises = userResponse.studentIds.map((studentId: string) => getStudentByIdAPI(studentId))
           const studentResponses = await Promise.all(studentPromises)
           const studentList = studentResponses.map((response: any) => ({
             _id: response.data._id,
@@ -95,13 +95,14 @@ const AppointmentForm = ({ onSuccess }: AppointmentFormProps) => {
     const appointmentTime = scheduledDateTime.toISOString()
     setLoading(true)
     try {
-      await createAppointment({
+      const data: CreateAppointmentRequest = {
         studentId: student._id,
         appointmentTime,
         reason: reason.trim(),
-        type: 'other',
+        type: AppointmentType.Other,
         note: note.trim()
-      })
+      }
+      await appointmentApi.create(data)
       setAppointmentDetails({
         date: format(scheduledDateTime, 'dd/MM/yyyy', { locale: vi }),
         time: format(scheduledDateTime, 'HH:mm')

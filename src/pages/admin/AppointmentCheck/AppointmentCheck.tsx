@@ -1,54 +1,42 @@
-import { useEffect, useState } from 'react'
 import {
-  Table,
-  Button,
-  Select,
-  Modal,
-  Input,
-  Card,
-  Tag,
-  Typography,
-  Space,
-  Descriptions,
-  Avatar,
-  Tooltip,
-  Empty,
-  Divider,
-  Form,
-  Badge
-} from 'antd'
-import {
-  UserOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   EyeOutlined,
-  MedicineBoxOutlined
+  MedicineBoxOutlined,
+  UserOutlined,
+  DownloadOutlined
 } from '@ant-design/icons'
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Descriptions,
+  Divider,
+  Empty,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { getAppointments, approveAppointment } from '../../../api/appointment.api'
-import { searchNurseUsersAPI } from '../../../api/user.api'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { appointmentApi, ParentNurseAppointment, ParentNurseAppointmentStatus } from '../../../api/appointment.api'
+import { searchNurseUsersAPI } from '../../../api/user.api'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
 const { Option } = Select
 
 // Mock interfaces - replace with your actual types
-interface Appointment {
-  _id: string
-  studentId: string
-  appointmentTime: string
-  studentCode: string
-  reason: string
-  note?: string
-  status: string
-  studentName?: string
-  parentName?: string
-  phone?: string
-  schoolNurseName?: string
-}
-
+// Xóa interface Appointment, dùng ParentNurseAppointment
 interface Nurse {
   _id: string
   fullName: string
@@ -58,31 +46,27 @@ interface Nurse {
 }
 
 function AppointmentCheck() {
-  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [appointments, setAppointments] = useState<ParentNurseAppointment[]>([])
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<ParentNurseAppointment | null>(null)
   const [nurses, setNurses] = useState<Nurse[]>([])
   const [selectedNurse, setSelectedNurse] = useState<string>('')
   const [assigning, setAssigning] = useState(false)
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [cancelNote, setCancelNote] = useState('')
+  const [exporting, setExporting] = useState(false)
 
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      const res = await getAppointments(1, 20)
-      const mapped = (res.pageData || []).map((item: any) => ({
-        ...item,
-        studentCode: item.student?.studentCode || '',
-        studentName: item.student?.fullName || '',
-        parentName: item.parent?.fullName || '',
-        phone: item.parent?.phone || '',
-        schoolNurseName: item.schoolNurse?.fullName || ''
-      }))
-      setAppointments(mapped)
+      const res = await appointmentApi.search({ pageNum: 1, pageSize: 20 })
+      // Nếu API trả về mảng:
+      setAppointments(Array.isArray(res) ? res : [])
+      // Nếu API trả về object có pageData:
+      // setAppointments(res.data.pageData || [])
     } catch {
       setAppointments([])
     } finally {
@@ -93,7 +77,7 @@ function AppointmentCheck() {
   const fetchNurses = async (search?: string) => {
     try {
       const res = await searchNurseUsersAPI(1, 10, search)
-      setNurses(res.pageData || res.pageData || [])
+      setNurses(Array.isArray(res.pageData) ? res.pageData : [])
     } catch {
       setNurses([])
     }
@@ -125,13 +109,13 @@ function AppointmentCheck() {
     )
   }
 
-  const handleAssignClick = (appt: Appointment) => {
+  const handleAssignClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setModalOpen(true)
     fetchNurses()
   }
 
-  const handleDetailClick = (appt: Appointment) => {
+  const handleDetailClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setDetailModalOpen(true)
   }
@@ -140,8 +124,8 @@ function AppointmentCheck() {
     if (!selectedAppointment || !selectedNurse) return
     setAssigning(true)
     try {
-      await approveAppointment(selectedAppointment._id, {
-        status: 'approved',
+      await appointmentApi.approve(selectedAppointment._id, {
+        status: ParentNurseAppointmentStatus.Approved,
         schoolNurseId: selectedNurse
       })
       toast.success('Giao y tá thành công!')
@@ -155,7 +139,7 @@ function AppointmentCheck() {
     }
   }
 
-  const handleCancelClick = (appt: Appointment) => {
+  const handleCancelClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setCancelModalOpen(true)
     setCancelReason('')
@@ -169,8 +153,8 @@ function AppointmentCheck() {
     }
     setAssigning(true)
     try {
-      await approveAppointment(selectedAppointment._id, {
-        status: 'cancelled',
+      await appointmentApi.approve(selectedAppointment._id, {
+        status: ParentNurseAppointmentStatus.Cancelled,
         schoolNurseId: '',
         cancellationReason: cancelReason,
         note: cancelNote
@@ -185,22 +169,47 @@ function AppointmentCheck() {
     }
   }
 
-  const columns: ColumnsType<Appointment> = [
+  const handleExportExcel = async () => {
+    setExporting(true)
+    try {
+      const res = await appointmentApi.exportExcel({})
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'appointments.xlsx')
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+      toast.success('Xuất file Excel thành công!')
+    } catch {
+      toast.error('Xuất file Excel thất bại!')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const columns: ColumnsType<ParentNurseAppointment> = [
     {
       title: 'Học sinh',
-      dataIndex: 'studentName',
-      key: 'studentName',
-      render: (text, record) => (
+      dataIndex: ['student', 'fullName'],
+      key: 'student',
+      render: (_, record) => (
         <Space>
           <Avatar icon={<UserOutlined />} />
           <div>
-            <div className='font-medium'>{text || record.studentId}</div>
+            <div className='font-medium'>{record.student?.fullName || record.studentId}</div>
             <Text type='secondary' className='text-xs'>
-              PH: {record.parentName}
+              PH: {record.parent?.fullName}
             </Text>
           </div>
         </Space>
       )
+    },
+    {
+      title: 'Mã học sinh',
+      dataIndex: ['student', 'studentCode'],
+      key: 'studentCode',
+      render: (_, record) => record.student?.studentCode || ''
     },
     {
       title: 'Thời gian hẹn',
@@ -216,19 +225,6 @@ function AppointmentCheck() {
             })}
           </Text>
         </Space>
-      )
-    },
-    {
-      title: 'Lý do khám',
-      dataIndex: 'reason',
-      key: 'reason',
-      ellipsis: {
-        showTitle: false
-      },
-      render: (reason) => (
-        <Tooltip placement='topLeft' title={reason}>
-          <Text className='max-w-xs'>{reason}</Text>
-        </Tooltip>
       )
     },
     {
@@ -255,13 +251,8 @@ function AppointmentCheck() {
           {record.status === 'pending' && (
             <>
               <Tooltip title='Giao cho y tá'>
-                <Button
-                  type='primary'
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleAssignClick(record)}
-                  size='small'
-                >
-                  Duyệt
+                <Button type='primary' onClick={() => handleAssignClick(record)} size='small'>
+                  Giao cho y tá
                 </Button>
               </Tooltip>
               <Tooltip title='Hủy lịch hẹn'>
@@ -271,12 +262,13 @@ function AppointmentCheck() {
               </Tooltip>
             </>
           )}
+          {/* Khi trạng thái là 'approved', chỉ hiển thị nút xem chi tiết, các nút khác ẩn */}
         </Space>
       )
     }
   ]
 
-  const pendingCount = appointments.filter((apt) => apt.status === 'pending').length
+  const pendingCount = appointments.filter((apt) => apt?.status === 'pending')?.length
 
   return (
     <div className=''>
@@ -313,6 +305,11 @@ function AppointmentCheck() {
             emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description='Chưa có lịch hẹn nào' />
           }}
           className='bg-white'
+          title={() => (
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExportExcel}>
+              Xuất Excel
+            </Button>
+          )}
         />
       </Card>
 
@@ -336,16 +333,18 @@ function AppointmentCheck() {
         {selectedAppointment && (
           <div>
             <Descriptions column={1} bordered size='small'>
-              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.studentCode}</Descriptions.Item>
-              <Descriptions.Item label='Tên học sinh'>{selectedAppointment.studentName}</Descriptions.Item>
-              <Descriptions.Item label='Phụ huynh'>{selectedAppointment.parentName}</Descriptions.Item>
-              <Descriptions.Item label='Số điện thoại'>{selectedAppointment.phone}</Descriptions.Item>
+              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.student?.studentCode}</Descriptions.Item>
+              <Descriptions.Item label='Tên học sinh'>{selectedAppointment.student?.fullName}</Descriptions.Item>
+              <Descriptions.Item label='Phụ huynh'>{selectedAppointment.parent?.fullName}</Descriptions.Item>
+              <Descriptions.Item label='Số điện thoại'>{selectedAppointment.parent?.phone}</Descriptions.Item>
               <Descriptions.Item label='Thời gian hẹn'>
                 {new Date(selectedAppointment.appointmentTime).toLocaleString('vi-VN')}
               </Descriptions.Item>
               <Descriptions.Item label='Trạng thái'>{getStatusTag(selectedAppointment.status)}</Descriptions.Item>
-              {selectedAppointment.schoolNurseName && (
-                <Descriptions.Item label='Y tá phụ trách'>{selectedAppointment.schoolNurseName}</Descriptions.Item>
+              {selectedAppointment.schoolNurse?.fullName && (
+                <Descriptions.Item label='Y tá phụ trách'>
+                  {selectedAppointment.schoolNurse?.fullName}
+                </Descriptions.Item>
               )}
             </Descriptions>
 
@@ -389,7 +388,7 @@ function AppointmentCheck() {
             <Text strong>Lịch hẹn:</Text>
             <div className='mt-2 p-3 bg-gray-50 rounded'>
               <Text>
-                {selectedAppointment?.studentName} - {selectedAppointment?.reason}
+                {selectedAppointment?.student?.fullName} - {selectedAppointment?.reason}
               </Text>
             </div>
           </div>
@@ -448,7 +447,7 @@ function AppointmentCheck() {
             <Text strong>Lịch hẹn sẽ bị hủy:</Text>
             <div className='mt-2 p-3 bg-red-50 rounded border border-red-200'>
               <Text>
-                {selectedAppointment?.studentName} - {selectedAppointment?.reason}
+                {selectedAppointment?.student?.fullName} - {selectedAppointment?.reason}
               </Text>
             </div>
           </div>

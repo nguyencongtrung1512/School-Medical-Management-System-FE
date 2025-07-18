@@ -1,18 +1,23 @@
-import type React from 'react'
-import { useState, useEffect } from 'react'
-import { Form, Select, DatePicker, Button, Card, Input, message, Row, Col, Typography, Space, Divider } from 'antd'
 import {
+  BookOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
-  MedicineBoxOutlined,
   FileTextOutlined,
-  TeamOutlined,
-  BookOutlined
+  MedicineBoxOutlined,
+  TeamOutlined
 } from '@ant-design/icons'
-import { createVaccineEvent, updateVaccineEvent, type VaccineEvent, VaccineEventStatus } from '../../../api/vaccineEvent.api'
-import { getGradesAPI } from '../../../api/grade.api'
+import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
+import type React from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { getGradesAPI } from '../../../api/grade.api'
+import {
+  createVaccineEvent,
+  updateVaccineEvent,
+  type VaccineEvent,
+  VaccineEventStatus
+} from '../../../api/vaccineEvent.api'
 
 const { Option } = Select
 const { Title, Text } = Typography
@@ -311,7 +316,7 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                 className='bg-blue-500 hover:bg-blue-600 rounded-lg min-w-[120px]'
                 icon={<MedicineBoxOutlined />}
               >
-                {loading ? (isEdit ? 'Đang cập nhật...' : 'Đang tạo...') : (isEdit ? 'Cập nhật' : 'Tạo kế hoạch')}
+                {loading ? (isEdit ? 'Đang cập nhật...' : 'Đang tạo...') : isEdit ? 'Cập nhật' : 'Tạo kế hoạch'}
               </Button>
             </Space>
           </div>

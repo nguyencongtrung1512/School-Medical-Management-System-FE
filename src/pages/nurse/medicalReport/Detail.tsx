@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Modal, Descriptions, Form, Input, Select, Button, message } from 'antd'
-import { getMedicalEventById, updateMedicalEvent } from '../../../api/medicalEvent.api'
-import type { MedicalEvent, UpdateMedicalEventRequest, GetMedicalEventByIdResponse } from '../../../api/medicalEvent.api'
+import { medicalEventApi, MedicalEvent, UpdateMedicalEventRequest, SeverityLevel } from '../../../api/medicalEvent.api'
 import { getMedicines } from '../../../api/medicines.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import type { Medicine } from '../../../api/medicines.api'
@@ -27,17 +26,15 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
   const fetchMedicalEvent = async () => {
     try {
-      const response: GetMedicalEventByIdResponse = await getMedicalEventById(id)
-      console.log('trung', response)
+      const response = await medicalEventApi.getById(id)
       setMedicalEvent(response.data)
-      console.log('medicalEvent sau khi set:', response.data)
       form.setFieldsValue({
         eventName: response.data.eventName,
         description: response.data.description,
         actionTaken: response.data.actionTaken,
         medicinesId: response.data.medicinesId,
         medicalSuppliesId: response.data.medicalSuppliesId,
-        isSerious: response.data.isSerious,
+        severityLevel: response.data.severityLevel,
         notes: response.data.notes
       })
     } catch {
@@ -57,7 +54,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const handleUpdate = async (values: UpdateMedicalEventRequest) => {
     try {
       setLoading(true)
-      await updateMedicalEvent(id, values)
+      await medicalEventApi.update(id, values)
       toast.success('Cập nhật sự kiện y tế thành công!')
       setIsEditing(false)
       onSuccess()
@@ -106,23 +103,23 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Descriptions.Item label='Thuốc sử dụng' span={2}>
                   {medicalEvent.medicines && medicalEvent.medicines.length > 0
                     ? medicalEvent.medicines.map((medicine) => (
-                      <div key={medicine._id}>
-                        {medicine.name} - {medicine.quantity} {medicine.unit}
-                      </div>
-                    ))
+                        <div key={medicine._id}>
+                          {medicine.name} - {medicine.quantity} {medicine.unit}
+                        </div>
+                      ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Vật tư y tế sử dụng' span={2}>
                   {medicalEvent.medicalSupplies && medicalEvent.medicalSupplies.length > 0
                     ? medicalEvent.medicalSupplies.map((supply) => (
-                      <div key={supply._id}>
-                        {supply.name} - {supply.quantity} {supply.unit}
-                      </div>
-                    ))
+                        <div key={supply._id}>
+                          {supply.name} - {supply.quantity} {supply.unit}
+                        </div>
+                      ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Mức độ nghiêm trọng'>
-                  {medicalEvent.isSerious ? 'Nghiêm trọng' : 'Không nghiêm trọng'}
+                  {medicalEvent.severityLevel || 'Không xác định'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Người tạo'>{medicalEvent.schoolNurse?.fullName || 'N/A'}</Descriptions.Item>
                 {medicalEvent.notes && (
@@ -173,17 +170,8 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 />
               </Form.Item>
 
-              <Form.Item
-                name='isSerious'
-                label='Mức độ nghiêm trọng'
-                rules={[{ required: true, message: 'Vui lòng chọn mức độ nghiêm trọng!' }]}
-              >
-                <Select
-                  options={[
-                    { value: true, label: 'Nghiêm trọng' },
-                    { value: false, label: 'Không nghiêm trọng' }
-                  ]}
-                />
+              <Form.Item name='severityLevel' label='Mức độ nghiêm trọng'>
+                <Select options={Object.values(SeverityLevel).map((level) => ({ value: level, label: level }))} />
               </Form.Item>
 
               <Form.Item name='notes' label='Ghi chú'>

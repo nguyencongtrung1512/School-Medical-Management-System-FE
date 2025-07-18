@@ -1,164 +1,132 @@
 import axiosInstance from '../service/axiosInstance'
 
-export interface CreateAppointmentRequest {
-  studentId: string
-  appointmentTime: string // ISO string
-  reason: string
-  type: string
-  note?: string
+export enum AppointmentType {
+  VaccineEvent = 'vaccine-event',
+  MedicalCheckEvent = 'medical-check-event',
+  Other = 'other'
 }
 
-export interface Appointment {
-  _id: string
-  studentId: string
-  appointmentTime: string
-  reason: string
-  type: string
-  note?: string
-  status: string
-  schoolNurseId?: string
-  cancellationReason?: string
-  createdAt: string
-  updatedAt: string
+export enum ParentNurseAppointmentStatus {
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected',
+  Cancelled = 'cancelled',
+  Done = 'done'
 }
 
-export interface AppointmentAPIResponse {
+export interface User {
   _id: string
-  parentId: string
-  studentId: string
-  appointmentTime: string
-  reason: string
-  type: string
-  status: string
-  note: string
+  fullName: string
+  email: string
+  phone: string
+  role: string
   isDeleted: boolean
   createdAt: string
   updatedAt: string
-  __v: number
-  schoolNurse: unknown
-  student: {
-    _id: string
-    fullName: string
-    isDeleted: boolean
-    gender: string
-    dob: string
-    classId: string
-    studentCode: string
-    studentIdCode: string
-    parents: Array<{
-      userId: string
-      type: string
-      email: string
-    }>
-    createdAt: string
-    updatedAt: string
-    __v: number
-  }
-  parent: {
-    _id: string
-    password: string
-    email: string
-    fullName: string
-    phone: string
-    role: string
-    studentIds: string[]
-    isDeleted: boolean
-    createdAt: string
-    updatedAt: string
-    __v: number
-  }
 }
 
-export interface AppointmentListResponse {
-  success: boolean
-  data: {
-    pageData: AppointmentAPIResponse[]
-    total: number
-  }
+export interface Student {
+  _id: string
+  fullName: string
+  isDeleted: boolean
+  gender: string
+  dob: string
+  classId: string
+  studentCode: string
+  createdAt: string
+  updatedAt: string
 }
 
-export interface GetAppointmentsParamsNurse {
-  pageNum: number
-  pageSize: number
-  nurseId?: string
-}
-
-export interface CreateAppointmentResponse {
-  success: boolean
-  data: Appointment
-}
-
-export const createAppointment = async (data: CreateAppointmentRequest): Promise<CreateAppointmentResponse> => {
-  return axiosInstance.post('/appointments', data)
-}
-
-export interface ApproveAppointmentRequest {
-  status: string // 'approved'
-  schoolNurseId: string
-  cancellationReason?: string
+export interface ParentNurseAppointment {
+  _id: string
+  parentId: string
+  studentId: string
+  schoolNurseId?: string
+  appointmentTime: string
+  reason: string
+  type: AppointmentType
+  status: ParentNurseAppointmentStatus
   note?: string
+  isDeleted: boolean
+  parentArrivalTime?: string
+  createdAt: string
+  updatedAt: string
+  // Populated fields
+  parent?: User
+  student?: Student
+  schoolNurse?: User
 }
 
-export const approveAppointment = async (
-  id: string,
-  data: ApproveAppointmentRequest
-): Promise<CreateAppointmentResponse> => {
-  return axiosInstance.patch(`/appointments/${id}/approve`, data)
-}
-
-export const getAppointments = async (pageNum: number, pageSize: number): Promise<AppointmentListResponse> => {
-  return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}`)
-}
-
-export const getAppointmentById = async (id: string): Promise<{ success: boolean; data: Appointment }> => {
-  return axiosInstance.get(`/appointments/${id}`)
-}
-
-export const getAppointmentsNurse = async (params: GetAppointmentsParamsNurse): Promise<AppointmentListResponse> => {
-  const { pageNum, pageSize, nurseId } = params
-  const queryParams = nurseId ? `?schoolNurseId=${nurseId}` : ''
-  return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}${queryParams}`)
+export interface CreateAppointmentRequest {
+  studentId: string
+  appointmentTime: string
+  reason: string
+  type: AppointmentType
+  note?: string
+  status?: ParentNurseAppointmentStatus
+  isDeleted?: boolean
 }
 
 export interface UpdateAppointmentStatusRequest {
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'done'
-  schoolNurseId: string
+  status: ParentNurseAppointmentStatus
+  schoolNurseId?: string
   cancellationReason?: string
   note?: string
 }
 
-// Update appointment status
-export const updateAppointmentStatus = async (
-  id: string,
-  data: UpdateAppointmentStatusRequest
-): Promise<CreateAppointmentResponse> => {
-  return axiosInstance.patch(`/appointments/${id}/status`, data)
+export interface AppointmentListResponse {
+  pageData: ParentNurseAppointment[]
+  pageInfo: {
+    pageNum: number
+    pageSize: number
+    totalItems: number
+    totalPages: number
+  }
 }
 
-// Search parameters with filtering support
-export interface SearchAppointmentsParams extends GetAppointmentsParamsNurse {
+export interface SearchAppointmentsParams {
+  pageNum: number
+  pageSize: number
   query?: string
   parentId?: string
   studentId?: string
-  managerId?: string
-  status?: string
-  type?: string
+  schoolNurseId?: string
+  status?: ParentNurseAppointmentStatus
+  type?: AppointmentType
 }
 
-// Search appointments with advanced filters
-export const searchAppointments = async (params: SearchAppointmentsParams): Promise<AppointmentListResponse> => {
-  const { pageNum, pageSize, ...query } = params
-  return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}`, {
-    params: query
-  })
-}
+export const appointmentApi = {
+  // Tạo lịch hẹn mới
+  create: (data: CreateAppointmentRequest) => {
+    return axiosInstance.post('/appointments', data)
+  },
 
-// Export appointments to Excel file (returns Blob)
-export const exportAppointmentsExcel = async (
-  params: Omit<SearchAppointmentsParams, 'pageNum' | 'pageSize'>
-): Promise<Blob> => {
-  return axiosInstance.get('/appointments/export/excel', {
-    params,
-    responseType: 'blob'
-  })
+  // Duyệt và phân nurse cho lịch hẹn (manager)
+  approve: (id: string, data: UpdateAppointmentStatusRequest) => {
+    return axiosInstance.patch(`/appointments/${id}/approve`, data)
+  },
+
+  // Tìm kiếm lịch hẹn có phân trang & lọc
+  search: (params: SearchAppointmentsParams) => {
+    const { pageNum, pageSize, ...query } = params
+    return axiosInstance.get(`/appointments/search/${pageNum}/${pageSize}`, { params: query })
+  },
+
+  // Lấy chi tiết lịch hẹn
+  getById: (id: string) => {
+    return axiosInstance.get(`/appointments/${id}`)
+  },
+
+  // Xuất excel
+  exportExcel: (params: Omit<SearchAppointmentsParams, 'pageNum' | 'pageSize'>) => {
+    return axiosInstance.get('/appointments/export/excel', {
+      params,
+      responseType: 'blob'
+    })
+  },
+
+  // Cập nhật trạng thái lịch hẹn (nurse/manager)
+  updateStatus: (id: string, data: UpdateAppointmentStatusRequest) => {
+    return axiosInstance.patch(`/appointments/${id}/status`, data)
+  }
 }

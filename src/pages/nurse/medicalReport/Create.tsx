@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Form, Input, Select, Button, Row, Col } from 'antd'
-import { createMedicalEvent } from '../../../api/medicalEvent.api'
+import { medicalEventApi, CreateMedicalEventRequest } from '../../../api/medicalEvent.api'
 import { getMedicines } from '../../../api/medicines.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import { getStudentsAPI } from '../../../api/student.api'
@@ -12,18 +12,6 @@ import { toast } from 'react-toastify'
 import { useAuth } from '../../../contexts/auth.context'
 
 const { TextArea } = Input
-
-interface CreateMedicalEventRequest {
-  studentId: string
-  schoolNurseId: string
-  eventName: string
-  description: string
-  actionTaken: string
-  medicinesId: string[]
-  medicalSuppliesId: string[]
-  isSerious: boolean
-  notes?: string
-}
 
 interface CreateMedicalEventFormProps {
   onSuccess: () => void
@@ -66,11 +54,9 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       if (response && response.pageData) {
         setStudents(response.pageData)
       } else {
-        console.error('Response không đúng định dạng:', response)
         toast.error('Dữ liệu học sinh không đúng định dạng')
       }
     } catch (error) {
-      console.error('Lỗi khi tải danh sách học sinh:', error)
       toast.error('Không thể tải danh sách học sinh')
     } finally {
       setStudentLoading(false)
@@ -78,23 +64,21 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   }
 
   const debouncedFetchStudents = debounce((value: string) => {
-    console.log('Tìm kiếm học sinh với từ khóa:', value)
     fetchStudents(value)
   }, 500)
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: CreateMedicalEventRequest) => {
     try {
       if (!user) {
         toast.error('Không tìm thấy thông tin y tá')
         return
       }
-
       const medicalEventData: CreateMedicalEventRequest = {
         ...values,
         schoolNurseId: user.id
+        // parentId: ... // cần lấy từ student nếu backend yêu cầu
       }
-
-      await createMedicalEvent(medicalEventData)
+      await medicalEventApi.create(medicalEventData)
       toast.success('Tạo sự kiện y tế thành công!')
       form.resetFields()
       onSuccess()
@@ -173,27 +157,11 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
         </Col>
       </Row>
 
-      <Row gutter={24}>
-        <Col span={12}>
-          <Form.Item
-            name='isSerious'
-            label='Mức độ nghiêm trọng'
-            rules={[{ required: true, message: 'Vui lòng chọn mức độ nghiêm trọng!' }]}
-          >
-            <Select
-              options={[
-                { value: true, label: 'Nghiêm trọng' },
-                { value: false, label: 'Không nghiêm trọng' }
-              ]}
-            />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item name='notes' label='Ghi chú'>
-            <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
-          </Form.Item>
-        </Col>
-      </Row>
+      {/* Các trường nâng cao có thể bổ sung ở đây nếu cần: severityLevel, status, leaveMethod, leaveTime, pickedUpBy, images */}
+
+      <Form.Item name='notes' label='Ghi chú'>
+        <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
+      </Form.Item>
 
       <Form.Item>
         <Button type='primary' htmlType='submit' style={{ marginRight: 8 }}>

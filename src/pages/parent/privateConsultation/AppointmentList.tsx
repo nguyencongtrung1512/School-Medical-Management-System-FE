@@ -1,19 +1,21 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
-import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { Calendar, Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getAppointments, Appointment } from '../../../api/appointment.api'
+import { appointmentApi, ParentNurseAppointment } from '../../../api/appointment.api'
 import Loading from '../../../components/Loading/Loading'
+import { Badge } from '../../../components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 
 interface AppointmentListProps {
-  appointments: Appointment[]
+  appointments: ParentNurseAppointment[]
 }
 
 const AppointmentList = ({ appointments }: AppointmentListProps) => {
   const [showAll, setShowAll] = useState(false)
-  const sortedAppointments = [...appointments].sort((a, b) => new Date(b.appointmentTime).getTime() - new Date(a.appointmentTime).getTime())
+  const sortedAppointments = [...appointments].sort(
+    (a, b) => new Date(b.appointmentTime).getTime() - new Date(a.appointmentTime).getTime()
+  )
   const visibleAppointments = showAll ? sortedAppointments : sortedAppointments.slice(0, 3)
 
   const getStatusColor = (status: string) => {
@@ -76,7 +78,7 @@ const AppointmentList = ({ appointments }: AppointmentListProps) => {
               <div className='flex items-start justify-between'>
                 <div className='space-y-2'>
                   <div className='flex items-center space-x-2'>
-                    <h3 className='font-medium text-gray-900'>{appointment.fullName}</h3>
+                    <h3 className='font-medium text-gray-900'>{appointment.student?.fullName}</h3>
                   </div>
                   <div className='flex items-center space-x-4 text-sm text-gray-600'>
                     <div className='flex items-center space-x-1'>
@@ -130,15 +132,14 @@ const AppointmentList = ({ appointments }: AppointmentListProps) => {
 }
 
 const AppointmentListContainer = ({ reload }: { reload?: boolean }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [appointments, setAppointments] = useState<ParentNurseAppointment[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      const res = await getAppointments(1, 10)
-      setAppointments(res.pageData || [])
-      console.log("trung nè", res.pageData)
+      const res = await appointmentApi.search({ pageNum: 1, pageSize: 10 })
+      setAppointments(res.data.pageData || [])
     } catch {
       setAppointments([])
     } finally {
