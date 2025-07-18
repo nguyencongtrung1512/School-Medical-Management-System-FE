@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react'
-import { Form, Input, InputNumber, Button, DatePicker } from 'antd'
-import { updateMedicalSupply } from '../../../api/medicalSupplies.api'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import { toast } from 'react-toastify'
+import { Button, DatePicker, Form, Input, InputNumber, message } from 'antd'
 import dayjs from 'dayjs'
+import React, { useEffect } from 'react'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
+import { updateMedicalSupply } from '../../../api/medicalSupplies.api'
 
 interface UpdateMedicalSupplyFormProps {
   medicalSupply: MedicalSupply
@@ -32,10 +31,16 @@ const UpdateMedicalSupplyForm: React.FC<UpdateMedicalSupplyFormProps> = ({ medic
         expiryDate: values.expiryDate.format('YYYY-MM-DD')
       }
       await updateMedicalSupply(medicalSupply._id!, formattedValues)
-      toast.success('Cập nhật vật tư y tế thành công')
+      message.success('Cập nhật vật tư y tế thành công')
       onSuccess()
-    } catch (error) {
-      toast.error('Không thể cập nhật vật tư y tế')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật vật tư y tế')
+      }
     }
   }
 
@@ -57,11 +62,19 @@ const UpdateMedicalSupplyForm: React.FC<UpdateMedicalSupplyFormProps> = ({ medic
         <Input placeholder='Nhập đơn vị' />
       </Form.Item>
 
-      <Form.Item name='expiryDate' label='Ngày hết hạn' rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn!' }]}>
+      <Form.Item
+        name='expiryDate'
+        label='Ngày hết hạn'
+        rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn!' }]}
+      >
         <DatePicker className='w-full' format='DD/MM/YYYY' />
       </Form.Item>
 
-      <Form.Item name='supplier' label='Nhà cung cấp' rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}>
+      <Form.Item
+        name='supplier'
+        label='Nhà cung cấp'
+        rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}
+      >
         <Input placeholder='Nhập nhà cung cấp' />
       </Form.Item>
 

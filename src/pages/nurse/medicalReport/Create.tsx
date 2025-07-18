@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import { Form, Input, Select, Button, Row, Col } from 'antd'
-import { medicalEventApi, CreateMedicalEventRequest } from '../../../api/medicalEvent.api'
-import { getMedicines } from '../../../api/medicines.api'
-import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
-import { getStudentsAPI } from '../../../api/student.api'
-import type { Medicine } from '../../../api/medicines.api'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import type { StudentProfile } from '../../../api/student.api'
+import { Button, Col, Form, Input, message, Row, Select } from 'antd'
 import { debounce } from 'lodash'
-import { toast } from 'react-toastify'
+import React, { useEffect, useState } from 'react'
+import { CreateMedicalEventRequest, medicalEventApi } from '../../../api/medicalEvent.api'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
+import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
+import type { Medicine } from '../../../api/medicines.api'
+import { getMedicines } from '../../../api/medicines.api'
+import type { StudentProfile } from '../../../api/student.api'
+import { getStudentsAPI } from '../../../api/student.api'
 import { useAuth } from '../../../contexts/auth.context'
 
 const { TextArea } = Input
@@ -40,8 +39,14 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       ])
       setMedicines(medicinesResponse.pageData)
       setMedicalSupplies(suppliesResponse.pageData)
-    } catch (error) {
-      toast.error('Không thể tải danh sách thuốc và vật tư y tế')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách thuốc và vật tư y tế')
+      }
     } finally {
       setLoading(false)
     }
@@ -54,10 +59,16 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       if (response && response.pageData) {
         setStudents(response.pageData)
       } else {
-        toast.error('Dữ liệu học sinh không đúng định dạng')
+        message.error('Dữ liệu học sinh không đúng định dạng')
       }
-    } catch (error) {
-      toast.error('Không thể tải danh sách học sinh')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách học sinh')
+      }
     } finally {
       setStudentLoading(false)
     }
@@ -70,7 +81,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   const onFinish = async (values: CreateMedicalEventRequest) => {
     try {
       if (!user) {
-        toast.error('Không tìm thấy thông tin y tá')
+        message.error('Không tìm thấy thông tin y tá')
         return
       }
       const medicalEventData: CreateMedicalEventRequest = {
@@ -79,11 +90,17 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
         // parentId: ... // cần lấy từ student nếu backend yêu cầu
       }
       await medicalEventApi.create(medicalEventData)
-      toast.success('Tạo sự kiện y tế thành công!')
+      message.success('Tạo sự kiện y tế thành công!')
       form.resetFields()
       onSuccess()
-    } catch (error) {
-      toast.error('Có lỗi xảy ra khi tạo sự kiện y tế!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi tạo sự kiện y tế!')
+      }
     }
   }
 

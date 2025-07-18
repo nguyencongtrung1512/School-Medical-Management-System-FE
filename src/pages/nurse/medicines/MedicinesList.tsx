@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Button, Space, Modal, Popconfirm, Descriptions } from 'antd'
+import { Table, Button, Space, Modal, Popconfirm, Descriptions, message } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { getMedicines, deleteMedicine, getMedicineById } from '../../../api/medicines.api'
 import type { Medicine } from '../../../api/medicines.api'
 import CreateMedicineForm from './Create'
-import UpdateMedicineForm from './update'
-import { toast } from 'react-toastify'
+import UpdateMedicineForm from './Update'
 
 const MedicinesList: React.FC = () => {
   const [medicines, setMedicines] = useState<Medicine[]>([])
@@ -27,12 +26,16 @@ const MedicinesList: React.FC = () => {
         setMedicines(response.pageData)
         setTotalItems(response.pageInfo.totalItems)
       } else {
-        console.error('Invalid response format:', response)
-        toast.error('Dữ liệu không đúng định dạng')
+        message.error('Dữ liệu không đúng định dạng')
       }
-    } catch (error) {
-      console.error('Error fetching medicines:', error)
-      toast.error('Không thể tải danh sách thuốc')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách thuốc')
+      }
     } finally {
       setLoading(false)
     }
@@ -45,11 +48,16 @@ const MedicinesList: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteMedicine(id)
-      toast.success('Xóa thuốc thành công')
+      message.success('Xóa thuốc thành công')
       fetchMedicines(currentPage, pageSize)
-    } catch (error) {
-      console.error('Error deleting medicine:', error)
-      toast.error('Không thể xóa thuốc')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể xóa thuốc')
+      }
     }
   }
 
@@ -58,9 +66,14 @@ const MedicinesList: React.FC = () => {
       const medicine = await getMedicineById(id)
       setSelectedMedicine(medicine.data)
       setIsDetailModalVisible(true)
-    } catch (error) {
-      console.error('Error fetching medicine detail:', error)
-      toast.error('Không thể tải thông tin thuốc')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải thông tin thuốc')
+      }
     }
   }
 

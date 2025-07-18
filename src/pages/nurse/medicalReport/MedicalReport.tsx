@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Typography, Table, Button, Space } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
+import { Button, Card, message, Space, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { medicalEventApi, MedicalEvent } from '../../../api/medicalEvent.api'
+import React, { useEffect, useState } from 'react'
+import { MedicalEvent, medicalEventApi } from '../../../api/medicalEvent.api'
 import CreateMedicalEventForm from './Create'
 import Detail from './Detail'
 
@@ -21,8 +21,14 @@ const MedicalReport: React.FC = () => {
       const response = await medicalEventApi.search({})
       // response.data.pageData is correct if backend returns { pageData, ... }
       setMedicalEvents(response.data && response.data.pageData ? response.data.pageData : [])
-    } catch (error) {
-      console.error('Error fetching medical events:', error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi tải danh sách sự kiện y tế')
+      }
     } finally {
       setLoading(false)
     }

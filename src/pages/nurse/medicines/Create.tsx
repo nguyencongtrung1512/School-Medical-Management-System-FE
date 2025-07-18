@@ -1,7 +1,6 @@
+import { Button, Form, Input, message } from 'antd'
 import React from 'react'
-import { Form, Input, Button } from 'antd'
 import { createMedicine } from '../../../api/medicines.api'
-import { toast } from 'react-toastify'
 
 interface CreateMedicineFormProps {
   onSuccess: () => void
@@ -14,11 +13,17 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
   const onFinish = async (values: { name: string; description: string; dosage: string; sideEffects?: string }) => {
     try {
       await createMedicine(values)
-      toast.success('Thêm thuốc mới thành công')
+      message.success('Thêm thuốc mới thành công')
       form.resetFields()
       onSuccess()
-    } catch (error) {
-      toast.error('Không thể thêm thuốc mới')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể thêm thuốc mới')
+      }
     }
   }
 

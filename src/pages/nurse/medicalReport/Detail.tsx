@@ -1,11 +1,10 @@
+import { Button, Descriptions, Form, Input, message, Modal, Select } from 'antd'
 import React, { useState } from 'react'
-import { Modal, Descriptions, Form, Input, Select, Button, message } from 'antd'
-import { medicalEventApi, MedicalEvent, UpdateMedicalEventRequest, SeverityLevel } from '../../../api/medicalEvent.api'
-import { getMedicines } from '../../../api/medicines.api'
+import { MedicalEvent, medicalEventApi, SeverityLevel, UpdateMedicalEventRequest } from '../../../api/medicalEvent.api'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import type { Medicine } from '../../../api/medicines.api'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import { toast } from 'react-toastify'
+import { getMedicines } from '../../../api/medicines.api'
 
 const { TextArea } = Input
 
@@ -37,8 +36,14 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
         severityLevel: response.data.severityLevel,
         notes: response.data.notes
       })
-    } catch {
-      message.error('Có lỗi xảy ra khi tải thông tin sự kiện!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi tải thông tin sự kiện!')
+      }
     }
   }
 
@@ -55,11 +60,17 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     try {
       setLoading(true)
       await medicalEventApi.update(id, values)
-      toast.success('Cập nhật sự kiện y tế thành công!')
+      message.success('Cập nhật sự kiện y tế thành công!')
       setIsEditing(false)
       onSuccess()
-    } catch {
-      message.error('Có lỗi xảy ra khi cập nhật sự kiện!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi cập nhật sự kiện!')
+      }
     } finally {
       setLoading(false)
     }
@@ -74,8 +85,14 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       ])
       setMedicines(medicinesResponse.pageData)
       setMedicalSupplies(suppliesResponse.pageData)
-    } catch {
-      message.error('Không thể tải danh sách thuốc và vật tư y tế')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách thuốc và vật tư y tế')
+      }
     } finally {
       setLoading(false)
     }

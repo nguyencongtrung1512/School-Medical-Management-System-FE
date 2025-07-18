@@ -1,8 +1,6 @@
+import { Button, DatePicker, Form, Input, InputNumber, message } from 'antd'
 import React from 'react'
-import { Form, Input, InputNumber, Button, DatePicker } from 'antd'
 import { createMedicalSupply } from '../../../api/medicalSupplies.api'
-import { toast } from 'react-toastify'
-import dayjs from 'dayjs'
 
 interface CreateMedicalSupplyFormProps {
   onSuccess: () => void
@@ -19,11 +17,17 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         expiryDate: values.expiryDate.format('YYYY-MM-DD')
       }
       await createMedicalSupply(formattedValues)
-      toast.success('Thêm vật tư y tế mới thành công')
+      message.success('Thêm vật tư y tế mới thành công')
       form.resetFields()
       onSuccess()
-    } catch (error) {
-      toast.error('Không thể thêm vật tư y tế mới')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể thêm vật tư y tế mới')
+      }
     }
   }
 
@@ -45,11 +49,19 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         <Input placeholder='Nhập đơn vị' />
       </Form.Item>
 
-      <Form.Item name='expiryDate' label='Ngày hết hạn' rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn!' }]}>
+      <Form.Item
+        name='expiryDate'
+        label='Ngày hết hạn'
+        rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn!' }]}
+      >
         <DatePicker className='w-full' format='DD/MM/YYYY' />
       </Form.Item>
 
-      <Form.Item name='supplier' label='Nhà cung cấp' rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}>
+      <Form.Item
+        name='supplier'
+        label='Nhà cung cấp'
+        rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}
+      >
         <Input placeholder='Nhập nhà cung cấp' />
       </Form.Item>
 

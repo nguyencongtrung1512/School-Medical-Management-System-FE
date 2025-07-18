@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { Table, Button, Modal, Space, Popconfirm } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { getAllMedicalSupplies, deleteMedicalSupply } from '../../../api/medicalSupplies.api'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import CreateMedicalSupplyForm from './Create'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { Button, message, Modal, Popconfirm, Space, Table } from 'antd'
 import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
+import React, { useEffect, useState } from 'react'
+import type { MedicalSupply } from '../../../api/medicalSupplies.api'
+import { deleteMedicalSupply, getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
+import CreateMedicalSupplyForm from './Create'
 import UpdateMedicalSupplyForm from './Update'
 
 const MedicalSuppliesList: React.FC = () => {
@@ -25,8 +24,14 @@ const MedicalSuppliesList: React.FC = () => {
       console.log('trung ne: ', response)
       setMedicalSupplies(response.pageData)
       setTotal(response.data.totalElements)
-    } catch (error) {
-      console.log(error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách vật tư y tế')
+      }
     } finally {
       setLoading(false)
     }
@@ -50,10 +55,16 @@ const MedicalSuppliesList: React.FC = () => {
   const handleDelete = async (_id: number) => {
     try {
       await deleteMedicalSupply(_id)
-      toast.success('Xóa vật tư y tế thành công')
+      message.success('Xóa vật tư y tế thành công')
       fetchMedicalSupplies()
-    } catch (error) {
-      console.log(error)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể xóa vật tư y tế')
+      }
     }
   }
 

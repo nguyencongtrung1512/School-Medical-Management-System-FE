@@ -1,8 +1,7 @@
+import { Button, Form, Input, message } from 'antd'
 import React, { useEffect } from 'react'
-import { Form, Input, Button } from 'antd'
-import { updateMedicine } from '../../../api/medicines.api'
 import type { Medicine } from '../../../api/medicines.api'
-import { toast } from 'react-toastify'
+import { updateMedicine } from '../../../api/medicines.api'
 
 interface UpdateMedicineFormProps {
   medicine: Medicine
@@ -25,10 +24,16 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
   const onFinish = async (values: { name?: string; description?: string; dosage?: string; sideEffects?: string }) => {
     try {
       await updateMedicine(medicine._id, values)
-      toast.success('Cập nhật thuốc thành công')
+      message.success('Cập nhật thuốc thành công')
       onSuccess()
-    } catch (error) {
-      toast.error('Không thể cập nhật thuốc')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật thuốc')
+      }
     }
   }
 

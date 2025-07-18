@@ -1,4 +1,10 @@
-import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DeleteOutlined,
+  InboxOutlined,
+  MedicineBoxOutlined
+} from '@ant-design/icons'
 import {
   Button,
   Card,
@@ -28,8 +34,6 @@ import {
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
 import { handleUploadFile } from '../../../utils/upload'
-import { InboxOutlined, DeleteOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
 
 const { Title, Text } = Typography
 
@@ -119,10 +123,11 @@ const ReceiveMedicine: React.FC = () => {
                 studentId: studentResponse.data,
                 parentInfo: parentResponse.data
               }
-            } catch (error: any) {
-              console.error('Error fetching info:', error)
-              if (error.message) {
-                toast.error(error.message)
+            } catch (error: unknown) {
+              console.log('error', error)
+              const err = error as { message?: string }
+              if (err.message) {
+                message.error(err.message)
               }
               return request
             }
@@ -130,9 +135,14 @@ const ReceiveMedicine: React.FC = () => {
         )
         setMedicineRequests(requestsWithStudentInfo as PopulatedMedicineSubmissionData[])
         setTotalItems(response.pageInfo.totalItems)
-      } catch (error) {
-        message.error('Không thể lấy danh sách yêu cầu thuốc!')
-        console.error('Fetch medicine requests error:', error)
+      } catch (error: unknown) {
+        console.log('error', error)
+        const err = error as { message?: string }
+        if (err.message) {
+          message.error(err.message)
+        } else {
+          message.error('Không thể lấy danh sách yêu cầu thuốc!')
+        }
       } finally {
         setLoading(false)
       }
@@ -275,8 +285,14 @@ const ReceiveMedicine: React.FC = () => {
       )
       // Nếu đang xem chi tiết đúng đơn này thì cập nhật luôn trạng thái trong selectedRequest
       setSelectedRequest((prev) => (prev && prev._id === id ? { ...prev, status: newStatus } : prev))
-    } catch {
-      message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
+      }
     }
   }
 
@@ -400,8 +416,14 @@ const ReceiveMedicine: React.FC = () => {
       setSlotImage('')
       // reload data
       setCurrentPage(1)
-    } catch {
-      message.error('Cập nhật thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Cập nhật thất bại!')
+      }
     } finally {
       setSlotLoading(false)
     }

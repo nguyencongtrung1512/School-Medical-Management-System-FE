@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
-import { Table, Button, Modal, Form, Input, Select, TimePicker, message, Card, Typography, Space, Row, Col } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
 import { PlusOutlined } from '@ant-design/icons'
+import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, TimePicker, Typography, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
+import { useState } from 'react'
 
 const { Title } = Typography
 const { Option } = Select
@@ -89,15 +89,11 @@ function ResultsAfterVaccination() {
   const [selectedClass, setSelectedClass] = useState<string>('')
 
   // Lấy danh sách khối lớp duy nhất
-  const grades = Array.from(new Set(mockStudents.map(student => student.grade)))
+  const grades = Array.from(new Set(mockStudents.map((student) => student.grade)))
 
   // Lấy danh sách lớp theo khối đã chọn
   const classes = Array.from(
-    new Set(
-      mockStudents
-        .filter(student => student.grade === selectedGrade)
-        .map(student => student.class)
-    )
+    new Set(mockStudents.filter((student) => student.grade === selectedGrade).map((student) => student.class))
   )
 
   const columns: ColumnsType<HealthRecord> = [
@@ -144,7 +140,7 @@ function ResultsAfterVaccination() {
   ]
 
   const handleAddRecord = (values: FormValues) => {
-    const student = mockStudents.find(s => s.id === values.studentId)
+    const student = mockStudents.find((s) => s.id === values.studentId)
     if (!student) return
 
     const newRecord: HealthRecord = {
@@ -167,7 +163,7 @@ function ResultsAfterVaccination() {
   }
 
   // Lọc học sinh theo khối và lớp
-  const filteredStudents = mockStudents.filter(student => {
+  const filteredStudents = mockStudents.filter((student) => {
     if (selectedGrade && student.grade !== selectedGrade) return false
     if (selectedClass && student.class !== selectedClass) return false
     return true
@@ -182,13 +178,13 @@ function ResultsAfterVaccination() {
               <Select
                 placeholder='Chọn khối'
                 style={{ width: 120 }}
-                onChange={value => {
+                onChange={(value) => {
                   setSelectedGrade(value)
                   setSelectedClass('')
                 }}
                 value={selectedGrade || undefined}
               >
-                {grades.map(grade => (
+                {grades.map((grade) => (
                   <Option key={grade} value={grade}>
                     Khối {grade}
                   </Option>
@@ -199,11 +195,11 @@ function ResultsAfterVaccination() {
               <Select
                 placeholder='Chọn lớp'
                 style={{ width: 120 }}
-                onChange={value => setSelectedClass(value)}
+                onChange={(value) => setSelectedClass(value)}
                 value={selectedClass || undefined}
                 disabled={!selectedGrade}
               >
-                {classes.map(classItem => (
+                {classes.map((classItem) => (
                   <Option key={classItem} value={classItem}>
                     Lớp {classItem}
                   </Option>
@@ -225,7 +221,7 @@ function ResultsAfterVaccination() {
 
           <Table
             columns={columns}
-            dataSource={records.filter(record => {
+            dataSource={records.filter((record) => {
               if (selectedGrade && record.grade !== selectedGrade) return false
               if (selectedClass && record.class !== selectedClass) return false
               return true
@@ -234,9 +230,13 @@ function ResultsAfterVaccination() {
 
           <Modal title='Thêm bản ghi mới' open={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
             <Form form={form} onFinish={handleAddRecord} layout='vertical'>
-              <Form.Item name='studentId' label='Học sinh' rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}>
+              <Form.Item
+                name='studentId'
+                label='Học sinh'
+                rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
+              >
                 <Select>
-                  {filteredStudents.map(student => (
+                  {filteredStudents.map((student) => (
                     <Option key={student.id} value={student.id}>
                       {student.name} - Lớp {student.class}
                     </Option>

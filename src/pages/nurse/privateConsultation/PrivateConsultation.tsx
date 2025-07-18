@@ -18,6 +18,7 @@ import {
   Empty,
   Input,
   Menu,
+  message,
   Modal,
   Row,
   Select,
@@ -32,7 +33,6 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 
 import { appointmentApi, ParentNurseAppointment, ParentNurseAppointmentStatus } from '../../../api/appointment.api'
 import { useAuth } from '../../../contexts/auth.context'
@@ -67,7 +67,14 @@ function PrivateConsultation() {
       const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
       const pageData = res.data?.pageData || []
       setAppointments(pageData)
-    } catch {
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Có lỗi xảy ra khi tải danh sách lịch hẹn')
+      }
       setAppointments([])
     } finally {
       setLoading(false)
@@ -235,11 +242,17 @@ function PrivateConsultation() {
         status: ParentNurseAppointmentStatus.Done,
         note: doneNote
       })
-      toast.success('Đánh dấu hoàn thành thành công!')
+      message.success('Đánh dấu hoàn thành thành công!')
       setDoneModalOpen(false)
       fetchAppointments()
-    } catch {
-      toast.error('Cập nhật thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Cập nhật thất bại!')
+      }
     } finally {
       setUpdating(false)
     }
@@ -247,7 +260,7 @@ function PrivateConsultation() {
 
   const confirmCancel = async () => {
     if (!selectedAppointment || !cancelReason.trim()) {
-      toast.error('Vui lòng nhập lý do hủy!')
+      message.error('Vui lòng nhập lý do hủy!')
       return
     }
     setUpdating(true)
@@ -256,11 +269,18 @@ function PrivateConsultation() {
         status: ParentNurseAppointmentStatus.Cancelled,
         cancellationReason: cancelReason
       })
-      toast.success('Hủy lịch hẹn thành công!')
+      message.success('Hủy lịch hẹn thành công!')
       setCancelModalOpen(false)
       fetchAppointments()
-    } catch {
-      toast.error('Hủy lịch thất bại!')
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Hủy lịch thất bại!')
+      }
+      message.error('Hủy lịch thất bại!')
     } finally {
       setUpdating(false)
     }

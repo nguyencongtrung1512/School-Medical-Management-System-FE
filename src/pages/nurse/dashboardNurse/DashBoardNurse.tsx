@@ -1,33 +1,19 @@
+import { ArrowUpOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import { Card, Col, DatePicker, Row, Select, Space, Statistic, Table, Tag, Typography } from 'antd'
 import React, { useState } from 'react'
 import {
-  Card,
-  Row,
-  Col,
-  Select,
-  DatePicker,
-  Table,
-  Typography,
-  Space,
-  Statistic,
-  Progress,
-  Tag
-} from 'antd'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
+  Cell,
   Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
+  Line,
+  LineChart,
   Pie,
-  Cell
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts'
-import { ArrowUpOutlined, ArrowDownOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -91,10 +77,10 @@ const DashBoardNurse: React.FC = () => {
   // Thống kê tổng quan
   const stats = {
     totalEvents: medicalEvents.length,
-    feverCount: medicalEvents.filter(e => e.type === 'fever').length,
-    accidentCount: medicalEvents.filter(e => e.type === 'accident').length,
-    allergyCount: medicalEvents.filter(e => e.type === 'allergy').length,
-    medicineCount: medicalEvents.filter(e => e.type === 'medicine').length
+    feverCount: medicalEvents.filter((e) => e.type === 'fever').length,
+    accidentCount: medicalEvents.filter((e) => e.type === 'accident').length,
+    allergyCount: medicalEvents.filter((e) => e.type === 'allergy').length,
+    medicineCount: medicalEvents.filter((e) => e.type === 'medicine').length
   }
 
   // Cột cho bảng báo cáo
@@ -162,7 +148,7 @@ const DashBoardNurse: React.FC = () => {
               <Select
                 defaultValue='week'
                 style={{ width: 120 }}
-                onChange={value => setTimeRange(value)}
+                onChange={(value) => setTimeRange(value)}
                 options={[
                   { value: 'day', label: 'Theo ngày' },
                   { value: 'week', label: 'Theo tuần' },
@@ -174,7 +160,7 @@ const DashBoardNurse: React.FC = () => {
               <Select
                 defaultValue='all'
                 style={{ width: 120 }}
-                onChange={value => setSelectedClass(value)}
+                onChange={(value) => setSelectedClass(value)}
                 options={[
                   { value: 'all', label: 'Tất cả lớp' },
                   { value: '5A', label: 'Lớp 5A' },
@@ -186,7 +172,7 @@ const DashBoardNurse: React.FC = () => {
               <Select
                 defaultValue='all'
                 style={{ width: 120 }}
-                onChange={value => setSelectedType(value)}
+                onChange={(value) => setSelectedType(value)}
                 options={[
                   { value: 'all', label: 'Tất cả loại' },
                   { value: 'fever', label: 'Sốt' },
@@ -206,11 +192,7 @@ const DashBoardNurse: React.FC = () => {
         <Row gutter={16}>
           <Col span={6}>
             <Card>
-              <Statistic
-                title='Tổng số sự kiện'
-                value={stats.totalEvents}
-                prefix={<MedicineBoxOutlined />}
-              />
+              <Statistic title='Tổng số sự kiện' value={stats.totalEvents} prefix={<MedicineBoxOutlined />} />
             </Card>
           </Col>
           <Col span={6}>
@@ -225,20 +207,12 @@ const DashBoardNurse: React.FC = () => {
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic
-                title='Số tai nạn'
-                value={stats.accidentCount}
-                valueStyle={{ color: '#faad14' }}
-              />
+              <Statistic title='Số tai nạn' value={stats.accidentCount} valueStyle={{ color: '#faad14' }} />
             </Card>
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic
-                title='Số lượt uống thuốc'
-                value={stats.medicineCount}
-                valueStyle={{ color: '#1890ff' }}
-              />
+              <Statistic title='Số lượt uống thuốc' value={stats.medicineCount} valueStyle={{ color: '#1890ff' }} />
             </Card>
           </Col>
         </Row>
@@ -289,12 +263,7 @@ const DashBoardNurse: React.FC = () => {
 
         {/* Bảng báo cáo */}
         <Card title='Báo cáo chi tiết'>
-          <Table
-            columns={columns}
-            dataSource={medicalEvents}
-            rowKey='id'
-            pagination={{ pageSize: 10 }}
-          />
+          <Table columns={columns} dataSource={medicalEvents} rowKey='id' pagination={{ pageSize: 10 }} />
         </Card>
       </Space>
     </div>
@@ -302,4 +271,3 @@ const DashBoardNurse: React.FC = () => {
 }
 
 export default DashBoardNurse
-
