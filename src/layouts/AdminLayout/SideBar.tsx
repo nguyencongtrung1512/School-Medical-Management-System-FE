@@ -1,12 +1,14 @@
-import React from 'react'
-import { Layout, Menu } from 'antd'
-import { DashboardOutlined,
-  MedicineBoxOutlined,
+import {
   AuditOutlined,
+  BookOutlined,
+  DashboardOutlined,
   EditOutlined,
-  TeamOutlined,
-  BookOutlined, } from '@ant-design/icons'
-import { useNavigate, useLocation } from 'react-router-dom'
+  MedicineBoxOutlined,
+  TeamOutlined
+} from '@ant-design/icons'
+import { Layout, Menu } from 'antd'
+import React from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import path from '../../constants/path'
 
 const { Sider } = Layout
@@ -29,7 +31,7 @@ const Sidebar: React.FC = () => {
     {
       key: path.Appointment_Check,
       icon: <AuditOutlined className='text-xl' />,
-      label: 'kiểm duyệt tư vấn'
+      label: 'Kiểm duyệt tư vấn'
     },
     {
       key: path.CATEGORY_MANAGEMENT,
@@ -43,7 +45,7 @@ const Sidebar: React.FC = () => {
     },
     {
       key: path.GRADE_MANAGEMENT,
-      icon: <BookOutlined  className='text-xl' />,
+      icon: <BookOutlined className='text-xl' />,
       label: 'Quản lí Student'
     }
   ]
