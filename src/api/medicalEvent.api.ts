@@ -1,16 +1,48 @@
 import axiosInstance from '../service/axiosInstance'
 
-interface MedicalSupply {
+export enum MedicalEventStatus {
+  TREATED = 'treated',
+  MONITORING = 'monitoring',
+  TRANSFERRED = 'transferred'
+}
+
+export enum SeverityLevel {
+  MILD = 'Mild',
+  MODERATE = 'Moderate',
+  SEVERE = 'Severe'
+}
+
+export enum LeaveMethod {
+  NONE = 'none',
+  PARENT_PICKUP = 'parent_pickup',
+  HOSPITAL_TRANSFER = 'hospital_transfer'
+}
+
+export interface Student {
   _id: string
-  name: string
-  description: string
-  quantity: number
-  unit: string
-  expiryDate: string
-  supplier: string
+  fullName: string
+  isDeleted: boolean
+  gender: string
+  dob: string
+  classId: string
+  avatar: string
+  studentCode: string
+  position: number
   createdAt: string
   updatedAt: string
-  __v: number
+  parentId: string
+}
+
+export interface User {
+  _id: string
+  email: string
+  fullName: string
+  phone: string
+  role: string
+  studentIds?: string[]
+  isDeleted: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Medicine {
@@ -23,125 +55,102 @@ export interface Medicine {
   supplier: string
   createdAt: string
   updatedAt: string
-  __v: number
 }
 
-interface SchoolNurse {
+export interface MedicalSupply {
   _id: string
-  email: string
-  fullName: string
-  phone: string
-  role: string
-  studentIds: string[]
-  isDeleted: boolean
+  name: string
+  description: string
+  quantity: number
+  unit: string
+  expiryDate: string
+  supplier: string
   createdAt: string
   updatedAt: string
-  __v: number
-}
-
-interface Student {
-  _id: string
-  fullName: string
-  isDeleted: boolean
-  gender: string
-  dob: string
-  classId: string
-  avatar: string
-  studentCode: string
-  position: number
-  createdAt: string
-  updatedAt: string
-  __v: number
-  parentId: string
 }
 
 export interface MedicalEvent {
   _id: string
   studentId: string
+  parentId: string
   schoolNurseId: string
   eventName: string
-  description: string
-  actionTaken: string
-  medicinesId: string[]
-  medicalSuppliesId: string[]
-  isSerious: boolean
-  notes: string
-  isDeleted: boolean
-  createdAt: string
-  updatedAt: string
-  __v: number
-  medicines: Medicine[]
-  schoolNurse: SchoolNurse
-  student: Student
-  medicalSupplies: MedicalSupply[]
-}
-
-export interface GetMedicalEventByIdResponse {
-  success: boolean;
-  data: MedicalEvent;
-}
-
-interface PageInfo {
-  pageNum: string
-  pageSize: string
-  totalItems: number
-  totalPages: number
-}
-
-export interface MedicalEventResponse {
-  pageData: MedicalEvent[]
-  pageInfo: PageInfo
-}
-
-export interface CreateMedicalEventRequest {
-  studentId: string
-  eventName: string
-  description: string
-  actionTaken: string
-  medicinesId?: string[]
-  medicalSuppliesId?: string[]
-  isSerious: boolean
-  notes?: string
-}
-
-export interface UpdateMedicalEventRequest {
-  eventName?: string
   description?: string
   actionTaken?: string
   medicinesId?: string[]
   medicalSuppliesId?: string[]
-  isSerious?: boolean
+  severityLevel?: SeverityLevel
+  status?: MedicalEventStatus
+  leaveMethod?: LeaveMethod
+  leaveTime?: string
+  pickedUpBy?: string
+  images?: string[]
+  notes?: string
+  isDeleted?: boolean
+  createdAt?: string
+  updatedAt?: string
+  // populated fields
+  student?: Student
+  parent?: User
+  schoolNurse?: User
+  medicines?: Medicine[]
+  medicalSupplies?: MedicalSupply[]
+}
+
+export interface SearchMedicalEventParams {
+  pageNum?: number
+  pageSize?: number
+  query?: string
+  studentId?: string
+  parentId?: string
+  schoolNurseId?: string
+  medicinesId?: string[]
+  medicalSuppliesId?: string[]
+}
+
+export interface CreateMedicalEventRequest {
+  studentId: string
+  parentId: string
+  schoolNurseId: string
+  eventName: string
+  description?: string
+  actionTaken?: string
+  medicinesId?: string[]
+  medicalSuppliesId?: string[]
+  severityLevel?: SeverityLevel
+  status?: MedicalEventStatus
+  leaveMethod?: LeaveMethod
+  leaveTime?: string
+  pickedUpBy?: string
+  images?: string[]
   notes?: string
 }
 
-export const getMedicalEvents = async (
-  pageNum: number = 1,
-  pageSize: number = 10,
-  userId?: string,
-  studentId?: string
-): Promise<MedicalEventResponse> => {
-  let url = `/medical-events/search?pageSize=${pageSize}&pageNum=${pageNum}`
-  if (userId) {
-    url += `&userId=${userId}`
+export type UpdateMedicalEventRequest = Partial<CreateMedicalEventRequest>
+
+export const medicalEventApi = {
+  // Tìm kiếm sự kiện y tế có phân trang
+  search: (params: SearchMedicalEventParams) => {
+    return axiosInstance.get('/medical-events/search', { params })
+  },
+
+  // Lấy chi tiết sự kiện y tế theo ID
+  getById: (id: string) => {
+    return axiosInstance.get(`/medical-events/${id}`)
+  },
+
+  // Tạo sự kiện y tế mới
+  create: (data: CreateMedicalEventRequest) => {
+    return axiosInstance.post('/medical-events/create', data)
+  },
+
+  // Cập nhật sự kiện y tế
+  update: (id: string, data: UpdateMedicalEventRequest) => {
+    return axiosInstance.put(`/medical-events/${id}`, data)
+  },
+
+  // Xóa sự kiện y tế
+  delete: (id: string) => {
+    return axiosInstance.delete(`/medical-events/${id}`)
   }
-  if (studentId) {
-    url += `&studentId=${studentId}`
-  }
-  return axiosInstance.get(url)
-}
-
-export const getMedicalEventById = async (id: string): Promise<GetMedicalEventByIdResponse> => {
-  return axiosInstance.get(`/medical-events/${id}`)
-}
-
-export const createMedicalEvent = async (data: CreateMedicalEventRequest): Promise<MedicalEvent> => {
-  return axiosInstance.post('/medical-events/create', data)
-}
-
-export const updateMedicalEvent = async (id: string, data: UpdateMedicalEventRequest): Promise<MedicalEvent> => {
-  return axiosInstance.put(`/medical-events/${id}`, data)
-}
-
-export const deleteMedicalEvent = async (id: string): Promise<void> => {
-  await axiosInstance.delete(`/medical-events/${id}`)
 }
