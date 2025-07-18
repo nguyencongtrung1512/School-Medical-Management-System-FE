@@ -1,33 +1,37 @@
-import React, { useEffect, useState } from 'react'
+import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 import {
-  Table,
   Button,
-  Modal,
-  Form,
+  Card,
+  Col,
+  Descriptions,
   Input,
   message,
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Descriptions,
+  Modal,
   Row,
-  Col,
-  Statistic
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+  Upload
 } from 'antd'
-import { CheckCircleOutlined, ClockCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import React, { useEffect, useState } from 'react'
 import {
-  updateMedicineSubmissionStatus,
-  MedicineSubmissionData,
   getMedicineSubmissionsByNurseId,
+  MedicineDetail,
+  MedicineSubmissionData,
+  updateMedicineSlotStatus,
+  updateMedicineSubmissionStatus,
   UpdateMedicineSubmissionStatusRequest
 } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
+import { handleUploadFile } from '../../../utils/upload'
+import { InboxOutlined, DeleteOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
 
 const { Title, Text } = Typography
-const { TextArea } = Input
 
 interface PopulatedMedicineSubmissionData {
   parentId: string
@@ -48,15 +52,41 @@ interface PopulatedMedicineSubmissionData {
   nurseNotes?: string
 }
 
+interface MedicineDetailWithSlotStatus extends MedicineDetail {
+  _id: string
+  createdAt: string
+  updatedAt: string
+  slotStatus?: Array<{
+    time: string
+    status: string
+    note?: string
+    image?: string
+    _id?: string
+  }>
+}
+
 const ReceiveMedicine: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<PopulatedMedicineSubmissionData | null>(null)
-  const [form] = Form.useForm()
   const [medicineRequests, setMedicineRequests] = useState<PopulatedMedicineSubmissionData[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
+  const [slotModalOpen, setSlotModalOpen] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState<SlotRow | null>(null)
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>('')
+  const [slotNote, setSlotNote] = useState('')
+  const [slotImage, setSlotImage] = useState('')
+  const [slotUploading, setSlotUploading] = useState(false)
+  const [slotLoading, setSlotLoading] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; type: 'approve' | 'reject'; id: string }>({
+    open: false,
+    type: 'approve',
+    id: ''
+  })
+  const [rejectReason, setRejectReason] = useState('')
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   useEffect(() => {
     const fetchMedicineRequests = async () => {
@@ -89,8 +119,11 @@ const ReceiveMedicine: React.FC = () => {
                 studentId: studentResponse.data,
                 parentInfo: parentResponse.data
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error('Error fetching info:', error)
+              if (error.message) {
+                toast.error(error.message)
+              }
               return request
             }
           })
@@ -202,7 +235,7 @@ const ReceiveMedicine: React.FC = () => {
           <Button type='link' onClick={() => handleViewDetails(record)}>
             Xem chi tiết
           </Button>
-          {record.status === 'pending' && (
+          {/* {record.status === 'pending' && (
             <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'approved')}>
               Duyệt đơn
             </Button>
@@ -211,12 +244,12 @@ const ReceiveMedicine: React.FC = () => {
             <Button danger onClick={() => handleUpdateStatus(record._id, 'rejected')}>
               Từ chối
             </Button>
-          )}
-          {record.status === 'approved' && (
+          )} */}
+          {/* {record.status === 'approved' && (
             <Button type='primary' onClick={() => handleUpdateStatus(record._id, 'completed')}>
               Hoàn thành
             </Button>
-          )}
+          )} */}
         </Space>
       )
     }
@@ -227,37 +260,23 @@ const ReceiveMedicine: React.FC = () => {
     setIsModalVisible(true)
   }
 
-  const handleUpdateStatus = async (id: string, newStatus: MedicineSubmissionData['status']) => {
+  const handleUpdateStatus = async (id: string, newStatus: MedicineSubmissionData['status'], reason?: string) => {
     try {
       let payload: UpdateMedicineSubmissionStatusRequest = {
         status: newStatus as UpdateMedicineSubmissionStatusRequest['status']
       }
       if (newStatus === 'rejected') {
-        const reason = prompt('Nhập lý do từ chối:') || ''
-        if (!reason.trim()) {
-          message.warning('Bạn phải nhập lý do từ chối!')
-          return
-        }
         payload = { status: 'rejected', cancellationReason: reason }
       }
-
-      const response = await updateMedicineSubmissionStatus(id, payload)
-      console.log('update response', response)
+      await updateMedicineSubmissionStatus(id, payload)
       message.success('Cập nhật trạng thái thành công!')
       setMedicineRequests((prevRequests) =>
         prevRequests.map((req) => (req._id === id ? { ...req, status: newStatus } : req))
       )
-    } catch (error) {
+      // Nếu đang xem chi tiết đúng đơn này thì cập nhật luôn trạng thái trong selectedRequest
+      setSelectedRequest((prev) => (prev && prev._id === id ? { ...prev, status: newStatus } : prev))
+    } catch {
       message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
-      console.error('Update status error:', error)
-    }
-  }
-
-  const handleAddNote = () => {
-    if (selectedRequest) {
-      // Sau này sẽ gọi API để thêm ghi chú
-      message.success('Thêm ghi chú thành công!')
-      setIsModalVisible(false)
     }
   }
 
@@ -268,6 +287,124 @@ const ReceiveMedicine: React.FC = () => {
     approved: medicineRequests.filter((r) => r.status === 'approved').length,
     completed: medicineRequests.filter((r) => r.status === 'completed').length,
     rejected: medicineRequests.filter((r) => r.status === 'rejected').length
+  }
+
+  // Table columns for slots inside each medicine submission
+  interface SlotRow {
+    medicineName: string
+    dosage: string
+    time: string
+    status: string
+    note?: string
+    image?: string
+    medicineDetailId: string
+    submissionId: string
+  }
+  const slotColumns: ColumnsType<SlotRow> = [
+    {
+      title: 'Tên thuốc',
+      dataIndex: 'medicineName',
+      key: 'medicineName',
+      render: (_: unknown, record: SlotRow) => record.medicineName
+    },
+    {
+      title: 'Liều lượng',
+      dataIndex: 'dosage',
+      key: 'dosage',
+      render: (_: unknown, record: SlotRow) => record.dosage
+    },
+    {
+      title: 'Thời gian uống',
+      dataIndex: 'time',
+      key: 'time',
+      render: (time: string) => new Date(time).toLocaleString('vi-VN')
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        let color = 'blue',
+          text = 'Chờ uống'
+        if (status === 'taken') {
+          color = 'green'
+          text = 'Đã uống'
+        }
+        if (status === 'missed') {
+          color = 'red'
+          text = 'Bỏ lỡ'
+        }
+        if (status === 'compensated') {
+          color = 'orange'
+          text = 'Uống bù'
+        }
+        return <Tag color={color}>{text}</Tag>
+      }
+    },
+    {
+      title: 'Ảnh minh họa',
+      dataIndex: 'image',
+      key: 'image',
+      render: (image: string) => (image ? <img src={image} alt='minh họa' style={{ maxWidth: 80 }} /> : null)
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      render: (note: string) => note || ''
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      render: (_: unknown, record: SlotRow) =>
+        record.status === 'pending' &&
+        selectedRequest?.status === 'approved' && (
+          <Button type='primary' size='small' onClick={() => openSlotModal(record)}>
+            Hoàn thành
+          </Button>
+        )
+    }
+  ]
+
+  const openSlotModal = (slot: SlotRow) => {
+    setSelectedSlot(slot)
+    setSlotNote('')
+    setSlotImage('')
+    setSlotModalOpen(true)
+    setSelectedSubmissionId(slot.submissionId)
+  }
+
+  const handleSlotUpload = async (file: File) => {
+    setSlotUploading(true)
+    const url = await handleUploadFile(file, 'image')
+    if (url) setSlotImage(url)
+    setSlotUploading(false)
+    return false // prevent default upload
+  }
+
+  const handleCompleteSlot = async () => {
+    if (!selectedSlot) return
+    setSlotLoading(true)
+    try {
+      await updateMedicineSlotStatus(selectedSubmissionId, {
+        medicineDetailId: selectedSlot.medicineDetailId,
+        time: selectedSlot.time,
+        status: 'taken',
+        note: slotNote,
+        image: slotImage
+      })
+      message.success('Cập nhật thành công!')
+      setSlotModalOpen(false)
+      setSelectedSlot(null)
+      setSlotNote('')
+      setSlotImage('')
+      // reload data
+      setCurrentPage(1)
+    } catch {
+      message.error('Cập nhật thất bại!')
+    } finally {
+      setSlotLoading(false)
+    }
   }
 
   return (
@@ -319,6 +456,27 @@ const ReceiveMedicine: React.FC = () => {
               pageSizeOptions: ['5', '10', '20', '50']
             }}
             loading={loading}
+            expandable={{
+              expandedRowRender: (record: PopulatedMedicineSubmissionData) => (
+                <Table
+                  columns={slotColumns}
+                  dataSource={record.medicines.flatMap((med: MedicineDetailWithSlotStatus) =>
+                    (med.timeSlots || []).map((time: string, idx: number) => ({
+                      medicineName: med.name,
+                      dosage: med.dosage || '',
+                      time,
+                      status: med.slotStatus?.[idx]?.status || 'pending',
+                      note: med.slotStatus?.[idx]?.note || '',
+                      image: med.slotStatus?.[idx]?.image || '',
+                      medicineDetailId: med._id,
+                      submissionId: record._id
+                    }))
+                  )}
+                  rowKey={(row: SlotRow) => row.medicineDetailId + '-' + row.time}
+                  pagination={false}
+                />
+              )
+            }}
           />
 
           {/* Modal chi tiết */}
@@ -330,13 +488,13 @@ const ReceiveMedicine: React.FC = () => {
             footer={null}
           >
             {selectedRequest && (
-              <div>
+              <div className='max-h-[70vh] overflow-y-auto'>
                 <Descriptions bordered column={2}>
                   <Descriptions.Item label='Học sinh' span={2}>
                     {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentCode}
-                    {selectedRequest.studentId.classId && (
+                    {selectedRequest.studentId.classInfo && (
                       <div>
-                        <Text type='secondary'>Lớp: {selectedRequest.studentId.classId}</Text>
+                        <Text type='secondary'>Lớp: {selectedRequest.studentId.classInfo?.name}</Text>
                       </div>
                     )}
                   </Descriptions.Item>
@@ -346,43 +504,144 @@ const ReceiveMedicine: React.FC = () => {
                       <Text type='secondary'>Số điện thoại: {selectedRequest.parentInfo?.phone || 'N/A'}</Text>
                     </div>
                   </Descriptions.Item>
-                  <Descriptions.Item label='Tên thuốc'>{selectedRequest.medicines[0]?.name}</Descriptions.Item>
-                  <Descriptions.Item label='Liều lượng'>{selectedRequest.medicines[0]?.dosage}</Descriptions.Item>
-                  <Descriptions.Item label='Số lần uống'>{selectedRequest.medicines[0]?.timesPerDay}</Descriptions.Item>
-                  <Descriptions.Item label='Thời gian uống'>
-                    {selectedRequest.medicines[0]?.usageInstructions}
-                  </Descriptions.Item>
-                  {'startDate' in selectedRequest.medicines[0] && 'endDate' in selectedRequest.medicines[0] && (
-                    <Descriptions.Item label='Thời gian sử dụng' span={2}>
-                      {(() => {
-                        const med = selectedRequest.medicines[0] as { startDate?: string; endDate?: string }
-                        if (med.startDate && med.endDate) {
-                          return `${new Date(med.startDate).toLocaleDateString('vi-VN')} - ${new Date(med.endDate).toLocaleDateString('vi-VN')}`
-                        }
-                        return '—'
-                      })()}
-                    </Descriptions.Item>
-                  )}
-                  <Descriptions.Item label='Lý do dùng thuốc' span={2}>
-                    {selectedRequest.medicines[0]?.reason}
-                  </Descriptions.Item>
-                  {selectedRequest.medicines[0]?.note && (
-                    <Descriptions.Item label='Ghi chú đặc biệt' span={2}>
-                      {selectedRequest.medicines[0]?.note}
-                    </Descriptions.Item>
-                  )}
                 </Descriptions>
-
-                <Form form={form} layout='vertical' onFinish={handleAddNote} style={{ marginTop: 16 }}>
-                  <Form.Item name='nurseNotes' label='Ghi chú của y tá' initialValue={selectedRequest.nurseNotes}>
-                    <TextArea rows={4} placeholder='Nhập ghi chú của y tá...' />
-                  </Form.Item>
-                  <Form.Item>
-                    <Button type='primary' htmlType='submit'>
-                      Lưu ghi chú
+                {/* Hiển thị danh sách slot uống thuốc */}
+                <div style={{ marginTop: 24 }}>
+                  <Title level={5}>Lịch uống thuốc</Title>
+                  <Table
+                    columns={slotColumns}
+                    dataSource={selectedRequest.medicines.flatMap((med: MedicineDetailWithSlotStatus) =>
+                      (med.timeSlots || []).map((time: string, idx: number) => ({
+                        medicineName: med.name,
+                        dosage: med.dosage || '',
+                        time,
+                        status: med.slotStatus?.[idx]?.status || 'pending',
+                        note: med.slotStatus?.[idx]?.note || '',
+                        image: med.slotStatus?.[idx]?.image || '',
+                        medicineDetailId: med._id,
+                        submissionId: selectedRequest._id
+                      }))
+                    )}
+                    rowKey={(row: SlotRow) => row.medicineDetailId + '-' + row.time}
+                    pagination={false}
+                    size='small'
+                  />
+                </div>
+                {selectedRequest.status === 'pending' && (
+                  <div className='flex justify-end gap-2 mt-6'>
+                    <Button
+                      type='primary'
+                      onClick={() => setConfirmModal({ open: true, type: 'approve', id: selectedRequest._id })}
+                    >
+                      Duyệt đơn
                     </Button>
-                  </Form.Item>
-                </Form>
+                    <Button
+                      danger
+                      onClick={() => setConfirmModal({ open: true, type: 'reject', id: selectedRequest._id })}
+                    >
+                      Từ chối
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </Modal>
+
+          {/* Modal hoàn thành slot */}
+          <Modal
+            title='Xác nhận hoàn thành uống thuốc'
+            open={slotModalOpen}
+            onCancel={() => setSlotModalOpen(false)}
+            onOk={handleCompleteSlot}
+            okText='Xác nhận'
+            confirmLoading={slotLoading}
+          >
+            {selectedSlot && (
+              <div>
+                <div>
+                  <b>Thuốc:</b> {selectedSlot.medicineName}
+                </div>
+                <div>
+                  <b>Thời gian:</b> {new Date(selectedSlot.time).toLocaleString('vi-VN')}
+                </div>
+                <Input.TextArea
+                  value={slotNote}
+                  onChange={(e) => setSlotNote(e.target.value)}
+                  placeholder='Ghi chú (nếu có)'
+                  rows={3}
+                  style={{ marginTop: 12 }}
+                />
+                <div className='mt-4'>
+                  <Upload.Dragger
+                    name='file'
+                    multiple={false}
+                    showUploadList={false}
+                    beforeUpload={handleSlotUpload}
+                    accept='image/*'
+                    disabled={slotUploading}
+                    style={{ padding: 16, borderRadius: 8 }}
+                  >
+                    <p className='ant-upload-drag-icon'>
+                      <InboxOutlined style={{ fontSize: 32, color: '#1890ff' }} />
+                    </p>
+                    <p className='ant-upload-text'>Kéo & thả hoặc bấm để chọn ảnh minh họa</p>
+                    <p className='ant-upload-hint'>Chỉ nhận file ảnh, dung lượng tối đa 5MB.</p>
+                  </Upload.Dragger>
+                  {slotImage && (
+                    <div className='flex flex-col items-center mt-4'>
+                      <img src={slotImage} alt='preview' className='rounded shadow max-h-60 mb-2' />
+                      <Button icon={<DeleteOutlined />} danger size='small' onClick={() => setSlotImage('')}>
+                        Xóa ảnh
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Modal xác nhận duyệt/từ chối */}
+          <Modal
+            open={confirmModal.open}
+            onCancel={() => {
+              setConfirmModal({ ...confirmModal, open: false })
+              setRejectReason('')
+            }}
+            onOk={async () => {
+              setConfirmLoading(true)
+              if (confirmModal.type === 'approve') {
+                await handleUpdateStatus(confirmModal.id, 'approved')
+                setConfirmModal({ ...confirmModal, open: false })
+              } else {
+                if (!rejectReason.trim()) {
+                  message.warning('Vui lòng nhập lý do từ chối!')
+                  setConfirmLoading(false)
+                  return
+                }
+                await handleUpdateStatus(confirmModal.id, 'rejected', rejectReason)
+                setRejectReason('')
+                setConfirmModal({ ...confirmModal, open: false })
+              }
+              setConfirmLoading(false)
+            }}
+            okText={confirmModal.type === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+            cancelText='Hủy'
+            confirmLoading={confirmLoading}
+          >
+            {confirmModal.type === 'approve' ? (
+              <div>
+                Bạn chắc chắn muốn <b>duyệt</b> đơn thuốc này?
+              </div>
+            ) : (
+              <div>
+                <div>Vui lòng nhập lý do từ chối:</div>
+                <Input.TextArea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                  placeholder='Nhập lý do từ chối...'
+                  style={{ marginTop: 8 }}
+                />
               </div>
             )}
           </Modal>
