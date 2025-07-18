@@ -46,12 +46,12 @@ const Sidebar: React.FC = () => {
       key: path.MEDICINES,
       icon: <FileSearchOutlined className='text-lg' />,
       label: 'Kho thuốc'
-    },
-    {
-      key: path.MEDICAL_PLAN,
-      icon: <FileSearchOutlined className='text-lg' />,
-      label: 'Kế hoạch y tế'
     }
+    // {
+    //   key: path.MEDICAL_PLAN,
+    //   icon: <FileSearchOutlined className='text-lg' />,
+    //   label: 'Kế hoạch y tế'
+    // }
   ]
 
   const handleMenuClick = (key: string) => {

@@ -139,10 +139,10 @@ export default function useRouteElements() {
               path: path.MEDICAL_SUPPLIES,
               element: <MedicalSuppliesList />
             },
-            {
-              path: path.MEDICAL_PLAN,
-              element: <MedicalCheckEvent />
-            },
+            // {
+            //   path: path.MEDICAL_PLAN,
+            //   element: <MedicalCheckEvent />
+            // },
             {
               path: path.PRIVATE_CONSULTATION,
               element: <PrivateConsultation />
@@ -164,6 +164,10 @@ export default function useRouteElements() {
             {
               path: path.DASHBOARD_ADMIN,
               element: <DashBoardAdmin />
+            },
+            {
+              path: path.MEDICAL_PLAN,
+              element: <MedicalCheckEvent />
             },
             {
               path: path.CENSOR_LIST,

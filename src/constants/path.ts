@@ -27,12 +27,12 @@ const path = {
   RESULTS_AFTER_VACCINATION: '/nurse/results-after-vaccination', //khai báo kết quả tiêm chủng
   RECEIVE_MEDICINE: '/nurse/receive-medicine', //nhận thuốc
   MEDICAL_REPORT: '/nurse/medical-report', //báo cáo y tế
-  MEDICAL_PLAN: '/nurse/medical-check-event', //kế hoạch khám bệnh
   PRIVATE_CONSULTATION: '/nurse/private-consultation', //tư vấn riêng
   MEDICINES: '/nurse/medicines',// kho thuốc
   MEDICAL_SUPPLIES: '/nurse/medical-supplies',
   //=============Admin============
   BASE_ADMIN: '/admin',
+  MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh
   Appointment_Check: '/admin/appointment-check',
   DASHBOARD_ADMIN: '/admin/dashboard',
   CENSOR_LIST: '/admin/censor-list',

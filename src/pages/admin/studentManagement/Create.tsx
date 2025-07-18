@@ -33,7 +33,12 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         fullName: values.fullName,
         gender: values.gender,
         dob: values.dob,
-        email: values.email,
+        parents: [
+          {
+            type: values.parentType,
+            email: values.email
+          }
+        ],
         classId: classId,
         avatar: values.avatar
       }
@@ -146,13 +151,18 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         >
           <Input placeholder='Nhập email phụ huynh' />
         </Form.Item>
+        <Form.Item
+          name='parentType'
+          label='Loại phụ huynh'
+          rules={[{ required: true, message: 'Vui lòng chọn loại phụ huynh!' }]}
+        >
+          <Select placeholder='Chọn loại phụ huynh'>
+            <Select.Option value='father'>Cha</Select.Option>
+            <Select.Option value='mother'>Mẹ</Select.Option>
+          </Select>
+        </Form.Item>
         <Form.Item name='avatar' label='Avatar'>
-          <Upload
-            name='avatar'
-            listType='picture'
-            showUploadList={false}
-            beforeUpload={beforeUpload}
-          >
+          <Upload name='avatar' listType='picture' showUploadList={false} beforeUpload={beforeUpload}>
             <Button icon={<UploadOutlined />}>Upload Avatar</Button>
           </Upload>
           {(avatarUrl || form.getFieldValue('avatar')) && (

@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Card,
   Table,
@@ -12,11 +12,11 @@ import {
   Col,
   Statistic,
   message,
-  Select,
   Divider,
   Tag,
   Tooltip,
-  Breadcrumb
+  Breadcrumb,
+  Select
 } from 'antd'
 import {
   PlusOutlined,
@@ -26,17 +26,15 @@ import {
   HomeOutlined,
   TeamOutlined,
   BookOutlined,
-  CalendarOutlined,
-  UserOutlined,
-  FilterOutlined
+  UserOutlined
 } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getGradeByIdAPI } from '../../../api/grade.api'
-import { getClassesAPI } from '../../../api/classes.api'
+// Đã bỏ getClassesAPI vì chỉ lấy lớp từ currentGrade
 import CreateClass from './Create'
 import DeleteClass from './Delete'
 import UpdateClass from './Update'
-import type { TablePaginationConfig } from 'antd/lib/table/interface'
+import type { Key } from 'react'
 
 const { Title, Text } = Typography
 
@@ -79,14 +77,8 @@ const ClassList: React.FC = () => {
   const [deletingClass, setDeletingClass] = useState<Classes | null>(null)
   const [currentGrade, setCurrentGrade] = useState<Grade | null>(null)
   const [classList, setClassList] = useState<Classes[]>([])
-  const [loading, setLoading] = useState(false)
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0
-  })
   const [selectedYear, setSelectedYear] = useState<string>('')
-  const [schoolYears, setSchoolYears] = useState<string[]>([])
+  // Đã bỏ setLoading, setSchoolYears vì không còn dùng
 
   const fetchGradeInfo = async () => {
     if (!gradeId) return
@@ -95,6 +87,13 @@ const ClassList: React.FC = () => {
       const response = await getGradeByIdAPI(gradeId)
       if (response && response.data) {
         setCurrentGrade(response.data)
+        // Lấy danh sách lớp từ khối và cập nhật vào classList, thêm trường status dựa vào isDeleted
+        setClassList(
+          (response.data.classes || []).map((cls: Classes) => ({
+            ...cls,
+            status: cls.isDeleted ? 'Dừng hoạt động' : 'Hoạt động'
+          }))
+        )
       }
     } catch (e) {
       console.error('Error fetching grade info:', e)
@@ -102,53 +101,11 @@ const ClassList: React.FC = () => {
     }
   }
 
-  const fetchClasses = async () => {
-    if (!gradeId) return
-
-    try {
-      setLoading(true)
-      const response = await getClassesAPI(10, 1, gradeId, selectedYear || undefined)
-      const classesData = response.pageData || []
-
-      console.log('ttt', response.pageData)
-
-      const years = Array.from(
-        new Set((classesData as Classes[]).map((c: Classes) => c.schoolYear).filter(Boolean))
-      ) as string[]
-      setSchoolYears(years)
-
-      if (Array.isArray(classesData)) {
-        const transformedClasses: Classes[] = classesData.map((classItem: Classes) => ({
-          ...classItem,
-          totalStudents: classItem.totalStudents || 0,
-          status: classItem.isDeleted ? 'Đã xóa' : 'Hoạt động'
-        }))
-
-        setClassList(transformedClasses)
-        setPagination((prev) => ({
-          ...prev,
-          total: transformedClasses.length
-        }))
-      }
-    } catch (error) {
-      console.error('Error fetching classes:', error)
-      message.error('Không thể tải danh sách lớp')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
     if (gradeId) {
       fetchGradeInfo()
-      fetchClasses()
     }
-  }, [gradeId, pagination.current, pagination.pageSize, selectedYear])
-
-  useEffect(() => {
-    fetchClasses()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.current, pagination.pageSize, selectedYear])
+  }, [gradeId])
 
   const handleAddClass = () => {
     setIsCreateModalVisible(true)
@@ -168,28 +125,19 @@ const ClassList: React.FC = () => {
     navigate(`/admin/student-management/classes/${classes._id}`)
   }
 
-  const handleTableChange = (pagination: TablePaginationConfig) => {
-    setPagination((prev) => ({
-      ...prev,
-      current: pagination.current || prev.current,
-      pageSize: pagination.pageSize || prev.pageSize
-    }))
-    fetchClasses()
-  }
-
   const handleCreateOk = () => {
     setIsCreateModalVisible(false)
-    fetchClasses() // Refresh lại danh sách lớp
+    fetchGradeInfo() // Refresh lại danh sách lớp bằng cách fetch lại grade
   }
 
   const handleDeleteOk = () => {
     setIsDeleteModalVisible(false)
-    fetchClasses() // Refresh lại danh sách lớp
+    fetchGradeInfo() // Refresh lại danh sách lớp bằng cách fetch lại grade
   }
 
   const handleUpdateOk = () => {
     setIsUpdateModalVisible(false)
-    fetchClasses() // Refresh lại danh sách lớp
+    fetchGradeInfo() // Refresh lại danh sách lớp bằng cách fetch lại grade
   }
 
   // Statistics
@@ -205,6 +153,12 @@ const ClassList: React.FC = () => {
     activeClasses: classList.filter((c) => !c.isDeleted).length
   }
 
+  // Lọc danh sách lớp theo năm học
+  const filteredClassList = useMemo(() => {
+    if (!selectedYear) return classList
+    return classList.filter((cls) => cls.schoolYear === selectedYear)
+  }, [classList, selectedYear])
+
   const columns = [
     {
       title: (
@@ -214,7 +168,7 @@ const ClassList: React.FC = () => {
         </Space>
       ),
       key: 'classInfo',
-      render: (_, record: Classes) => (
+      render: (_: unknown, record: Classes) => (
         <div>
           <div className='font-semibold text-gray-800 mb-1'>Lớp {record.name}</div>
           <Text type='secondary' className='text-sm'>
@@ -249,9 +203,9 @@ const ClassList: React.FC = () => {
       render: (status: string, record: Classes) => <Tag color={record.isDeleted ? 'red' : 'green'}>{status}</Tag>,
       filters: [
         { text: 'Hoạt động', value: 'Hoạt động' },
-        { text: 'Đã xóa', value: 'Đã xóa' }
+        { text: 'Dừng hoạt động', value: 'Dừng hoạt động' }
       ],
-      onFilter: (value, record) => record.status === value
+      onFilter: (value: boolean | Key, record: Classes) => record.status === String(value)
     },
     {
       title: 'Thao tác',
@@ -353,7 +307,6 @@ const ClassList: React.FC = () => {
 
       {/* Filter Section */}
 
-
       {/* Statistics Section */}
       <Row gutter={[16, 16]} className='mb-6'>
         <Col xs={12} sm={6} md={6}>
@@ -401,10 +354,7 @@ const ClassList: React.FC = () => {
       <Card className='mb-6 shadow-sm' style={{ borderRadius: '8px' }}>
         <Row gutter={[16, 16]} align='middle'>
           <Col>
-            <Space>
-              <FilterOutlined className='text-gray-500' />
-              <Text strong>Năm học: </Text>
-            </Space>
+            <span style={{ fontWeight: 600 }}>Năm học: </span>
           </Col>
           <Col>
             <Select
@@ -413,9 +363,8 @@ const ClassList: React.FC = () => {
               allowClear
               value={selectedYear || undefined}
               onChange={(value) => setSelectedYear(value || '')}
-              suffixIcon={<CalendarOutlined />}
             >
-              {schoolYears.map((year) => (
+              {[...new Set(classList.map((cls) => cls.schoolYear).filter(Boolean))].map((year) => (
                 <Select.Option key={year} value={year}>
                   {year}
                 </Select.Option>
@@ -424,7 +373,6 @@ const ClassList: React.FC = () => {
           </Col>
         </Row>
       </Card>
-
       {/* Table Section */}
       <Card className='shadow-sm' style={{ borderRadius: '12px' }}>
         <div className='mb-4'>
@@ -437,17 +385,9 @@ const ClassList: React.FC = () => {
 
         <Table
           columns={columns}
-          dataSource={classList}
+          dataSource={filteredClassList}
           rowKey='_id'
-          loading={loading}
-          pagination={{
-            ...pagination,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lớp`,
-            pageSizeOptions: ['5', '10', '20', '50']
-          }}
-          onChange={handleTableChange}
+          pagination={false}
           className='custom-table'
           scroll={{ x: 800 }}
           locale={{
@@ -484,7 +424,7 @@ const ClassList: React.FC = () => {
         editingClass={editingClass}
       />
 
-      <style jsx global>{`
+      <style>{`
         .custom-table .ant-table-thead > tr > th {
           background-color: #fafafa;
           font-weight: 600;

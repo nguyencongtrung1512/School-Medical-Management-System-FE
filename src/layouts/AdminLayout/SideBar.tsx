@@ -3,6 +3,7 @@ import {
   BookOutlined,
   DashboardOutlined,
   EditOutlined,
+  HeartOutlined,
   MedicineBoxOutlined,
   TeamOutlined
 } from '@ant-design/icons'
@@ -29,9 +30,14 @@ const Sidebar: React.FC = () => {
       label: 'Sự kiện tiêm chủng'
     },
     {
+      key: path.MEDICAL_PLAN,
+      icon: <HeartOutlined className='text-xl' />,
+      label: 'Sự kiện kiểm tra y tế'
+    },
+    {
       key: path.Appointment_Check,
       icon: <AuditOutlined className='text-xl' />,
-      label: 'Kiểm duyệt tư vấn'
+      label: 'Kiểm duyệt tư vấn' 
     },
     {
       key: path.CATEGORY_MANAGEMENT,
