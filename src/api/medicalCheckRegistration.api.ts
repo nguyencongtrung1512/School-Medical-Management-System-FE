@@ -12,29 +12,52 @@ export interface MedicalCheckRegistration {
   updatedAt?: string
 }
 
+export interface CreateMedicalCheckRegistrationDTO {
+  parentId: string
+  studentId: string
+  eventId: string
+  note?: string
+}
+
+export interface UpdateMedicalCheckRegistrationDTO {
+  note?: string
+  status?: string
+  cancellationReason?: string
+}
+
+export interface UpdateRegistrationStatusDTO {
+  status: string
+  cancellationReason?: string
+}
+
 export const medicalCheckRegistrationApi = {
-  // Tìm kiếm đăng ký khám sức khỏe có phân trang
-  search: (params: { pageNum: number; pageSize: number; query?: string; eventId?: string; parentId?: string; studentId?: string }) => {
-    return axiosInstance.get('/medical-check-registrations/search', { params })
+  create: (data: CreateMedicalCheckRegistrationDTO) => {
+    return axiosInstance.post('/medical-check-registration/create', data)
   },
-
-  // Tạo đăng ký mới
-  create: (data: Partial<MedicalCheckRegistration>) => {
-    return axiosInstance.post('/medical-check-registrations', data)
+  search: (params: {
+    pageNum?: number
+    pageSize?: number
+    query?: string
+    parentId?: string
+    studentId?: string
+    eventId?: string
+    status?: string
+  }) => {
+    return axiosInstance.get('/medical-check-registration/search', { params })
   },
-
-  // Lấy đăng ký theo ID
   getById: (id: string) => {
-    return axiosInstance.get(`/medical-check-registrations/${id}`)
+    return axiosInstance.get(`/medical-check-registration/${id}`)
   },
-
-  // Cập nhật đăng ký
-  update: (id: string, data: Partial<MedicalCheckRegistration>) => {
-    return axiosInstance.put(`/medical-check-registrations/${id}`, data)
+  update: (id: string, data: UpdateMedicalCheckRegistrationDTO) => {
+    return axiosInstance.put(`/medical-check-registration/${id}`, data)
   },
-
-  // Xóa đăng ký
   delete: (id: string) => {
-    return axiosInstance.delete(`/medical-check-registrations/${id}`)
+    return axiosInstance.delete(`/medical-check-registration/${id}`)
+  },
+  updateStatus: (id: string, data: UpdateRegistrationStatusDTO) => {
+    return axiosInstance.patch(`/medical-check-registration/${id}/status`, data)
+  },
+  exportExcel: (params: { [key: string]: any }) => {
+    return axiosInstance.get('/medical-check-registration/export/excel', { params, responseType: 'blob' })
   }
 }
