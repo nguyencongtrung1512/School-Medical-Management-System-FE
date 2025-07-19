@@ -1,284 +1,479 @@
-import { PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, TimePicker, Typography, message } from 'antd'
+import {
+  BookOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  EyeOutlined,
+  MedicineBoxOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  StopOutlined
+} from '@ant-design/icons'
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Input,
+  message,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { Dayjs } from 'dayjs'
-import { useState } from 'react'
+import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
+import {
+  getAllVaccineEvents,
+  updateVaccineEventStatus,
+  type VaccineEvent,
+  VaccineEventStatus
+} from '../../../api/vaccineEvent.api'
 
-const { Title } = Typography
+const { Title, Text, Paragraph } = Typography
+const { Search } = Input
 const { Option } = Select
 
-interface Student {
-  id: string
-  name: string
-  grade: string
-  class: string
-  parentName: string
-  parentPhone: string
-}
+const ResultsAfterVaccination: React.FC = () => {
+  const [vaccineEvents, setVaccineEvents] = useState<VaccineEvent[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [statusFilter, setStatusFilter] = useState<VaccineEventStatus | undefined>(undefined)
+  const [selectedEvent, setSelectedEvent] = useState<VaccineEvent | null>(null)
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
 
-interface HealthRecord {
-  key: string
-  studentId: string
-  studentName: string
-  grade: string
-  class: string
-  reason: string
-  result: string
-  medication: string
-  time: string
-  note: string
-}
+  useEffect(() => {
+    fetchVaccineEvents()
+  }, [currentPage, pageSize])
 
-interface FormValues {
-  studentId: string
-  reason: string
-  result: string
-  medication: string
-  time: Dayjs
-  note?: string
-}
-
-// Dữ liệu mẫu
-const mockStudents: Student[] = [
-  {
-    id: '1',
-    name: 'Nguyễn Văn A',
-    grade: '1',
-    class: '1A',
-    parentName: 'Nguyễn Văn Bố',
-    parentPhone: '0123456789'
-  },
-  {
-    id: '2',
-    name: 'Trần Thị B',
-    grade: '1',
-    class: '1A',
-    parentName: 'Trần Văn Mẹ',
-    parentPhone: '0987654321'
-  },
-  {
-    id: '3',
-    name: 'Lê Văn C',
-    grade: '2',
-    class: '2B',
-    parentName: 'Lê Văn Cha',
-    parentPhone: '0123456788'
+  const fetchVaccineEvents = async () => {
+    setLoading(true)
+    try {
+      const response = await getAllVaccineEvents(currentPage, pageSize)
+      setVaccineEvents((response as any).pageData || [])
+      setTotalItems(((response as any).totalPage || 0) * pageSize)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách sự kiện tiêm chủng')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
-]
 
-const mockRecords: HealthRecord[] = [
-  {
-    key: '1',
-    studentId: '1',
-    studentName: 'Nguyễn Văn A',
-    grade: '1',
-    class: '1A',
-    reason: 'Tiêm phòng cúm',
-    result: 'Không sốt',
-    medication: 'Không',
-    time: '10:15',
-    note: 'Bình thường'
+  const handleTableChange = (page: number, pageSize?: number) => {
+    setCurrentPage(page)
+    if (pageSize) {
+      setPageSize(pageSize)
+    }
   }
-]
 
-function ResultsAfterVaccination() {
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [form] = Form.useForm()
-  const [records, setRecords] = useState<HealthRecord[]>(mockRecords)
-  const [selectedGrade, setSelectedGrade] = useState<string>('')
-  const [selectedClass, setSelectedClass] = useState<string>('')
+  const getStatusConfig = (status: VaccineEventStatus) => {
+    const configs = {
+      [VaccineEventStatus.ONGOING]: {
+        color: 'processing',
+        text: 'Đang diễn ra',
+        icon: <ClockCircleOutlined />
+      },
+      [VaccineEventStatus.COMPLETED]: {
+        color: 'success',
+        text: 'Hoàn thành',
+        icon: <CheckCircleOutlined />
+      },
+      [VaccineEventStatus.CANCELLED]: {
+        color: 'error',
+        text: 'Đã hủy',
+        icon: <StopOutlined />
+      }
+    }
+    return configs[status] || { color: 'default', text: status, icon: <ClockCircleOutlined /> }
+  }
 
-  // Lấy danh sách khối lớp duy nhất
-  const grades = Array.from(new Set(mockStudents.map((student) => student.grade)))
+  const handleUpdateStatus = async (id: string, newStatus: VaccineEventStatus) => {
+    try {
+      await updateVaccineEventStatus(id, newStatus)
+      message.success('Cập nhật trạng thái thành công!')
+      fetchVaccineEvents() // Refresh danh sách
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể cập nhật trạng thái')
+      }
+    }
+  }
 
-  // Lấy danh sách lớp theo khối đã chọn
-  const classes = Array.from(
-    new Set(mockStudents.filter((student) => student.grade === selectedGrade).map((student) => student.class))
-  )
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return ''
+    const date = dayjs(dateString)
+    return date.format('DD/MM/YYYY HH:mm')
+  }
 
-  const columns: ColumnsType<HealthRecord> = [
+  const showDetailModal = (event: VaccineEvent) => {
+    setSelectedEvent(event)
+    setIsDetailModalVisible(true)
+  }
+
+  const columns: ColumnsType<VaccineEvent> = [
     {
-      title: 'Học sinh',
-      dataIndex: 'studentName',
-      key: 'studentName'
+      title: 'Sự kiện tiêm chủng',
+      key: 'event',
+      render: (_, record) => (
+        <Space>
+          <Badge status={getStatusConfig(record.status).color as 'success' | 'error' | 'processing' | 'default'} />
+          <div>
+            <div className='font-medium text-gray-900'>{record.title}</div>
+            <Text type='secondary' className='text-sm'>
+              {record.vaccineName}
+            </Text>
+          </div>
+        </Space>
+      ),
+      sorter: (a, b) => a.title.localeCompare(b.title)
     },
     {
-      title: 'Khối',
-      dataIndex: 'grade',
-      key: 'grade'
+      title: 'Thời gian & Địa điểm',
+      key: 'schedule',
+      sorter: (a, b) => dayjs(a.eventDate).valueOf() - dayjs(b.eventDate).valueOf(),
+      render: (_, record) => (
+        <Space direction='vertical' size={0}>
+          <Space size='small'>
+            <CalendarOutlined className='text-blue-500' />
+            <Text className='text-sm'>{record.eventDate ? formatDateTime(record.eventDate) : '-'}</Text>
+          </Space>
+          <Space size='small'>
+            <EnvironmentOutlined className='text-green-500' />
+            <Text type='secondary' className='text-sm'>
+              {record.location}
+            </Text>
+          </Space>
+        </Space>
+      )
     },
     {
-      title: 'Lớp',
-      dataIndex: 'class',
-      key: 'class'
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: VaccineEventStatus) => {
+        const config = getStatusConfig(status)
+        return (
+          <Tag color={config.color} icon={config.icon}>
+            {config.text}
+          </Tag>
+        )
+      },
+      filters: [
+        { text: 'Đang diễn ra', value: VaccineEventStatus.ONGOING },
+        { text: 'Hoàn thành', value: VaccineEventStatus.COMPLETED },
+        { text: 'Đã hủy', value: VaccineEventStatus.CANCELLED }
+      ],
+      onFilter: (value, record) => record.status === value
     },
     {
-      title: 'Lý do',
-      dataIndex: 'reason',
-      key: 'reason'
-    },
-    {
-      title: 'Kết quả',
-      dataIndex: 'result',
-      key: 'result'
-    },
-    {
-      title: 'Uống thuốc',
-      dataIndex: 'medication',
-      key: 'medication'
-    },
-    {
-      title: 'Thời gian',
-      dataIndex: 'time',
-      key: 'time'
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note'
+      title: 'Thao tác',
+      key: 'action',
+      width: 180,
+      render: (_, record) => (
+        <Space>
+          <Tooltip title='Xem chi tiết'>
+            <Button
+              type='text'
+              icon={<EyeOutlined />}
+              onClick={() => showDetailModal(record)}
+              className='text-blue-600 hover:text-blue-700'
+            />
+          </Tooltip>
+          <Tooltip title='Cập nhật trạng thái'>
+            <Select
+              value={record.status}
+              style={{ width: 120 }}
+              onChange={(value) => {
+                Modal.confirm({
+                  title: 'Xác nhận cập nhật trạng thái',
+                  content: `Bạn có chắc chắn muốn thay đổi trạng thái sự kiện "${record.title}" thành "${getStatusConfig(value as VaccineEventStatus).text}"?`,
+                  okText: 'Cập nhật',
+                  cancelText: 'Hủy',
+                  onOk: () => handleUpdateStatus(record._id, value as VaccineEventStatus)
+                })
+              }}
+            >
+              <Option value={VaccineEventStatus.ONGOING}>
+                <Space>
+                  <ClockCircleOutlined />
+                  Đang diễn ra
+                </Space>
+              </Option>
+              <Option value={VaccineEventStatus.COMPLETED}>
+                <Space>
+                  <CheckCircleOutlined />
+                  Hoàn thành
+                </Space>
+              </Option>
+              <Option value={VaccineEventStatus.CANCELLED}>
+                <Space>
+                  <StopOutlined />
+                  Đã hủy
+                </Space>
+              </Option>
+            </Select>
+          </Tooltip>
+        </Space>
+      )
     }
   ]
 
-  const handleAddRecord = (values: FormValues) => {
-    const student = mockStudents.find((s) => s.id === values.studentId)
-    if (!student) return
-
-    const newRecord: HealthRecord = {
-      key: Date.now().toString(),
-      studentId: values.studentId,
-      studentName: student.name,
-      grade: student.grade,
-      class: student.class,
-      reason: values.reason,
-      result: values.result,
-      medication: values.medication,
-      time: values.time.format('HH:mm'),
-      note: values.note || ''
-    }
-
-    setRecords([...records, newRecord])
-    setIsModalVisible(false)
-    form.resetFields()
-    message.success('Đã thêm bản ghi mới')
+  const stats = {
+    total: vaccineEvents.length,
+    ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.ONGOING).length,
+    completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.COMPLETED).length,
+    cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.CANCELLED).length
   }
 
-  // Lọc học sinh theo khối và lớp
-  const filteredStudents = mockStudents.filter((student) => {
-    if (selectedGrade && student.grade !== selectedGrade) return false
-    if (selectedClass && student.class !== selectedClass) return false
-    return true
+  const filteredEvents = vaccineEvents.filter((event) => {
+    const matchesSearch = searchKeyword
+      ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      : true
+
+    const matchesStatus = statusFilter ? event.status === statusFilter : true
+
+    return matchesSearch && matchesStatus
   })
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction='vertical' style={{ width: '100%' }}>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col>
-              <Select
-                placeholder='Chọn khối'
-                style={{ width: 120 }}
-                onChange={(value) => {
-                  setSelectedGrade(value)
-                  setSelectedClass('')
-                }}
-                value={selectedGrade || undefined}
-              >
-                {grades.map((grade) => (
-                  <Option key={grade} value={grade}>
-                    Khối {grade}
-                  </Option>
-                ))}
-              </Select>
-            </Col>
-            <Col>
-              <Select
-                placeholder='Chọn lớp'
-                style={{ width: 120 }}
-                onChange={(value) => setSelectedClass(value)}
-                value={selectedClass || undefined}
-                disabled={!selectedGrade}
-              >
-                {classes.map((classItem) => (
-                  <Option key={classItem} value={classItem}>
-                    Lớp {classItem}
-                  </Option>
-                ))}
-              </Select>
-            </Col>
-          </Row>
+    <div className='p-6'>
+      <Card className='shadow-sm'>
+        <div className='flex justify-between items-center mb-6'>
+          <div>
+            <Title level={2} className='m-0 flex items-center gap-2'>
+              <MedicineBoxOutlined className='text-blue-600' />
+              Quản lý sự kiện tiêm chủng
+            </Title>
+            <Text type='secondary'>Cập nhật trạng thái các sự kiện tiêm vaccine trong trường</Text>
+          </div>
+          <Space>
+            <Button icon={<ReloadOutlined />} onClick={fetchVaccineEvents} loading={loading}>
+              Làm mới
+            </Button>
+          </Space>
+        </div>
 
-          <Row justify='space-between' align='middle'>
-            <Col>
-              <Title level={4}>Ghi nhận kết quả sau tiêm</Title>
-            </Col>
-            <Col>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>
-                Thêm bản ghi
-              </Button>
-            </Col>
-          </Row>
+        {/* Statistics */}
+        <Row gutter={[16, 16]} className='mb-6'>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Tổng số sự kiện'
+                value={stats.total}
+                prefix={<MedicineBoxOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Đang diễn ra'
+                value={stats.ongoing}
+                prefix={<ClockCircleOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Hoàn thành'
+                value={stats.completed}
+                prefix={<CheckCircleOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card size='small' className='text-center'>
+              <Statistic
+                title='Đã hủy'
+                value={stats.cancelled}
+                prefix={<StopOutlined />}
+                valueStyle={{ color: '#ff4d4f' }}
+              />
+            </Card>
+          </Col>
+        </Row>
 
-          <Table
-            columns={columns}
-            dataSource={records.filter((record) => {
-              if (selectedGrade && record.grade !== selectedGrade) return false
-              if (selectedClass && record.class !== selectedClass) return false
-              return true
-            })}
-          />
+        {/* Filters */}
+        <Row gutter={[16, 16]} className='mb-4'>
+          <Col xs={24} md={12}>
+            <Search
+              placeholder='Tìm kiếm theo tên sự kiện, vaccine, địa điểm...'
+              allowClear
+              enterButton={<SearchOutlined />}
+              onSearch={(value) => setSearchKeyword(value)}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+            />
+          </Col>
+          <Col xs={24} md={12}>
+            <Select
+              placeholder='Lọc theo trạng thái'
+              allowClear
+              style={{ width: '100%' }}
+              onChange={(value) => setStatusFilter(value)}
+            >
+              <Option value={VaccineEventStatus.ONGOING}>
+                <Space>
+                  <ClockCircleOutlined />
+                  Đang diễn ra
+                </Space>
+              </Option>
+              <Option value={VaccineEventStatus.COMPLETED}>
+                <Space>
+                  <CheckCircleOutlined />
+                  Hoàn thành
+                </Space>
+              </Option>
+              <Option value={VaccineEventStatus.CANCELLED}>
+                <Space>
+                  <StopOutlined />
+                  Đã hủy
+                </Space>
+              </Option>
+            </Select>
+          </Col>
+        </Row>
 
-          <Modal title='Thêm bản ghi mới' open={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
-            <Form form={form} onFinish={handleAddRecord} layout='vertical'>
-              <Form.Item
-                name='studentId'
-                label='Học sinh'
-                rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
-              >
-                <Select>
-                  {filteredStudents.map((student) => (
-                    <Option key={student.id} value={student.id}>
-                      {student.name} - Lớp {student.class}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
+        {/* Table */}
+        <Table
+          columns={columns}
+          dataSource={filteredEvents}
+          rowKey='_id'
+          loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalItems,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
+            onChange: handleTableChange
+          }}
+          scroll={{ x: 800 }}
+        />
 
-              <Form.Item name='reason' label='Lý do' rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}>
-                <Input />
-              </Form.Item>
+        {/* Detail Modal */}
+        <Modal
+          title={
+            <Space>
+              <MedicineBoxOutlined className='text-blue-500' />
+              Chi tiết sự kiện tiêm chủng
+            </Space>
+          }
+          open={isDetailModalVisible}
+          onCancel={() => setIsDetailModalVisible(false)}
+          footer={[
+            <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+              Đóng
+            </Button>
+          ]}
+          width={700}
+        >
+          {selectedEvent && (
+            <div className='mt-4'>
+              <Descriptions bordered column={1} size='small'>
+                <Descriptions.Item label='Tên sự kiện' span={1}>
+                  <Text strong>{selectedEvent.title}</Text>
+                </Descriptions.Item>
 
-              <Form.Item name='result' label='Kết quả' rules={[{ required: true, message: 'Vui lòng nhập kết quả' }]}>
-                <Input />
-              </Form.Item>
+                <Descriptions.Item label='Tên vaccine'>
+                  <Space>
+                    <MedicineBoxOutlined className='text-blue-500' />
+                    {selectedEvent.vaccineName}
+                  </Space>
+                </Descriptions.Item>
 
-              <Form.Item
-                name='medication'
-                label='Uống thuốc'
-                rules={[{ required: true, message: 'Vui lòng chọn trạng thái uống thuốc' }]}
-              >
-                <Select>
-                  <Option value='Có'>Có</Option>
-                  <Option value='Không'>Không</Option>
-                </Select>
-              </Form.Item>
+                <Descriptions.Item label='Mô tả'>
+                  <Paragraph className='mb-0'>{selectedEvent.description || 'Không có mô tả'}</Paragraph>
+                </Descriptions.Item>
 
-              <Form.Item name='time' label='Thời gian' rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}>
-                <TimePicker format='HH:mm' />
-              </Form.Item>
+                <Descriptions.Item label='Địa điểm'>
+                  <Space>
+                    <EnvironmentOutlined className='text-green-500' />
+                    {selectedEvent.location}
+                  </Space>
+                </Descriptions.Item>
 
-              <Form.Item name='note' label='Ghi chú'>
-                <Input.TextArea />
-              </Form.Item>
+                <Descriptions.Item label='Ngày diễn ra sự kiện'>
+                  <Space>
+                    <CalendarOutlined className='text-blue-500' />
+                    {selectedEvent.eventDate ? formatDateTime(selectedEvent.eventDate) : '-'}
+                  </Space>
+                </Descriptions.Item>
 
-              <Form.Item>
-                <Button type='primary' htmlType='submit'>
-                  Lưu
-                </Button>
-              </Form.Item>
-            </Form>
-          </Modal>
-        </Space>
+                <Descriptions.Item label='Thời gian đăng ký'>
+                  <Space direction='vertical' size={0}>
+                    <Space size='small'>
+                      <ClockCircleOutlined className='text-orange-500' />
+                      <Text>
+                        Bắt đầu:{' '}
+                        {selectedEvent.startRegistrationDate
+                          ? formatDateTime(selectedEvent.startRegistrationDate)
+                          : '-'}
+                      </Text>
+                    </Space>
+                    <Space size='small'>
+                      <ClockCircleOutlined className='text-red-500' />
+                      <Text>
+                        Kết thúc:{' '}
+                        {selectedEvent.endRegistrationDate ? formatDateTime(selectedEvent.endRegistrationDate) : '-'}
+                      </Text>
+                    </Space>
+                  </Space>
+                </Descriptions.Item>
+
+                <Descriptions.Item label='Năm học'>
+                  <Space>
+                    <BookOutlined className='text-purple-500' />
+                    {selectedEvent.schoolYear}
+                  </Space>
+                </Descriptions.Item>
+
+                <Descriptions.Item label='Trạng thái'>
+                  <Tag
+                    color={getStatusConfig(selectedEvent.status).color}
+                    icon={getStatusConfig(selectedEvent.status).icon}
+                  >
+                    {getStatusConfig(selectedEvent.status).text}
+                  </Tag>
+                </Descriptions.Item>
+              </Descriptions>
+
+              <div className='mt-6 text-center'>
+                <Text type='secondary'>
+                  <ClockCircleOutlined className='mr-2' />
+                  Cập nhật lần cuối: {dayjs().format('DD/MM/YYYY HH:mm')}
+                </Text>
+              </div>
+            </div>
+          )}
+        </Modal>
       </Card>
     </div>
   )
