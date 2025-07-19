@@ -22,14 +22,15 @@ const path = {
   BASE_NURSE: '/nurse',
   DASHBOARD_NURSE: '/nurse/dashboard', //trang chủ
   NURSE_PROFILE: '/nurse/profile', //thông tin cá nhân
-  HEALTH_RECORD_CENSORSHIP: '/nurse/health-record-censorship', //xác nhận khai báo của phụ huynh 
+  HEALTH_RECORD_CENSORSHIP: '/nurse/health-record-censorship', //xác nhận khai báo của phụ huynh
   SCHEDULE_VACCINATION: '/nurse/schedule-vaccination', //lịch tiêm chủng cho học sinh
   RESULTS_AFTER_VACCINATION: '/nurse/results-after-vaccination', //khai báo kết quả tiêm chủng
   RECEIVE_MEDICINE: '/nurse/receive-medicine', //nhận thuốc
   MEDICAL_REPORT: '/nurse/medical-report', //báo cáo y tế
   PRIVATE_CONSULTATION: '/nurse/private-consultation', //tư vấn riêng
-  MEDICINES: '/nurse/medicines',// kho thuốc
+  MEDICINES: '/nurse/medicines', // kho thuốc
   MEDICAL_SUPPLIES: '/nurse/medical-supplies',
+  RESULTS_AFTER_MEDICAL_CHECK: '/nurse/results-after-medical-check', //khai báo kết quả khám sức khỏe
   //=============Admin============
   BASE_ADMIN: '/admin',
   MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh

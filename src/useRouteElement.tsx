@@ -1,39 +1,40 @@
 import { useRoutes } from 'react-router-dom'
 import path from './constants/path'
 import MainLayout from './layouts/MainLayout/MainLayout'
-import Login from './pages/login/login'
+import NurseLayout from './layouts/NurseLayout/NurseLayout'
 import Home from './pages/home/home'
+import Login from './pages/login/login'
+import HealthRecordCensorship from './pages/nurse/healthRecordCensorship/HealthRecordCensorship'
 import HealthRecord from './pages/parent/healthRecord/healthRecord'
 import ProfileParent from './pages/parent/profile/profileParent'
-import NurseLayout from './layouts/NurseLayout/NurseLayout'
-import HealthRecordCensorship from './pages/nurse/healthRecordCensorship/HealthRecordCensorship'
 // import ScheduleVaccination from './pages/nurse/scheduleVaccination/ScheduleVaccination'
-import ResultsAfterVaccination from './pages/nurse/resultsAfterVaccination'
-import ReceiveMedicine from './pages/nurse/receiveMedicine/ReceiveMedicine'
-import MedicalReport from './pages/nurse/medicalReport/MedicalReport'
-import DashBoardNurse from './pages/nurse/dashboardNurse/DashBoardNurse'
-import PrivateConsultation from './pages/nurse/privateConsultation/PrivateConsultation'
-import AdminLayout from './layouts/AdminLayout/AdminLayout'
-import DashBoardAdmin from './pages/admin/dashBoardAdmin/DashBoardAdmin'
-import CensorList from './pages/admin/censorManagement/CensorList'
-import UserList from './pages/admin/userManagement/UserList'
-import StudentList from './pages/admin/studentManagement/StudentList'
-import GradeList from './pages/admin/gradeManagement/GradeList'
-import ClassList from './pages/admin/classroomManagement/Classlist'
-import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
-import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
-import Blog, { BlogPost } from './pages/parent/blog'
-import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
-import BlogList from './pages/admin/BlogManagement/Bloglist'
-import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
 import ProtectedRoute from './components/ProtectedRoute'
-import Register from './pages/register'
-import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
-import MedicinesList from './pages/nurse/medicines/MedicinesList'
-import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
-import MedicalCheckEvent from './pages/admin/medicalCheckEvent'
-import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
+import AdminLayout from './layouts/AdminLayout/AdminLayout'
 import AppointmentCheck from './pages/admin/AppointmentCheck/AppointmentCheck'
+import BlogDetail from './pages/admin/BlogManagement/BlogDetail'
+import BlogList from './pages/admin/BlogManagement/Bloglist'
+import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
+import CensorList from './pages/admin/censorManagement/CensorList'
+import ClassList from './pages/admin/classroomManagement/Classlist'
+import DashBoardAdmin from './pages/admin/dashBoardAdmin/DashBoardAdmin'
+import GradeList from './pages/admin/gradeManagement/GradeList'
+import MedicalCheckEvent from './pages/admin/medicalCheckEvent'
+import StudentList from './pages/admin/studentManagement/StudentList'
+import UserList from './pages/admin/userManagement/UserList'
+import DashBoardNurse from './pages/nurse/dashboardNurse/DashBoardNurse'
+import MedicalReport from './pages/nurse/medicalReport/MedicalReport'
+import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
+import MedicinesList from './pages/nurse/medicines/MedicinesList'
+import PrivateConsultation from './pages/nurse/privateConsultation/PrivateConsultation'
+import ReceiveMedicine from './pages/nurse/receiveMedicine/ReceiveMedicine'
+import ResultsAfterMedicalEvent from './pages/nurse/resultsAfterMedicalEvent/ResultsAfterMedicalEvent'
+import ResultsAfterVaccination from './pages/nurse/resultsAfterVaccination'
+import Blog, { BlogPost } from './pages/parent/blog'
+import MedicalEventParent from './pages/parent/medicalEvent/medicalEventParent'
+import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubmissions'
+import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
+import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
+import Register from './pages/register'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -139,10 +140,10 @@ export default function useRouteElements() {
               path: path.MEDICAL_SUPPLIES,
               element: <MedicalSuppliesList />
             },
-            // {
-            //   path: path.MEDICAL_PLAN,
-            //   element: <MedicalCheckEvent />
-            // },
+            {
+              path: path.RESULTS_AFTER_MEDICAL_CHECK,
+              element: <ResultsAfterMedicalEvent />
+            },
             {
               path: path.PRIVATE_CONSULTATION,
               element: <PrivateConsultation />
