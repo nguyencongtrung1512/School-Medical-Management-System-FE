@@ -123,6 +123,11 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
     }
   }
 
+  // Disable ngày trong quá khứ cho tất cả DatePicker
+  const disabledPastDate = (current: dayjs.Dayjs) => {
+    return current && current.isBefore(dayjs(), 'day')
+  }
+
   return (
     <div className='max-w-4xl mx-auto p-6'>
       <Card className='shadow-lg' style={{ borderRadius: '12px' }}>
@@ -234,6 +239,7 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                  disabledDate={disabledPastDate}
                 />
               </Form.Item>
             </Col>
@@ -266,6 +272,7 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder='Chọn ngày và giờ diễn ra'
+                  disabledDate={disabledPastDate}
                 />
               </Form.Item>
             </Col>

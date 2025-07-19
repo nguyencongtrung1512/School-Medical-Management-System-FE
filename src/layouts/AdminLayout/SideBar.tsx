@@ -19,11 +19,11 @@ const Sidebar: React.FC = () => {
   const location = useLocation()
 
   const menuItems = [
-    {
-      key: path.DASHBOARD_ADMIN,
-      icon: <DashboardOutlined className='text-xl' />,
-      label: 'DashBoard'
-    },
+    // {
+    //   key: path.DASHBOARD_ADMIN,
+    //   icon: <DashboardOutlined className='text-xl' />,
+    //   label: 'DashBoard'
+    // },
     {
       key: path.CENSOR_LIST,
       icon: <MedicineBoxOutlined className='text-xl' />,
@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
     {
       key: path.Appointment_Check,
       icon: <AuditOutlined className='text-xl' />,
-      label: 'Kiểm duyệt tư vấn' 
+      label: 'Kiểm duyệt tư vấn'
     },
     {
       key: path.CATEGORY_MANAGEMENT,
