@@ -37,9 +37,9 @@ import {
   Typography
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import type { MedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
-import { medicalCheckEventApi } from '../../../api/medicalCheckEvent.api'
+import { EventStatus, medicalCheckEventApi, type MedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
 import CreateMedicalCheckEvent from './CreateMedicalCheckEvent'
 import UpdateMedicalCheckEvent from './UpdateMedicalCheckEvent'
 
@@ -67,8 +67,8 @@ const MedicalCheckEvent: React.FC = () => {
     setLoading(true)
     try {
       const response = await medicalCheckEventApi.search({ pageSize, pageNum: currentPage })
-      setEvents(response?.pageData || [])
-      setTotalItems(response?.pageInfo?.totalItems || 0)
+      setEvents((response as any)?.pageData || [])
+      setTotalItems((response as any)?.pageInfo?.totalItems || 0)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -89,19 +89,21 @@ const MedicalCheckEvent: React.FC = () => {
     }
   }
 
-  const getStatusConfig = (status: string = ''): { color: string; text: string; icon: React.ReactNode } => {
-    const configs: Record<string, { color: string; text: string; icon: React.ReactNode }> = {
-      ongoing: {
+  const getStatusConfig = (
+    status: EventStatus = EventStatus.Ongoing
+  ): { color: string; text: string; icon: React.ReactNode } => {
+    const configs: Record<EventStatus, { color: string; text: string; icon: React.ReactNode }> = {
+      [EventStatus.Ongoing]: {
         color: 'processing',
         text: 'Đang diễn ra',
         icon: <ClockCircleOutlined />
       },
-      completed: {
+      [EventStatus.Completed]: {
         color: 'success',
         text: 'Hoàn thành',
         icon: <CheckCircleOutlined />
       },
-      cancelled: {
+      [EventStatus.Cancelled]: {
         color: 'error',
         text: 'Đã hủy',
         icon: <StopOutlined />
@@ -123,7 +125,7 @@ const MedicalCheckEvent: React.FC = () => {
           <div>
             <div className='font-medium text-gray-900'>{record.eventName}</div>
             <Text type='secondary' className='text-sm'>
-              {record.description}
+              {record.description || 'Không có mô tả'}
             </Text>
           </div>
         </Space>
@@ -155,7 +157,7 @@ const MedicalCheckEvent: React.FC = () => {
       render: (_, record) => {
         const start = record.startRegistrationDate ? formatDateTime(record.startRegistrationDate) : '-'
         const end = record.endRegistrationDate ? formatDateTime(record.endRegistrationDate) : '-'
-        const isExpired = record.endRegistrationDate && new Date(record.endRegistrationDate) < new Date()
+        const isExpired = record.endRegistrationDate && dayjs(record.endRegistrationDate).isBefore(dayjs())
         return (
           <Space>
             <ClockCircleOutlined className={isExpired ? 'text-red-500' : 'text-orange-500'} />
@@ -170,7 +172,7 @@ const MedicalCheckEvent: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
+      render: (status: EventStatus) => {
         const config = getStatusConfig(status)
         return (
           <Badge
@@ -184,9 +186,9 @@ const MedicalCheckEvent: React.FC = () => {
         )
       },
       filters: [
-        { text: 'Đang diễn ra', value: 'ongoing' },
-        { text: 'Hoàn thành', value: 'completed' },
-        { text: 'Đã hủy', value: 'cancelled' }
+        { text: 'Đang diễn ra', value: EventStatus.Ongoing },
+        { text: 'Hoàn thành', value: EventStatus.Completed },
+        { text: 'Đã hủy', value: EventStatus.Cancelled }
       ],
       onFilter: (value, record) => record.status === value
     },
@@ -207,7 +209,7 @@ const MedicalCheckEvent: React.FC = () => {
               }}
             />
           </Tooltip>
-          {record.status === 'ongoing' && (
+          {record.status === EventStatus.Ongoing && (
             <>
               <Tooltip title='Cập nhật'>
                 <Button
@@ -262,9 +264,9 @@ const MedicalCheckEvent: React.FC = () => {
 
   const stats = {
     total: events.length,
-    ongoing: events.filter((p) => p.status === 'ongoing').length,
-    completed: events.filter((p) => p.status === 'completed').length,
-    cancelled: events.filter((p) => p.status === 'cancelled').length
+    ongoing: events.filter((p) => p.status === EventStatus.Ongoing).length,
+    completed: events.filter((p) => p.status === EventStatus.Completed).length,
+    cancelled: events.filter((p) => p.status === EventStatus.Cancelled).length
   }
 
   const filteredEvents = events.filter((event) => {
@@ -289,7 +291,7 @@ const MedicalCheckEvent: React.FC = () => {
     fetchEvents()
   }
 
-  const handleUpdateStatus = async (id: string = '', newStatus: string = '') => {
+  const handleUpdateStatus = async (id: string = '', newStatus: EventStatus = EventStatus.Ongoing) => {
     try {
       await medicalCheckEventApi.updateStatus(id, newStatus)
       message.success('Cập nhật trạng thái thành công!')
@@ -435,7 +437,7 @@ const MedicalCheckEvent: React.FC = () => {
           }}
           scroll={{ x: 1200 }}
           rowClassName={(record) =>
-            record.status === 'ongoing'
+            record.status === EventStatus.Ongoing
               ? 'hover:bg-blue-50 transition-colors cursor-pointer'
               : 'hover:bg-gray-50 transition-colors cursor-pointer'
           }
@@ -454,7 +456,7 @@ const MedicalCheckEvent: React.FC = () => {
         onCancel={() => setIsModalVisible(false)}
         width={900}
         footer={
-          selectedEvent?.status === 'ongoing'
+          selectedEvent?.status === EventStatus.Ongoing
             ? [
                 <Button key='cancel' onClick={() => setIsModalVisible(false)}>
                   Đóng
@@ -470,7 +472,7 @@ const MedicalCheckEvent: React.FC = () => {
                       okText: 'Xác nhận',
                       cancelText: 'Hủy',
                       onOk: () => {
-                        handleUpdateStatus(selectedEvent?._id || '', 'cancelled')
+                        handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
                         setIsModalVisible(false)
                       }
                     })
@@ -483,7 +485,7 @@ const MedicalCheckEvent: React.FC = () => {
                   type='primary'
                   icon={<CheckOutlined />}
                   onClick={() => {
-                    handleUpdateStatus(selectedEvent?._id || '', 'completed')
+                    handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
                     setIsModalVisible(false)
                   }}
                 >

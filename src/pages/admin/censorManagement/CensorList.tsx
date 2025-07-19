@@ -39,6 +39,7 @@ import {
   Typography
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import {
   deleteVaccineEvent,
@@ -194,7 +195,7 @@ const CensorList: React.FC = () => {
         const start = record.startRegistrationDate ? formatDateTime(record.startRegistrationDate) : '-'
         const end = record.endRegistrationDate ? formatDateTime(record.endRegistrationDate) : '-'
         // Nếu đã hết hạn đăng ký thì bôi đỏ
-        const isExpired = record.endRegistrationDate && new Date(record.endRegistrationDate) < new Date()
+        const isExpired = record.endRegistrationDate && dayjs(record.endRegistrationDate).isBefore(dayjs())
         return (
           <Space>
             <ClockCircleOutlined className={isExpired ? 'text-red-500' : 'text-orange-500'} />
