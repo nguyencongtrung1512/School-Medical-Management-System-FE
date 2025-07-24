@@ -35,6 +35,7 @@ import MedicineSubmissions from './pages/parent/medicineSubmissions/medicineSubm
 import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
 import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
 import Register from './pages/register'
+import VaccineRegistrationList from './pages/admin/censorManagement/VaccineRegistrationList'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -205,6 +206,10 @@ export default function useRouteElements() {
             {
               path: path.BLOG_DETAIL,
               element: <BlogDetail />
+            },
+            {
+              path: path.VACCINE_REGISTRATION,
+              element: <VaccineRegistrationList />
             }
           ]
         }

@@ -23,7 +23,7 @@ const MedicalSuppliesList: React.FC = () => {
       const response = await getAllMedicalSupplies(currentPage, pageSize)
       console.log('trung ne: ', response)
       setMedicalSupplies(response.pageData)
-      setTotal(response.data.totalElements)
+      setTotal(response.pageInfo.totalItems)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }

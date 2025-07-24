@@ -29,7 +29,8 @@ import {
   MedicineSubmissionData,
   updateMedicineSlotStatus,
   updateMedicineSubmissionStatus,
-  UpdateMedicineSubmissionStatusRequest
+  UpdateMedicineSubmissionStatusRequest,
+  getMedicineSubmissionById
 } from '../../../api/medicineSubmissions.api'
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
@@ -202,12 +203,21 @@ const ReceiveMedicine: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: PopulatedMedicineSubmissionData['status']) => {
-        let color = 'blue'
-        let text = 'Chờ xác nhận'
-        let icon = <ClockCircleOutlined />
-
-        switch (status) {
+      render: (_status: PopulatedMedicineSubmissionData['status'], record) => {
+        // Kiểm tra có slot nào đã trễ không
+        const now = new Date()
+        const hasLateSlot = record.medicines.some((med) =>
+          (med.timeSlots || []).some(
+            (time, idx) => new Date(time) < now && (med.slotStatus?.[idx]?.status ?? 'pending') === 'pending'
+          )
+        )
+        if (hasLateSlot) {
+          return <Tag color='default'>Đã trễ</Tag>
+        }
+        let color = 'blue',
+          text = 'Chờ xác nhận',
+          icon = <ClockCircleOutlined />
+        switch (_status) {
           case 'completed':
             color = 'green'
             text = 'Đã hoàn thành'
@@ -229,7 +239,6 @@ const ReceiveMedicine: React.FC = () => {
             text = 'Chờ xác nhận'
             icon = <ClockCircleOutlined />
         }
-
         return (
           <Tag color={color} icon={icon}>
             {text}
@@ -339,7 +348,12 @@ const ReceiveMedicine: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
+      render: (status: string, record: SlotRow) => {
+        const now = new Date()
+        const slotTime = new Date(record.time)
+        if (status === 'pending' && slotTime < now) {
+          return <Tag color='default'>Đã trễ</Tag>
+        }
         let color = 'blue',
           text = 'Chờ uống'
         if (status === 'taken') {
@@ -372,13 +386,19 @@ const ReceiveMedicine: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_: unknown, record: SlotRow) =>
-        record.status === 'pending' &&
-        selectedRequest?.status === 'approved' && (
-          <Button type='primary' size='small' onClick={() => openSlotModal(record)}>
-            Hoàn thành
-          </Button>
-        )
+      render: (_: unknown, record: SlotRow) => {
+        const now = new Date()
+        const slotTime = new Date(record.time)
+        // Chỉ hiển thị nút hoàn thành nếu slot chưa trễ và đang ở trạng thái pending và đơn đã được duyệt
+        if (record.status === 'pending' && selectedRequest?.status === 'approved' && slotTime >= now) {
+          return (
+            <Button type='primary' size='small' onClick={() => openSlotModal(record)}>
+              Hoàn thành
+            </Button>
+          )
+        }
+        return null
+      }
     }
   ]
 
@@ -416,6 +436,30 @@ const ReceiveMedicine: React.FC = () => {
       setSlotImage('')
       // reload data
       setCurrentPage(1)
+      // fetch lại chi tiết đơn thuốc nếu đang mở modal chi tiết
+      if (selectedRequest) {
+        try {
+          const detailRes = await getMedicineSubmissionById(selectedRequest._id)
+          console.log('detailRes', detailRes)
+          const [studentResponse, parentResponse] = await Promise.all([
+            getStudentByIdAPI(detailRes.data.student._id as string),
+            getUserByIdAPI(detailRes.data.parent._id)
+          ])
+          setSelectedRequest({
+            ...detailRes,
+            studentId: studentResponse.data,
+            parentInfo: parentResponse.data,
+            medicines: detailRes.medicines.map((med) => ({
+              ...med,
+              _id: med._id || '',
+              createdAt: med.createdAt || '',
+              updatedAt: med.updatedAt || ''
+            }))
+          })
+        } catch {
+          // ignore
+        }
+      }
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
