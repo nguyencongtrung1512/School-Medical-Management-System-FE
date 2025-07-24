@@ -1,4 +1,4 @@
-import { Button, Col, Form, Input, message, Row, Select } from 'antd'
+import { Button, Col, Form, Input, message, Row, Select, Typography } from 'antd'
 import { debounce } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import { CreateMedicalEventRequest, medicalEventApi } from '../../../api/medicalEvent.api'
@@ -11,6 +11,7 @@ import { getStudentsAPI } from '../../../api/student.api'
 import { useAuth } from '../../../contexts/auth.context'
 
 const { TextArea } = Input
+const { Text } = Typography
 
 interface CreateMedicalEventFormProps {
   onSuccess: () => void
@@ -24,6 +25,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   const [loading, setLoading] = useState(false)
   const [studentLoading, setStudentLoading] = useState(false)
   const { user } = useAuth()
+  const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(null)
 
   useEffect(() => {
     fetchMedicinesAndSupplies()
@@ -115,6 +117,10 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
               loading={studentLoading}
               filterOption={false}
               onSearch={debouncedFetchStudents}
+              onChange={(val) => {
+                const stu = students.find((s) => s._id === val)
+                setSelectedStudent(stu || null)
+              }}
               options={students.map((student) => ({
                 value: student._id,
                 label: `${student.fullName} - ${student.studentCode}`
@@ -122,6 +128,16 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
             />
           </Form.Item>
         </Col>
+        {selectedStudent && (
+          <Col span={12}>
+            <Row style={{ marginBottom: 16 }}>
+              <Col span={24}>
+                <Text strong>Mã học sinh: </Text>
+                <Text>{selectedStudent.studentCode}</Text>
+              </Col>
+            </Row>
+          </Col>
+        )}
         <Col span={12}>
           <Form.Item
             name='eventName'
@@ -165,10 +181,12 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
               mode='multiple'
               placeholder='Chọn vật tư y tế'
               loading={loading}
-              options={medicalSupplies.map((supply) => ({
-                value: supply._id,
-                label: supply.name
-              }))}
+              options={medicalSupplies
+                .filter((sup) => sup.quantity > 0)
+                .map((supply) => ({
+                  value: supply._id,
+                  label: `${supply.name} (${supply.quantity} ${supply.unit || ''})`
+                }))}
             />
           </Form.Item>
         </Col>

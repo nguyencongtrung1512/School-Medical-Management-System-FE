@@ -9,6 +9,7 @@ export interface Medicine {
   createdAt: string
   updatedAt: string
   __v: number
+  unit: string // đơn vị
 }
 
 interface PageInfo {
