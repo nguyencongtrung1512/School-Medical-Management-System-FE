@@ -17,7 +17,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
   const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>(undefined)
 
   const maxDate = dayjs().subtract(6, 'year')
-  const minDate = dayjs().subtract(50, 'year')
+  const minDate = dayjs().subtract(15, 'year')
 
   const handleOk = async () => {
     try {
@@ -32,12 +32,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         fullName: values.fullName,
         gender: values.gender,
         dob: values.dob,
-        parents: [
-          {
-            type: values.parentType,
-            email: values.email
-          }
-        ],
+        email: values.emailList.join(', '), // Gửi tất cả email được phân tách bằng dấu phẩy
         classId: classId,
         avatar: values.avatar
       }
@@ -145,6 +140,8 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
         >
           <DatePicker
             style={{ width: '100%' }}
+            format='DD/MM/YYYY'
+            placeholder='Chọn ngày sinh'
             disabledDate={(current) => {
               return current && (current > maxDate || current < minDate)
             }}
@@ -152,24 +149,40 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
           />
         </Form.Item>
         <Form.Item
-          name='email'
-          label='Email phụ huynh'
+          name='emailList'
+          label='Email phụ huynh (tối đa 3)'
           rules={[
-            { required: true, message: 'Vui lòng nhập email phụ huynh!' },
-            { type: 'email', message: 'Email không hợp lệ!' }
+            {
+              required: true,
+              message: 'Vui lòng nhập ít nhất 1 email phụ huynh!'
+            },
+            {
+              validator: (_, value) => {
+                if (value && value.length > 3) {
+                  return Promise.reject('Chỉ được nhập tối đa 3 email!')
+                }
+                if (value) {
+                  for (const email of value) {
+                    if (!/^\S+@\S+\.\S+$/.test(email)) {
+                      return Promise.reject(`Email không hợp lệ: ${email}`)
+                    }
+                  }
+                }
+                return Promise.resolve()
+              }
+            }
           ]}
         >
-          <Input placeholder='Nhập email phụ huynh' />
-        </Form.Item>
-        <Form.Item
-          name='parentType'
-          label='Loại phụ huynh'
-          rules={[{ required: true, message: 'Vui lòng chọn loại phụ huynh!' }]}
-        >
-          <Select placeholder='Chọn loại phụ huynh'>
-            <Select.Option value='father'>Cha</Select.Option>
-            <Select.Option value='mother'>Mẹ</Select.Option>
-          </Select>
+          <Select
+            mode='tags'
+            style={{ width: '100%' }}
+            placeholder='Nhập email và nhấn Enter'
+            maxTagCount={3}
+            maxTagTextLength={30}
+            tokenSeparators={[',', ';']}
+            showSearch={false}
+            allowClear
+          />
         </Form.Item>
         <Form.Item name='avatar' label='Avatar'>
           <Upload name='avatar' listType='picture' showUploadList={false} beforeUpload={beforeUpload}>

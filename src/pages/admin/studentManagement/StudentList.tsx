@@ -11,7 +11,8 @@ import {
   PlusOutlined,
   TeamOutlined,
   UserOutlined,
-  WomanOutlined
+  WomanOutlined,
+  DownloadOutlined
 } from '@ant-design/icons'
 import {
   Avatar,
@@ -39,12 +40,14 @@ import { deleteStudentAPI, getStudentByIdAPI } from '../../../api/student.api'
 import { formatDate } from '../../../utils/utils'
 import CreateClass from './Create'
 import StudentDetail from './Studentdetail'
+import * as XLSX from 'xlsx'
 
 const { Title, Text } = Typography
 
 interface Student {
   _id: string
   fullName: string
+  studentIdCode: string
   studentCode: string
   gender: string
   dob: string
@@ -84,6 +87,7 @@ const StudentList: React.FC = () => {
     try {
       const res = await getClassByIdAPI(classId)
       setCurrentClassroom(res.data)
+      console.log('res.data trung', res.data)
       const activeStudents = (res.data.students || []).filter((student: Student) => !student.isDeleted)
       setStudentList(activeStudents)
     } catch (error: unknown) {
@@ -104,7 +108,8 @@ const StudentList: React.FC = () => {
     setLoadingDetail(true)
     try {
       const res = await getStudentByIdAPI(student._id)
-      setStudentDetail(res.data)
+      setStudentDetail(res.data as Student)
+      console.log('res.data', res.data)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -144,7 +149,7 @@ const StudentList: React.FC = () => {
   const handleDeleteStudent = async (studentId: string) => {
     try {
       await deleteStudentAPI(studentId)
-      toast.success('Xóa học sinh thành công!')
+      message.success('Xóa học sinh thành công!')
       fetchClassData() // Refresh the list
     } catch (error: unknown) {
       console.log('error', error)
@@ -155,6 +160,26 @@ const StudentList: React.FC = () => {
         message.error('Không thể xóa học sinh.')
       }
     }
+  }
+
+  // Thêm hàm xuất excel
+  const handleExportExcel = () => {
+    if (!studentList.length) {
+      message.warning('Không có học sinh để xuất!')
+      return
+    }
+    // Chuẩn bị dữ liệu
+    const data = studentList.map((s) => ({
+      'Họ tên': s.fullName,
+      'Mã SV': s.studentIdCode,
+      'Giới tính': s.gender === 'male' ? 'Nam' : 'Nữ',
+      'Ngày sinh': formatDate(s.dob)
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Danh sách học sinh')
+    XLSX.writeFile(wb, `Danh_sach_hoc_sinh_${currentClassroom?.name || ''}.xlsx`)
+    message.success('Xuất file Excel thành công!')
   }
 
   // Statistics
@@ -179,7 +204,7 @@ const StudentList: React.FC = () => {
           <div>
             <div className='font-semibold text-gray-800'>{record.fullName}</div>
             <Text type='secondary' className='text-sm'>
-              Mã SV: {record.studentCode}
+              Mã SV: {record.studentIdCode}
             </Text>
           </div>
         </div>
@@ -309,16 +334,27 @@ const StudentList: React.FC = () => {
             </div>
           </Col>
           <Col xs={24} md={8} className='text-right'>
-            <Button
-              type='primary'
-              icon={<PlusOutlined />}
-              size='large'
-              onClick={() => setIsCreateModalVisible(true)}
-              className='shadow-sm'
-              style={{ borderRadius: '8px' }}
-            >
-              Thêm học sinh
-            </Button>
+            <Space>
+              <Button
+                type='primary'
+                icon={<PlusOutlined />}
+                size='large'
+                onClick={() => setIsCreateModalVisible(true)}
+                className='shadow-sm'
+                style={{ borderRadius: '8px' }}
+              >
+                Thêm học sinh
+              </Button>
+              <Button
+                icon={<DownloadOutlined />}
+                size='large'
+                onClick={handleExportExcel}
+                className='shadow-sm'
+                style={{ borderRadius: '8px' }}
+              >
+                Xuất Excel
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
