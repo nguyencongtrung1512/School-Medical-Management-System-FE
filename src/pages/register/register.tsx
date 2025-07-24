@@ -1,19 +1,19 @@
-import React, { useEffect } from 'react'
-import { Form, Input, Button, Row, Col, Alert, Select, Space } from 'antd'
 import {
-  UserOutlined,
   LockOutlined,
   MailOutlined,
+  MinusCircleOutlined,
   PhoneOutlined,
   PlusOutlined,
-  MinusCircleOutlined
+  UserOutlined
 } from '@ant-design/icons'
-import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import path from '../../constants/path'
-import { toast } from 'react-toastify'
+import { Alert, Button, Col, Form, Input, Row, Select, Space } from 'antd'
 import { AxiosError } from 'axios'
-import { registerAPI, RegisterRequest } from '../../api/auth.api'
+import { motion } from 'framer-motion'
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { registerAPI } from '../../api/auth.api'
+import path from '../../constants/path'
 
 interface RegisterFormValues {
   phoneNumber: string
@@ -55,7 +55,7 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
     try {
       const { type, studentCodes, email, password, fullname, phoneNumber } = values
       const studentParents = (studentCodes || []).map((code) => ({ studentCode: code, type }))
-      const body : RegisterRequest = {
+      const body: any = {
         email,
         password,
         fullName: fullname,
@@ -94,17 +94,21 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
         const errorMessage = axiosError.message || 'Đăng ký thất bại!'
 
         // Kiểm tra nếu lỗi liên quan đến email đã tồn tại
-        if (errorMessage.toLowerCase().includes('email') ||
+        if (
+          errorMessage.toLowerCase().includes('email') ||
           errorMessage.toLowerCase().includes('tồn tại') ||
-          errorMessage.toLowerCase().includes('exists')) {
+          errorMessage.toLowerCase().includes('exists')
+        ) {
           form.setFields([
             {
               name: 'email',
               errors: [errorMessage]
             }
           ])
-        } else if (errorMessage.toLowerCase().includes('phone') ||
-          errorMessage.toLowerCase().includes('số điện thoại')) {
+        } else if (
+          errorMessage.toLowerCase().includes('phone') ||
+          errorMessage.toLowerCase().includes('số điện thoại')
+        ) {
           // Lỗi liên quan đến số điện thoại
           form.setFields([
             {
@@ -112,8 +116,7 @@ const Register: React.FC<RegisterFormProps> = ({ loading }) => {
               errors: [errorMessage]
             }
           ])
-        } else if (errorMessage.toLowerCase().includes('password') ||
-          errorMessage.toLowerCase().includes('mật khẩu')) {
+        } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('mật khẩu')) {
           // Lỗi liên quan đến mật khẩu
           form.setFields([
             {

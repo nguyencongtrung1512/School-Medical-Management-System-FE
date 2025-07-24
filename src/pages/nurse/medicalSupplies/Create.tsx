@@ -10,7 +10,7 @@ interface CreateMedicalSupplyFormProps {
 const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuccess, onCancel }) => {
   const [form] = Form.useForm()
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: Record<string, any>) => {
     try {
       const formattedValues = {
         ...values,
@@ -41,8 +41,15 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         <Input.TextArea rows={4} placeholder='Nhập mô tả' />
       </Form.Item>
 
-      <Form.Item name='quantity' label='Số lượng' rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }]}>
-        <InputNumber min={0} className='w-full' placeholder='Nhập số lượng' />
+      <Form.Item
+        name='quantity'
+        label='Số lượng'
+        rules={[
+          { required: true, message: 'Vui lòng nhập số lượng!' },
+          { type: 'number', min: 1, max: 999, message: 'Số lượng phải từ 1 đến 999!' }
+        ]}
+      >
+        <InputNumber min={1} max={999} className='w-full' placeholder='Nhập số lượng' />
       </Form.Item>
 
       <Form.Item name='unit' label='Đơn vị' rules={[{ required: true, message: 'Vui lòng nhập đơn vị!' }]}>
@@ -52,7 +59,20 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
       <Form.Item
         name='expiryDate'
         label='Ngày hết hạn'
-        rules={[{ required: true, message: 'Vui lòng chọn ngày hết hạn!' }]}
+        rules={[
+          { required: true, message: 'Vui lòng chọn ngày hết hạn!' },
+          {
+            validator(_, value) {
+              if (!value) return Promise.reject('Vui lòng chọn ngày hết hạn!')
+              const now = new Date()
+              const minDate = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate())
+              const maxDate = new Date(now.getFullYear() + 11, now.getMonth(), now.getDate())
+              if (value.toDate() < minDate) return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
+              if (value.toDate() > maxDate) return Promise.reject('Ngày hết hạn không được quá 11 năm kể từ hôm nay!')
+              return Promise.resolve()
+            }
+          }
+        ]}
       >
         <DatePicker className='w-full' format='DD/MM/YYYY' />
       </Form.Item>
