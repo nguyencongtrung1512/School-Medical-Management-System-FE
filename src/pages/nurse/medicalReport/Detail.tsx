@@ -1,10 +1,13 @@
-import { Button, Descriptions, Form, Input, message, Modal, Select } from 'antd'
+import { Button, Descriptions, Form, Input, message, Modal, Select, Upload } from 'antd'
 import React, { useState } from 'react'
-import { MedicalEvent, medicalEventApi, SeverityLevel, UpdateMedicalEventRequest } from '../../../api/medicalEvent.api'
+import { MedicalEvent, medicalEventApi, SeverityLevel, UpdateMedicalEventRequest, MedicalEventStatus, LeaveMethod } from '../../../api/medicalEvent.api'
 import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import type { Medicine } from '../../../api/medicines.api'
 import { getMedicines } from '../../../api/medicines.api'
+import dayjs from 'dayjs'
+import { UploadOutlined } from '@ant-design/icons'
+import { handleUploadFile } from '../../../utils/upload'
 
 const { TextArea } = Input
 
@@ -22,6 +25,8 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [medicines, setMedicines] = useState<Medicine[]>([])
   const [medicalSupplies, setMedicalSupplies] = useState<MedicalSupply[]>([])
+  // Thêm state quản lý ảnh khi chỉnh sửa
+  const [imageUrls, setImageUrls] = useState<string[]>(medicalEvent?.images || [])
 
   const fetchMedicalEvent = async () => {
     try {
@@ -120,23 +125,42 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Descriptions.Item label='Thuốc sử dụng' span={2}>
                   {medicalEvent.medicines && medicalEvent.medicines.length > 0
                     ? medicalEvent.medicines.map((medicine) => (
-                        <div key={medicine._id}>
-                          {medicine.name} - {medicine.quantity} {medicine.unit}
-                        </div>
-                      ))
+                      <div key={medicine._id}>
+                        {medicine.name} - {medicine.quantity} {medicine.unit}
+                      </div>
+                    ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Vật tư y tế sử dụng' span={2}>
                   {medicalEvent.medicalSupplies && medicalEvent.medicalSupplies.length > 0
                     ? medicalEvent.medicalSupplies.map((supply) => (
-                        <div key={supply._id}>
-                          {supply.name} - {supply.quantity} {supply.unit}
-                        </div>
-                      ))
+                      <div key={supply._id}>
+                        {supply.name} - {supply.quantity} {supply.unit}
+                      </div>
+                    ))
                     : 'Không sử dụng'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Mức độ nghiêm trọng'>
                   {medicalEvent.severityLevel || 'Không xác định'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Trạng thái'>
+                  {medicalEvent.status || 'Không xác định'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Cách rời khỏi'>
+                  {medicalEvent.leaveMethod || 'Không xác định'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Thời gian rời khỏi'>
+                  {medicalEvent.leaveTime ? dayjs(medicalEvent.leaveTime).format('DD/MM/YYYY HH:mm') : 'Không xác định'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Người đón'>
+                  {medicalEvent.pickedUpBy || 'Không xác định'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Ảnh minh họa' span={2}>
+                  {medicalEvent.images && medicalEvent.images.length > 0
+                    ? medicalEvent.images.map((img, idx) => (
+                      <img key={idx} src={img} alt={`Ảnh ${idx + 1}`} style={{ maxWidth: 100, marginRight: 8 }} />
+                    ))
+                    : 'Không có ảnh'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Người tạo'>{medicalEvent.schoolNurse?.fullName || 'N/A'}</Descriptions.Item>
                 {medicalEvent.notes && (
@@ -189,6 +213,64 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
               <Form.Item name='severityLevel' label='Mức độ nghiêm trọng'>
                 <Select options={Object.values(SeverityLevel).map((level) => ({ value: level, label: level }))} />
+              </Form.Item>
+
+              <Form.Item name='status' label='Trạng thái'>
+                <Select>
+                  <Select.Option value={MedicalEventStatus.TREATED}>Đã xử lý</Select.Option>
+                  <Select.Option value={MedicalEventStatus.MONITORING}>Theo dõi</Select.Option>
+                  <Select.Option value={MedicalEventStatus.TRANSFERRED}>Chuyển viện</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item name='leaveMethod' label='Cách rời khỏi'>
+                <Select>
+                  <Select.Option value={LeaveMethod.NONE}>Không</Select.Option>
+                  <Select.Option value={LeaveMethod.PARENT_PICKUP}>Phụ huynh đón</Select.Option>
+                  <Select.Option value={LeaveMethod.HOSPITAL_TRANSFER}>Chuyển viện</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item name='leaveTime' label='Thời gian rời khỏi'>
+                <Input type='datetime-local' />
+              </Form.Item>
+              <Form.Item name='pickedUpBy' label='Người đón'>
+                <Input />
+              </Form.Item>
+              <Form.Item name='images' label='Ảnh minh họa'>
+                <Upload
+                  listType='picture'
+                  customRequest={async (options) => {
+                    const { file, onSuccess, onError } = options as any
+                    const url = await handleUploadFile(file as File, 'image')
+                    if (url) {
+                      setImageUrls((prev) => {
+                        const newArr = [...prev, url]
+                        form.setFieldsValue({ images: newArr })
+                        return newArr
+                      })
+                      if (onSuccess) onSuccess('ok')
+                    } else {
+                      if (onError) onError(new Error('Upload failed'))
+                    }
+                  }}
+                  fileList={imageUrls.map((url, idx) => ({
+                    uid: url,
+                    name: `Ảnh ${idx + 1}`,
+                    status: 'done',
+                    url
+                  }))}
+                  onRemove={(file) => {
+                    setImageUrls((prev) => {
+                      const newArr = prev.filter((url) => url !== file.url)
+                      form.setFieldsValue({ images: newArr })
+                      return newArr
+                    })
+                    return true
+                  }}
+                  accept='image/*'
+                  multiple
+                >
+                  <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+                </Upload>
               </Form.Item>
 
               <Form.Item name='notes' label='Ghi chú'>

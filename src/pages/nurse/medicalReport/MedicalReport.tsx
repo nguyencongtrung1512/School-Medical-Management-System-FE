@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, Card, message, Space, Table, Typography } from 'antd'
+import { Button, Card, message, Space, Table, Typography, Modal } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useEffect, useState } from 'react'
 import { MedicalEvent, medicalEventApi } from '../../../api/medicalEvent.api'
@@ -20,7 +20,7 @@ const MedicalReport: React.FC = () => {
       setLoading(true)
       const response = await medicalEventApi.search({})
       // response.data.pageData is correct if backend returns { pageData, ... }
-      setMedicalEvents(response.data && response.data.pageData ? response.data.pageData : [])
+      setMedicalEvents(response.pageData)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -76,9 +76,14 @@ const MedicalReport: React.FC = () => {
       title: 'Thao tác',
       key: 'action',
       render: (_, record) => (
-        <Button type='link' onClick={() => handleViewDetails(record._id)}>
-          Xem chi tiết
-        </Button>
+        <Space>
+          <Button type='link' onClick={() => handleViewDetails(record._id)}>
+            Xem chi tiết
+          </Button>
+          <Button type='link' danger onClick={() => handleDelete(record._id)}>
+            Xóa
+          </Button>
+        </Space>
       )
     }
   ]
@@ -96,6 +101,30 @@ const MedicalReport: React.FC = () => {
   const handleDetailSuccess = () => {
     setIsDetailModalVisible(false)
     fetchMedicalEvents()
+  }
+
+  const handleDelete = (id: string) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa sự kiện',
+      content: 'Bạn có chắc chắn muốn xóa sự kiện này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await medicalEventApi.delete(id)
+          message.success('Xóa sự kiện thành công!')
+          fetchMedicalEvents()
+        } catch (error: unknown) {
+          const err = error as { message?: string }
+          if (err.message) {
+            message.error(err.message)
+          } else {
+            message.error('Không thể xóa sự kiện!')
+          }
+        }
+      }
+    })
   }
 
   return (

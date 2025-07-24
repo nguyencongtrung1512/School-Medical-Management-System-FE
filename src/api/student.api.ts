@@ -6,14 +6,14 @@ export interface StudentProfile {
   fullName: string
   studentCode: string
   studentIdCode: string
-  classId?: string
+  class: string | { name?: string }
 }
 
 // Lấy danh sách học sinh có tìm kiếm và phân trang
 export const getStudentsAPI = (pageSize: number = 10, pageNum: number = 1, keyword?: string) => {
   let url = `/students/search?pageSize=${pageSize}&pageNum=${pageNum}`
   if (keyword) {
-    url += `&keyword=${encodeURIComponent(keyword)}`
+    url += `&query=${encodeURIComponent(keyword)}`
   }
   return axiosInstance.get(url)
 }

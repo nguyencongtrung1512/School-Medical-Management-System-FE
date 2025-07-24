@@ -166,7 +166,7 @@ const ReceiveMedicine: React.FC = () => {
       render: (text, record) => (
         <div>
           <div>{record.studentId.fullName}</div>
-          <Text type='secondary'>Mã số: {record.studentId.studentCode}</Text>
+          <Text type='secondary'>Mã số: {record.studentId.studentIdCode}</Text>
         </div>
       )
     },
@@ -513,7 +513,7 @@ const ReceiveMedicine: React.FC = () => {
               <div className='max-h-[70vh] overflow-y-auto'>
                 <Descriptions bordered column={2}>
                   <Descriptions.Item label='Học sinh' span={2}>
-                    {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentCode}
+                    {selectedRequest.studentId.fullName} - Mã số: {selectedRequest.studentId.studentIdCode}
                     {selectedRequest.studentId.classInfo && (
                       <div>
                         <Text type='secondary'>Lớp: {selectedRequest.studentId.classInfo?.name}</Text>
