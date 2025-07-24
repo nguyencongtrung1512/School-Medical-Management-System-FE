@@ -233,12 +233,12 @@ const Login: React.FC = () => {
                 <Button type='link' onClick={handleForgotPassword} className='p-0 font-medium text-base'>
                   Quên mật khẩu?
                 </Button>
-                <p className='text-gray-600 text-base'>
+                {/* <p className='text-gray-600 text-base'>
                   Bạn chưa có tài khoản?
                   <Button type='link' onClick={handleRegister} className='p-0 ml-1 font-medium text-base'>
                     Đăng ký
                   </Button>
-                </p>
+                </p> */}
               </div>
             </motion.div>
           ) : (

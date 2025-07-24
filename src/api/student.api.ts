@@ -5,6 +5,7 @@ export interface StudentProfile {
   _id: string
   fullName: string
   studentCode: string
+  studentIdCode: string
   classId?: string
 }
 
