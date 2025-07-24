@@ -1,34 +1,74 @@
 import axiosInstance from '../service/axiosInstance'
 
-interface VaccineRegistration {
+export interface VaccineRegistration {
+  _id: string
   parentId: string
   studentId: string
   eventId: string
-  status: string
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
   cancellationReason?: string
   note?: string
+  schoolYear: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-export const getAllVaccineRegistrations = async (page: number, size: number, parentId?: string, studentId?: string) => {
-  const params = new URLSearchParams()
-  if (parentId) params.append('parentId', parentId)
-  if (studentId) params.append('studentId', studentId)
-
-  return axiosInstance.get(`/vaccine-registration/search/${page}/${size}?${params.toString()}`)
+export interface CreateVaccineRegistrationDTO {
+  parentId: string
+  studentId: string
+  eventId: string
+  note?: string
+  cancellationReason?: string
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  schoolYear: string
 }
 
-export const createVaccineRegistration = async (data: VaccineRegistration) => {
-  return axiosInstance.post('/vaccine-registration/create', data)
+export interface UpdateVaccineRegistrationDTO {
+  parentId?: string
+  studentId?: string
+  eventId?: string
+  note?: string
+  cancellationReason?: string
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  schoolYear?: string
 }
 
-export const getVaccineRegistrationDetail = async (id: string) => {
-  return axiosInstance.get(`/vaccine-registration/${id}`)
+export interface UpdateRegistrationStatusDTO {
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  cancellationReason?: string
 }
 
-export const updateVaccineRegistration = async (id: string, data: Partial<VaccineRegistration>) => {
-  return axiosInstance.put(`/vaccine-registration/${id}`, data)
+export interface SearchVaccineRegistrationParams {
+  pageNum?: number
+  pageSize?: number
+  query?: string
+  parentId?: string
+  studentId?: string
+  eventId?: string
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
 }
 
-export const deleteVaccineRegistration = async (id: string) => {
-  return axiosInstance.delete(`/vaccine-registration/${id}`)
+export const vaccineRegistrationApi = {
+  create: (data: CreateVaccineRegistrationDTO) => {
+    return axiosInstance.post('/vaccine-registration/create', data)
+  },
+  search: (params: SearchVaccineRegistrationParams) => {
+    const { pageNum = 1, pageSize = 10, ...query } = params
+    return axiosInstance.get(`/vaccine-registration/search/${pageNum}/${pageSize}`, { params: query })
+  },
+  getById: (id: string) => {
+    return axiosInstance.get(`/vaccine-registration/${id}`)
+  },
+  update: (id: string, data: UpdateVaccineRegistrationDTO) => {
+    return axiosInstance.put(`/vaccine-registration/${id}`, data)
+  },
+  delete: (id: string) => {
+    return axiosInstance.delete(`/vaccine-registration/${id}`)
+  },
+  updateStatus: (id: string, data: UpdateRegistrationStatusDTO) => {
+    return axiosInstance.patch(`/vaccine-registration/${id}/status`, data)
+  },
+  exportExcel: (params: SearchVaccineRegistrationParams) => {
+    return axiosInstance.get('/vaccine-registration/export/excel', { params, responseType: 'blob' })
+  }
 }

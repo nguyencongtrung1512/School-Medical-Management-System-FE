@@ -27,12 +27,17 @@ const Sidebar: React.FC = () => {
     {
       key: path.CENSOR_LIST,
       icon: <MedicineBoxOutlined className='text-xl' />,
-      label: 'Sự kiện tiêm chủng'
+      label: 'Tiêm chủng'
+    },
+    {
+      key: path.VACCINE_REGISTRATION,
+      icon: <MedicineBoxOutlined className='text-xl' />,
+      label: 'Đăng kí tiêm chủng'
     },
     {
       key: path.MEDICAL_PLAN,
       icon: <HeartOutlined className='text-xl' />,
-      label: 'Sự kiện kiểm tra y tế'
+      label: 'Kiểm tra sức khoẻ'
     },
     {
       key: path.Appointment_Check,
