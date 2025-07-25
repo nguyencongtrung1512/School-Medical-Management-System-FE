@@ -65,8 +65,8 @@ function PrivateConsultation() {
     setLoading(true)
     try {
       const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
-      const pageData = res.data?.pageData || []
-      setAppointments(pageData)
+      console.log("data", res)
+      setAppointments(res)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -136,31 +136,37 @@ function PrivateConsultation() {
       dataIndex: 'student',
       key: 'student',
       width: 200,
-      render: (student) => (
-        <Space>
-          <Avatar icon={<UserOutlined />} />
-          <div>
-            <div className='font-medium'>{student.fullName}</div>
-            <Text type='secondary' className='text-xs'>
-              {student.studentCode}
-            </Text>
-          </div>
-        </Space>
-      )
+      render: (student) =>
+        student ? (
+          <Space>
+            <Avatar icon={<UserOutlined />} />
+            <div>
+              <div className='font-medium'>{student.fullName}</div>
+              <Text type='secondary' className='text-xs'>
+                {student.studentCode}
+              </Text>
+            </div>
+          </Space>
+        ) : (
+          <Text type='secondary'>Không có dữ liệu học sinh</Text>
+        )
     },
     {
       title: 'Phụ huynh',
       dataIndex: 'parent',
       key: 'parent',
       width: 180,
-      render: (parent) => (
-        <div>
-          <div>{parent.fullName}</div>
-          <Text type='secondary' className='text-xs'>
-            {parent.phone}
-          </Text>
-        </div>
-      )
+      render: (parent) =>
+        parent ? (
+          <div>
+            <div>{parent.fullName}</div>
+            <Text type='secondary' className='text-xs'>
+              {parent.phone}
+            </Text>
+          </div>
+        ) : (
+          <Text type='secondary'>Không có dữ liệu phụ huynh</Text>
+        )
     },
     {
       title: 'Thời gian',
@@ -197,8 +203,6 @@ function PrivateConsultation() {
       width: 120,
       render: (status) => getStatusTag(status),
       filters: [
-        { text: 'Chờ duyệt', value: 'pending' },
-        { text: 'Đã xác nhận', value: 'approved' },
         { text: 'Hoàn thành', value: 'done' },
         { text: 'Đã hủy', value: 'cancelled' }
       ],
