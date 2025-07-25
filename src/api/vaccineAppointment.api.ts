@@ -73,7 +73,7 @@ export interface SearchVaccineAppointmentDTO {
 
 export const vaccineAppointmentApi = {
   create: (data: CreateVaccineAppointmentDTO) => {
-    return axiosInstance.post('/vaccine-appointments/create', data)
+  return axiosInstance.post('/vaccine-appointments/create', data)
   },
   search: (params: SearchVaccineAppointmentDTO) => {
     const { pageNum = 1, pageSize = 10, ...rest } = params
@@ -83,13 +83,13 @@ export const vaccineAppointmentApi = {
     return axiosInstance.get(`/vaccine-appointments/${id}`)
   },
   update: (id: string, data: CreateVaccineAppointmentDTO) => {
-    return axiosInstance.put(`/vaccine-appointments/${id}`, data)
+  return axiosInstance.put(`/vaccine-appointments/${id}`, data)
   },
   delete: (id: string) => {
-    return axiosInstance.delete(`/vaccine-appointments/${id}`)
+  return axiosInstance.delete(`/vaccine-appointments/${id}`)
   },
   check: (id: string, data: CheckVaccineAppointmentDTO) => {
-    return axiosInstance.patch(`/vaccine-appointments/${id}/check`, data)
+  return axiosInstance.patch(`/vaccine-appointments/${id}/check`, data)
   },
   updatePostVaccination: (id: string, data: UpdatePostVaccineDTO) => {
     return axiosInstance.patch(`/vaccine-appointments/${id}/post-vaccination`, data)

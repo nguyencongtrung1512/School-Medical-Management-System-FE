@@ -33,6 +33,7 @@ const path = {
   RESULTS_AFTER_MEDICAL_CHECK: '/nurse/results-after-medical-check', //khai báo kết quả khám sức khỏe
   APPOINTMENT_VACCINE: '/nurse/appointment-vaccine', //lịch tiêm chủng
   REGISTER_VACCINE: '/nurse/register-vaccine', //đăng kí tiêm chủng
+  REGISTER_MEDICAL_CHECK: '/nurse/register-medical-check', //đăng kí khám sức khỏe
   //=============Admin============
   BASE_ADMIN: '/admin',
   MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh

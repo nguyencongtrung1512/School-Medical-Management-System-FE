@@ -526,7 +526,7 @@ const CensorList: React.FC = () => {
                     onClick={() => {
                       if (selectedPlan) {
                         handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Completed)
-                        setIsModalVisible(false)
+                      setIsModalVisible(false)
                       }
                     }}
                     disabled={selectedPlan ? dayjs(selectedPlan.eventDate).isAfter(dayjs()) : true}
