@@ -1,6 +1,7 @@
 // import { message } from "antd";
 import { message } from 'antd'
 import cloudinaryConfig from '../service/cloudinary'
+import type { UploadRequestOption } from 'antd/es/upload/interface'
 
 
 export const handleUploadFile = async (file: File, type: 'video' | 'image') => {

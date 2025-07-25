@@ -1,8 +1,7 @@
 import { Button, DatePicker, Form, Input, InputNumber, message } from 'antd'
 import dayjs from 'dayjs'
 import React, { useEffect } from 'react'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import { updateMedicalSupply } from '../../../api/medicalSupplies.api'
+import { updateMedicalSupply, MedicalSupply } from '../../../api/medicalSupplies.api'
 
 interface UpdateMedicalSupplyFormProps {
   medicalSupply: MedicalSupply
@@ -20,15 +19,18 @@ const UpdateMedicalSupplyForm: React.FC<UpdateMedicalSupplyFormProps> = ({ medic
       quantity: medicalSupply.quantity,
       unit: medicalSupply.unit,
       expiryDate: dayjs(medicalSupply.expiryDate),
-      supplier: medicalSupply.supplier
+      supplier: medicalSupply.supplier,
+      manufacturer: medicalSupply.manufacturer,
+      manufactureDate: dayjs(medicalSupply.manufactureDate)
     })
   }, [medicalSupply, form])
 
-  const onFinish = async (values: Record<string, any>) => {
+  const onFinish = async (values: MedicalSupply) => {
     try {
-      const formattedValues = {
+      const formattedValues: MedicalSupply = {
         ...values,
-        expiryDate: values.expiryDate.format('YYYY-MM-DD')
+        expiryDate: (values.expiryDate as any).format('YYYY-MM-DD'),
+        manufactureDate: (values.manufactureDate as any).format('YYYY-MM-DD')
       }
       await updateMedicalSupply(medicalSupply._id!, formattedValues)
       message.success('Cập nhật vật tư y tế thành công')
@@ -96,6 +98,22 @@ const UpdateMedicalSupplyForm: React.FC<UpdateMedicalSupplyFormProps> = ({ medic
         rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}
       >
         <Input placeholder='Nhập nhà cung cấp' />
+      </Form.Item>
+
+      <Form.Item
+        name='manufacturer'
+        label='Hãng sản xuất'
+        rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}
+      >
+        <Input placeholder='Nhập hãng sản xuất' />
+      </Form.Item>
+
+      <Form.Item
+        name='manufactureDate'
+        label='Ngày sản xuất'
+        rules={[{ required: true, message: 'Vui lòng chọn ngày sản xuất!' }]}
+      >
+        <DatePicker className='w-full' format='DD/MM/YYYY' />
       </Form.Item>
 
       <Form.Item>

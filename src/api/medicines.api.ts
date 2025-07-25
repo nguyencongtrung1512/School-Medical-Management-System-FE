@@ -6,10 +6,9 @@ export interface Medicine {
   description: string
   dosage: string
   sideEffects: string
-  createdAt: string
-  updatedAt: string
-  __v: number
-  unit: string // đơn vị
+  manufacturer: string // Thêm trường hãng sản xuất
+  manufactureDate: Date // Ngày sản xuất
+  expiryDate: Date // Ngày hết hạn
 }
 
 interface PageInfo {
@@ -29,6 +28,9 @@ interface CreateMedicineRequest {
   description: string
   dosage: string
   sideEffects: string
+  manufacturer: string
+  manufactureDate: Date
+  expiryDate: Date
 }
 
 interface UpdateMedicineRequest {
@@ -36,6 +38,9 @@ interface UpdateMedicineRequest {
   description?: string
   dosage?: string
   sideEffects?: string
+  manufacturer?: string
+  manufactureDate?: Date
+  expiryDate?: Date
 }
 
 export const getMedicines = async (pageNum: number = 1, pageSize: number = 10): Promise<MedicineResponse> => {

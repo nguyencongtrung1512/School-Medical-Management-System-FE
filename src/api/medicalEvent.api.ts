@@ -18,15 +18,22 @@ export enum LeaveMethod {
   HOSPITAL_TRANSFER = 'hospital_transfer'
 }
 
+export interface Class {
+  _id: string
+  name: string
+}
+
 export interface Student {
   _id: string
   fullName: string
   isDeleted: boolean
   gender: string
   dob: string
+  class: Class
   classId: string
   avatar: string
   studentCode: string
+  studentIdCode: string
   position: number
   createdAt: string
   updatedAt: string
@@ -73,6 +80,7 @@ export interface MedicalEvent {
   _id: string
   studentId: string
   parentId: string
+  studentIdCode: string
   schoolNurseId: string
   eventName: string
   description?: string
@@ -89,7 +97,8 @@ export interface MedicalEvent {
   isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
-  // populated fields
+  medicinesUsed: string[]
+  medicalSuppliesUsed: string[]
   student?: Student
   parent?: User
   schoolNurse?: User

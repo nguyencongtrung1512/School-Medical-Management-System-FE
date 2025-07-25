@@ -1,6 +1,7 @@
 import { Button, DatePicker, Form, Input, InputNumber, message } from 'antd'
 import React from 'react'
-import { createMedicalSupply } from '../../../api/medicalSupplies.api'
+import { createMedicalSupply, MedicalSupply } from '../../../api/medicalSupplies.api'
+import dayjs from 'dayjs'
 
 interface CreateMedicalSupplyFormProps {
   onSuccess: () => void
@@ -10,11 +11,12 @@ interface CreateMedicalSupplyFormProps {
 const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuccess, onCancel }) => {
   const [form] = Form.useForm()
 
-  const onFinish = async (values: Record<string, any>) => {
+  const onFinish = async (values: MedicalSupply) => {
     try {
-      const formattedValues = {
+      const formattedValues: MedicalSupply = {
         ...values,
-        expiryDate: values.expiryDate.format('YYYY-MM-DD')
+        expiryDate: (values.expiryDate as any).format('YYYY-MM-DD'),
+        manufactureDate: (values.manufactureDate as any).format('YYYY-MM-DD')
       }
       await createMedicalSupply(formattedValues)
       message.success('Thêm vật tư y tế mới thành công')
@@ -49,7 +51,7 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
           { type: 'number', min: 1, max: 999, message: 'Số lượng phải từ 1 đến 999!' }
         ]}
       >
-        <InputNumber min={1} max={999} className='w-full' placeholder='Nhập số lượng' />
+        <InputNumber min={1} max={999} step={1} className='w-full' placeholder='Nhập số lượng' />
       </Form.Item>
 
       <Form.Item name='unit' label='Đơn vị' rules={[{ required: true, message: 'Vui lòng nhập đơn vị!' }]}>
@@ -66,15 +68,21 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
               if (!value) return Promise.reject('Vui lòng chọn ngày hết hạn!')
               const now = new Date()
               const minDate = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate())
-              const maxDate = new Date(now.getFullYear() + 11, now.getMonth(), now.getDate())
               if (value.toDate() < minDate) return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
-              if (value.toDate() > maxDate) return Promise.reject('Ngày hết hạn không được quá 11 năm kể từ hôm nay!')
               return Promise.resolve()
             }
           }
         ]}
       >
-        <DatePicker className='w-full' format='DD/MM/YYYY' />
+        <DatePicker
+          className='w-full'
+          format='DD/MM/YYYY'
+          disabledDate={current => {
+            const now = new Date()
+            const minDate = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate())
+            return current && (current < dayjs(minDate).startOf('day') || current < dayjs().startOf('day'))
+          }}
+        />
       </Form.Item>
 
       <Form.Item
@@ -83,6 +91,26 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         rules={[{ required: true, message: 'Vui lòng nhập nhà cung cấp!' }]}
       >
         <Input placeholder='Nhập nhà cung cấp' />
+      </Form.Item>
+
+      <Form.Item
+        name='manufacturer'
+        label='Hãng sản xuất'
+        rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}
+      >
+        <Input placeholder='Nhập hãng sản xuất' />
+      </Form.Item>
+
+      <Form.Item
+        name='manufactureDate'
+        label='Ngày sản xuất'
+        rules={[{ required: true, message: 'Vui lòng chọn ngày sản xuất!' }]}
+      >
+        <DatePicker
+          className='w-full'
+          format='DD/MM/YYYY'
+          disabledDate={current => current && current > dayjs().endOf('day')}
+        />
       </Form.Item>
 
       <Form.Item>
