@@ -138,7 +138,7 @@ const MedicalSuppliesList: React.FC = () => {
   const handleExportExcel = async () => {
     try {
       setExportLoading(true)
-      
+
       // Get current filtered and sorted data
       const dataToExport = sortedSupplies.map((item, index) => ({
         'STT': index + 1,
@@ -192,7 +192,7 @@ const MedicalSuppliesList: React.FC = () => {
         if (ws[statusCell]) {
           const status = ws[statusCell].v
           let fillColor = "FFFFFF" // default white
-          
+
           if (status === "Đã hết hạn") {
             fillColor = "FFEBEE" // light red
           } else if (status === "Sắp hết hạn") {
@@ -200,7 +200,7 @@ const MedicalSuppliesList: React.FC = () => {
           } else if (status === "Còn hạn") {
             fillColor = "E8F5E8" // light green
           }
-          
+
           ws[statusCell].s = {
             fill: { fgColor: { rgb: fillColor } },
             alignment: { horizontal: "center", vertical: "center" }
@@ -232,7 +232,7 @@ const MedicalSuppliesList: React.FC = () => {
 
       // Write and download file
       XLSX.writeFile(wb, filename)
-      
+
       message.success(`Xuất file Excel thành công! Tải về: ${filename}`)
     } catch (error) {
       console.error('Export error:', error)
@@ -251,7 +251,7 @@ const MedicalSuppliesList: React.FC = () => {
 
     try {
       setExportLoading(true)
-      
+
       const dataToExport = sortedSupplies.map((item, index) => ({
         'STT': index + 1,
         'Tên vật tư': item.name,
@@ -267,7 +267,7 @@ const MedicalSuppliesList: React.FC = () => {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(dataToExport)
-      
+
       ws['!cols'] = [
         { wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 20 },
         { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }
@@ -277,7 +277,7 @@ const MedicalSuppliesList: React.FC = () => {
 
       const timestamp = dayjs().format('DD-MM-YYYY_HH-mm-ss')
       const filename = `Vat_tu_y_te_da_loc_${timestamp}.xlsx`
-      
+
       XLSX.writeFile(wb, filename)
       message.success(`Xuất dữ liệu đã lọc thành công!`)
     } catch (error) {
@@ -432,7 +432,7 @@ const MedicalSuppliesList: React.FC = () => {
           <Col>
             <Space>
               <Dropdown overlay={exportMenu} trigger={['click']}>
-                <Button 
+                <Button
                   icon={<DownloadOutlined />}
                   size='large'
                   loading={exportLoading}
@@ -440,10 +440,10 @@ const MedicalSuppliesList: React.FC = () => {
                   Xuất Excel
                 </Button>
               </Dropdown>
-              <Button 
-                type='primary' 
-                icon={<PlusOutlined />} 
-                onClick={() => setIsCreateModalVisible(true)} 
+              <Button
+                type='primary'
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalVisible(true)}
                 size='large'
               >
                 Thêm vật tư mới
