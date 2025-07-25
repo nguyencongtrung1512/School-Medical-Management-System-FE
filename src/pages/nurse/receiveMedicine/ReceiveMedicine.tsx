@@ -477,32 +477,51 @@ const ReceiveMedicine: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <Card>
         <Space direction='vertical' style={{ width: '100%' }}>
-          <Title level={4}>Quản lý thuốc</Title>
+          {/* header */}
+          <Row
+            style={{
+              background: 'linear-gradient(135deg, #7c91ef 0%, #2171cc 100%)',
+              borderRadius: '10px',
+              padding: '16px'
+            }}
+            gutter={[16, 16]}
+            align='middle'
+            justify='space-between'
+          >
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <Space>
+                  <MedicineBoxOutlined />
+                  Nhận thuốc từ phụ huynh
+                </Space>
+              </Title>
+            </Col>
+          </Row>
 
           {/* Thống kê */}
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={6}>
-              <Card>
+          <Row gutter={16} style={{ marginBottom: 24 }} justify='space-between'>
+            <Col flex='1'>
+              <Card hoverable>
                 <Statistic title='Tổng số đơn' value={stats.total} prefix={<MedicineBoxOutlined />} />
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
+            <Col flex='1'>
+              <Card hoverable>
                 <Statistic title='Chờ xác nhận' value={stats.pending} valueStyle={{ color: '#1890ff' }} />
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
+            <Col flex='1'>
+              <Card hoverable>
                 <Statistic title='Đã duyệt' value={stats.approved} valueStyle={{ color: '#52c41a' }} />
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
+            <Col flex='1'>
+              <Card hoverable>
                 <Statistic title='Đã hoàn thành' value={stats.completed} valueStyle={{ color: '#16a085' }} />
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
+            <Col flex='1'>
+              <Card hoverable>
                 <Statistic title='Từ chối' value={stats.rejected} valueStyle={{ color: '#a42e2e' }} />
               </Card>
             </Col>

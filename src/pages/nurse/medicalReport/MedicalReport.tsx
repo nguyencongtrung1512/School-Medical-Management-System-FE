@@ -376,7 +376,13 @@ const MedicalReport: React.FC = () => {
               </Title>
             </Col>
             <Col>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size='large'>
+              <Button
+                color='danger'
+                variant='solid'
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalVisible(true)}
+                size='large'
+              >
                 Tạo báo cáo
               </Button>
             </Col>
