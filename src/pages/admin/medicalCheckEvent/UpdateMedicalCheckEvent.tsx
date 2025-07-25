@@ -7,8 +7,7 @@ import {
   TeamOutlined
 } from '@ant-design/icons'
 import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space, Typography } from 'antd'
-import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import React, { useEffect, useState } from 'react'
 import { getGradesAPI } from '../../../api/grade.api'
 import { medicalCheckEventApi, type UpdateMedicalCheckEventDTO } from '../../../api/medicalCheckEvent.api'
@@ -32,11 +31,27 @@ interface FormValues {
   eventName: string
   gradeId: string
   location: string
+  provider: string
   description: string
   schoolYear: string
   eventDate: Dayjs
   startRegistrationDate: Dayjs
   endRegistrationDate: Dayjs
+}
+
+const disabledDate = (current: Dayjs) => {
+  return current && current.isBefore(dayjs().startOf('day'))
+}
+
+const disabledDateTime = (current: Dayjs | null) => {
+  const now = dayjs()
+  if (!current) return {}
+  if (!current.isSame(now, 'day')) return {}
+  return {
+    disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+    disabledMinutes: (selectedHour: number) =>
+      selectedHour === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : []
+  }
 }
 
 const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ eventId, onSuccess, onCancel }) => {
@@ -75,7 +90,8 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
         ...eventData,
         eventDate: eventData.eventDate ? dayjs(eventData.eventDate) : null,
         startRegistrationDate: eventData.startRegistrationDate ? dayjs(eventData.startRegistrationDate) : null,
-        endRegistrationDate: eventData.endRegistrationDate ? dayjs(eventData.endRegistrationDate) : null
+        endRegistrationDate: eventData.endRegistrationDate ? dayjs(eventData.endRegistrationDate) : null,
+        provider: eventData.provider || ''
       })
     } catch (error: unknown) {
       console.log('error', error)
@@ -97,11 +113,12 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
         eventName: values.eventName,
         gradeId: values.gradeId,
         location: values.location,
+        provider: values.provider,
         description: values.description,
         schoolYear: values.schoolYear,
-        eventDate: values.eventDate.toISOString(),
-        startRegistrationDate: values.startRegistrationDate.toISOString(),
-        endRegistrationDate: values.endRegistrationDate.toISOString()
+        eventDate: values.eventDate.toDate(),
+        startRegistrationDate: values.startRegistrationDate.toDate(),
+        endRegistrationDate: values.endRegistrationDate.toDate()
       }
       await medicalCheckEventApi.update(eventId, data)
       message.success('Cập nhật sự kiện khám sức khỏe thành công')
@@ -118,11 +135,6 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
     } finally {
       setLoading(false)
     }
-  }
-
-  // Disable ngày trong quá khứ cho tất cả DatePicker
-  const disabledPastDate = (current: Dayjs) => {
-    return current && current.isBefore(dayjs(), 'day')
   }
 
   return (
@@ -195,6 +207,21 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
 
             <Col xs={24} lg={12}>
               <Form.Item
+                name='provider'
+                label={
+                  <Space>
+                    <MedicineBoxOutlined />
+                    <span>Đơn vị cung cấp</span>
+                  </Space>
+                }
+                rules={[{ required: true, message: 'Vui lòng nhập đơn vị cung cấp' }]}
+              >
+                <Input placeholder='Nhập tên đơn vị cung cấp' className='rounded-lg' />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} lg={12}>
+              <Form.Item
                 name='schoolYear'
                 label={
                   <Space>
@@ -236,7 +263,8 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder='Chọn ngày và giờ bắt đầu đăng ký'
-                  disabledDate={disabledPastDate}
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
                 />
               </Form.Item>
             </Col>
@@ -269,7 +297,8 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder='Chọn ngày và giờ kết thúc đăng ký'
-                  disabledDate={disabledPastDate}
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
                 />
               </Form.Item>
             </Col>
@@ -302,7 +331,8 @@ const UpdateMedicalCheckEvent: React.FC<UpdateMedicalCheckEventProps> = ({ event
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder='Chọn ngày và giờ diễn ra sự kiện'
-                  disabledDate={disabledPastDate}
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
                 />
               </Form.Item>
             </Col>

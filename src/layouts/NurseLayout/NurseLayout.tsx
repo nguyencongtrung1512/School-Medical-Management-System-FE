@@ -44,14 +44,16 @@ const NurseLayout: React.FC = () => {
     <Layout className='min-h-screen bg-gray-50'>
       <Sidebar />
       <Layout className='ml-[220px]'>
-        <Header className='bg-gradient-to-r from-blue-600 to-blue-400 px-8 py-4 shadow-lg flex items-center justify-between rounded-b-xl'>
-          <div className='text-2xl font-bold text-white drop-shadow'>Nurse Dashboard</div>
+        <Header className='sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-blue-400 px-8 py-4 shadow-lg flex items-center justify-between'>
+          <div className='text-2xl font-bold text-white drop-shadow'>Nurse</div>
           <div className='relative' ref={dropdownRef}>
             <button
               className='flex text-xl items-center space-x-2 focus:outline-none rounded-full hover:bg-blue-500 p-1 transition-colors bg-blue-100 text-blue-900 font-semibold shadow-md'
               onClick={() => setOpen(!open)}
             >
-              <div className='w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold'>N</div>
+              <div className='w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold'>
+                N
+              </div>
               <span className='text-white font-medium'>Nurse</span>
             </button>
             {open && (

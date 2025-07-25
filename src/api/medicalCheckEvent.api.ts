@@ -12,11 +12,12 @@ export interface MedicalCheckEvent {
   gradeId: string
   description?: string
   location: string
-  eventDate: string
-  startRegistrationDate: string
-  endRegistrationDate: string
+  provider: string
+  eventDate: Date
+  startRegistrationDate: Date
+  endRegistrationDate: Date
   schoolYear: string
-  status?: EventStatus
+  status: EventStatus
   isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
@@ -27,11 +28,12 @@ export interface CreateMedicalCheckEventDTO {
   gradeId: string
   description?: string
   location: string
-  eventDate: string
-  startRegistrationDate: string
-  endRegistrationDate: string
+  provider: string
+  eventDate: Date
+  startRegistrationDate: Date
+  endRegistrationDate: Date
   schoolYear: string
-  status?: EventStatus
+  status: EventStatus
 }
 
 export interface UpdateMedicalCheckEventDTO {
@@ -39,9 +41,10 @@ export interface UpdateMedicalCheckEventDTO {
   gradeId?: string
   description?: string
   location?: string
-  eventDate?: string
-  startRegistrationDate?: string
-  endRegistrationDate?: string
+  provider?: string
+  eventDate?: Date
+  startRegistrationDate?: Date
+  endRegistrationDate?: Date
   schoolYear?: string
   status?: EventStatus
 }

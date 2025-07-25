@@ -67,8 +67,10 @@ const MedicalCheckEvent: React.FC = () => {
     setLoading(true)
     try {
       const response = await medicalCheckEventApi.search({ pageSize, pageNum: currentPage })
-      setEvents((response as any)?.pageData || [])
-      setTotalItems((response as any)?.pageInfo?.totalItems || 0)
+      const pageData = (response as unknown as { pageData: MedicalCheckEvent[] }).pageData || []
+      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      setEvents(pageData)
+      setTotalItems(total)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -193,6 +195,12 @@ const MedicalCheckEvent: React.FC = () => {
       onFilter: (value, record) => record.status === value
     },
     {
+      title: 'Đơn vị cung cấp',
+      dataIndex: 'provider',
+      key: 'provider',
+      render: (provider: string) => provider || '-'
+    },
+    {
       title: 'Thao tác',
       key: 'action',
       width: 120,
@@ -272,7 +280,7 @@ const MedicalCheckEvent: React.FC = () => {
   const filteredEvents = events.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
         event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     return matchesSearch
@@ -307,9 +315,9 @@ const MedicalCheckEvent: React.FC = () => {
     }
   }
 
-  function formatDateTime(dateString: string) {
-    if (!dateString) return ''
-    const date = new Date(dateString)
+  function formatDateTime(dateValue: string | Date) {
+    if (!dateValue) return ''
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue
     return date.toLocaleString('vi-VN', { hour12: false })
   }
 
@@ -488,8 +496,9 @@ const MedicalCheckEvent: React.FC = () => {
                     handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
                     setIsModalVisible(false)
                   }}
+                  disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
                 >
-                  Duyệt sự kiện
+                  Hoàn thành
                 </Button>
               ]
             : [
@@ -564,6 +573,16 @@ const MedicalCheckEvent: React.FC = () => {
                   }
                 >
                   {selectedEvent.schoolYear}
+                </Descriptions.Item>
+                <Descriptions.Item
+                  label={
+                    <Space>
+                      <MedicineBoxOutlined />
+                      Đơn vị cung cấp
+                    </Space>
+                  }
+                >
+                  {selectedEvent.provider}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
