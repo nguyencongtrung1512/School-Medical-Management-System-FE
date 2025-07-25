@@ -28,6 +28,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { appointmentApi, ParentNurseAppointment, ParentNurseAppointmentStatus } from '../../../api/appointment.api'
 import { searchNurseUsersAPI } from '../../../api/user.api'
 
@@ -109,6 +110,17 @@ function AppointmentCheck() {
     )
   }
 
+  const getStatusText = (status: string) => {
+    const statusConfig = {
+      pending: 'Chờ duyệt',
+      approved: 'Đã xác nhận',
+      confirmed: 'Đã xác nhận',
+      done: 'Hoàn thành',
+      cancelled: 'Đã hủy'
+    }
+    return statusConfig[status.toLowerCase() as keyof typeof statusConfig] || status
+  }
+
   const handleAssignClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setModalOpen(true)
@@ -184,20 +196,138 @@ function AppointmentCheck() {
   const handleExportExcel = async () => {
     setExporting(true)
     try {
-      const res = await appointmentApi.exportExcel({})
-      const url = window.URL.createObjectURL(new Blob([res.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'appointments.xlsx')
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode?.removeChild(link)
-      message.success('Xuất file Excel thành công!')
+      // Prepare data for Excel export
+      const excelData = appointments.map((appointment, index) => ({
+        STT: index + 1,
+        'Mã học sinh': appointment.student?.studentCode || '',
+        'Tên học sinh': appointment.student?.fullName || appointment.studentId,
+        'Phụ huynh': appointment.parent?.fullName || '',
+        'Số điện thoại': appointment.parent?.phone || '',
+        'Ngày hẹn': new Date(appointment.appointmentTime).toLocaleDateString('vi-VN'),
+        'Giờ hẹn': new Date(appointment.appointmentTime).toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        'Lý do khám': appointment.reason || '',
+        'Trạng thái': getStatusText(appointment.status),
+        'Y tá phụ trách': appointment.schoolNurse?.fullName || '',
+        'Ghi chú': appointment.note || '',
+        'Lý do hủy': appointment.cancellationReason || '',
+        'Ngày tạo': appointment.createdAt ? new Date(appointment.createdAt).toLocaleDateString('vi-VN') : '',
+        'Ngày cập nhật': appointment.updatedAt ? new Date(appointment.updatedAt).toLocaleDateString('vi-VN') : ''
+      }))
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new()
+      const worksheet = XLSX.utils.json_to_sheet(excelData)
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 5 }, // STT
+        { wch: 15 }, // Mã học sinh
+        { wch: 20 }, // Tên học sinh
+        { wch: 20 }, // Phụ huynh
+        { wch: 15 }, // Số điện thoại
+        { wch: 12 }, // Ngày hẹn
+        { wch: 10 }, // Giờ hẹn
+        { wch: 30 }, // Lý do khám
+        { wch: 12 }, // Trạng thái
+        { wch: 20 }, // Y tá phụ trách
+        { wch: 30 }, // Ghi chú
+        { wch: 30 }, // Lý do hủy
+        { wch: 12 }, // Ngày tạo
+        { wch: 12 } // Ngày cập nhật
+      ]
+      worksheet['!cols'] = columnWidths
+
+      // Add title row
+      XLSX.utils.sheet_add_aoa(
+        worksheet,
+        [
+          ['DANH SÁCH LỊCH HẸN TƯ VẤN SỨC KHỎE'],
+          [`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}`],
+          [`Tổng số lịch hẹn: ${appointments.length}`],
+          [] // Empty row
+        ],
+        { origin: 'A1' }
+      )
+
+      // Merge title cells
+      if (!worksheet['!merges']) worksheet['!merges'] = []
+      worksheet['!merges'].push(
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } }, // Title row
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } }, // Date row
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 13 } } // Count row
+      )
+
+      // Style the title
+      if (!worksheet['A1'].s) worksheet['A1'].s = {}
+      worksheet['A1'].s = {
+        font: { bold: true, sz: 16 },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      }
+
+      // Add data starting from row 5 (after title and headers)
+      XLSX.utils.sheet_add_json(worksheet, excelData, {
+        origin: 'A5',
+        skipHeader: false
+      })
+
+      // Style headers
+      const headerRow = 4 // 0-indexed, so row 5 is index 4
+      for (let col = 0; col < Object.keys(excelData[0] || {}).length; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: col })
+        if (!worksheet[cellAddress]) continue
+        if (!worksheet[cellAddress].s) worksheet[cellAddress].s = {}
+        worksheet[cellAddress].s = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: 'E6F3FF' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin' },
+            bottom: { style: 'thin' },
+            left: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+        }
+      }
+
+      // Add borders to data cells
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
+      for (let row = headerRow; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
+          if (!worksheet[cellAddress]) continue
+          if (!worksheet[cellAddress].s) worksheet[cellAddress].s = {}
+          if (!worksheet[cellAddress].s.border) {
+            worksheet[cellAddress].s.border = {
+              top: { style: 'thin' },
+              bottom: { style: 'thin' },
+              left: { style: 'thin' },
+              right: { style: 'thin' }
+            }
+          }
+        }
+      }
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách lịch hẹn')
+
+      // Generate filename with current date
+      const currentDate = new Date()
+      const dateString = currentDate.toISOString().split('T')[0] // YYYY-MM-DD format
+      const timeString = currentDate.toTimeString().split(' ')[0].replace(/:/g, '-') // HH-MM-SS format
+      const filename = `Danh_sach_lich_hen_${dateString}_${timeString}.xlsx`
+
+      // Write and download file
+      XLSX.writeFile(workbook, filename)
+
+      message.success(`Xuất file Excel thành công! File: ${filename}`)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
       if (err.message) {
-        message.error(err.message)
+        message.error(`Xuất file Excel thất bại: ${err.message}`)
       } else {
         message.error('Xuất file Excel thất bại!')
       }
@@ -324,8 +454,15 @@ function AppointmentCheck() {
           }}
           className='bg-white'
           title={() => (
-            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExportExcel}>
-              Xuất Excel
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exporting}
+              onClick={handleExportExcel}
+              color='default'
+              variant='outlined'
+              disabled={appointments.length === 0}
+            >
+              Xuất Excel ({appointments.length} lịch hẹn)
             </Button>
           )}
         />
