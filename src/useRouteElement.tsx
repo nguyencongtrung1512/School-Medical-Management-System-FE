@@ -39,6 +39,7 @@ import VaccineRegistrationList from './pages/admin/censorManagement/VaccineRegis
 import AppointmentVaccine from './pages/nurse/appointmentVaccine/AppointmentVaccine'
 import RegisterVaccine from './pages/registerVaccine/RegisterVaccine'
 import RegisterMedicalCheck from './pages/registerMedicalCheck/RegisterMedicalCheck'
+import AppointmentMedicalCheck from './pages/nurse/appointmentMedicalCheck/AppointmentMedicalCheck'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -163,6 +164,10 @@ export default function useRouteElements() {
             {
               path: path.REGISTER_MEDICAL_CHECK,
               element: <RegisterMedicalCheck />
+            },
+            {
+              path: path.MEDICAL_CHECK_APPOINTMENT,
+              element: <AppointmentMedicalCheck />
             }
           ]
         }

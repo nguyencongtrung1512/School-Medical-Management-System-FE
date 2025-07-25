@@ -34,6 +34,7 @@ const path = {
   APPOINTMENT_VACCINE: '/nurse/appointment-vaccine', //lịch tiêm chủng
   REGISTER_VACCINE: '/nurse/register-vaccine', //đăng kí tiêm chủng
   REGISTER_MEDICAL_CHECK: '/nurse/register-medical-check', //đăng kí khám sức khỏe
+  MEDICAL_CHECK_APPOINTMENT: '/nurse/medical-check-appointment', //kết quả khám sức khỏe
   //=============Admin============
   BASE_ADMIN: '/admin',
   MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh
