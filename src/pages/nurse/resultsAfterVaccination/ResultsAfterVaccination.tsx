@@ -31,12 +31,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import {
-  getAllVaccineEvents,
-  updateVaccineEventStatus,
-  type VaccineEvent,
-  VaccineEventStatus
-} from '../../../api/vaccineEvent.api'
+import { vaccineEventApi, VaccineEventStatus, type VaccineEvent } from '../../../api/vaccineEvent.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -60,9 +55,11 @@ const ResultsAfterVaccination: React.FC = () => {
   const fetchVaccineEvents = async () => {
     setLoading(true)
     try {
-      const response = await getAllVaccineEvents(currentPage, pageSize)
-      setVaccineEvents((response as any).pageData || [])
-      setTotalItems(((response as any).totalPage || 0) * pageSize)
+      const response = await vaccineEventApi.search({ pageNum: currentPage, pageSize })
+      const pageData = (response as unknown as { pageData: VaccineEvent[] }).pageData || []
+      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      setVaccineEvents(pageData)
+      setTotalItems(total)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -85,17 +82,17 @@ const ResultsAfterVaccination: React.FC = () => {
 
   const getStatusConfig = (status: VaccineEventStatus) => {
     const configs = {
-      [VaccineEventStatus.ONGOING]: {
+      [VaccineEventStatus.Ongoing]: {
         color: 'processing',
         text: 'Đang diễn ra',
         icon: <ClockCircleOutlined />
       },
-      [VaccineEventStatus.COMPLETED]: {
+      [VaccineEventStatus.Completed]: {
         color: 'success',
         text: 'Hoàn thành',
         icon: <CheckCircleOutlined />
       },
-      [VaccineEventStatus.CANCELLED]: {
+      [VaccineEventStatus.Cancelled]: {
         color: 'error',
         text: 'Đã hủy',
         icon: <StopOutlined />
@@ -106,7 +103,7 @@ const ResultsAfterVaccination: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: VaccineEventStatus) => {
     try {
-      await updateVaccineEventStatus(id, newStatus)
+      await vaccineEventApi.updateStatus(id, newStatus)
       message.success('Cập nhật trạng thái thành công!')
       fetchVaccineEvents() // Refresh danh sách
     } catch (error: unknown) {
@@ -120,10 +117,10 @@ const ResultsAfterVaccination: React.FC = () => {
     }
   }
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return ''
-    const date = dayjs(dateString)
-    return date.format('DD/MM/YYYY HH:mm')
+  const formatDateTime = (dateValue: string | Date) => {
+    if (!dateValue) return ''
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue
+    return dayjs(date).format('DD/MM/YYYY HH:mm')
   }
 
   const showDetailModal = (event: VaccineEvent) => {
@@ -168,6 +165,12 @@ const ResultsAfterVaccination: React.FC = () => {
       )
     },
     {
+      title: 'Đơn vị cung cấp',
+      dataIndex: 'provider',
+      key: 'provider',
+      render: (provider: string) => provider || '-'
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
@@ -180,9 +183,9 @@ const ResultsAfterVaccination: React.FC = () => {
         )
       },
       filters: [
-        { text: 'Đang diễn ra', value: VaccineEventStatus.ONGOING },
-        { text: 'Hoàn thành', value: VaccineEventStatus.COMPLETED },
-        { text: 'Đã hủy', value: VaccineEventStatus.CANCELLED }
+        { text: 'Đang diễn ra', value: VaccineEventStatus.Ongoing },
+        { text: 'Hoàn thành', value: VaccineEventStatus.Completed },
+        { text: 'Đã hủy', value: VaccineEventStatus.Cancelled }
       ],
       onFilter: (value, record) => record.status === value
     },
@@ -214,19 +217,19 @@ const ResultsAfterVaccination: React.FC = () => {
                 })
               }}
             >
-              <Option value={VaccineEventStatus.ONGOING}>
+              <Option value={VaccineEventStatus.Ongoing}>
                 <Space>
                   <ClockCircleOutlined />
                   Đang diễn ra
                 </Space>
               </Option>
-              <Option value={VaccineEventStatus.COMPLETED}>
+              <Option value={VaccineEventStatus.Completed}>
                 <Space>
                   <CheckCircleOutlined />
                   Hoàn thành
                 </Space>
               </Option>
-              <Option value={VaccineEventStatus.CANCELLED}>
+              <Option value={VaccineEventStatus.Cancelled}>
                 <Space>
                   <StopOutlined />
                   Đã hủy
@@ -241,9 +244,9 @@ const ResultsAfterVaccination: React.FC = () => {
 
   const stats = {
     total: vaccineEvents.length,
-    ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.ONGOING).length,
-    completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.COMPLETED).length,
-    cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.CANCELLED).length
+    ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Ongoing).length,
+    completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Completed).length,
+    cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Cancelled).length
   }
 
   const filteredEvents = vaccineEvents.filter((event) => {
@@ -338,19 +341,19 @@ const ResultsAfterVaccination: React.FC = () => {
               style={{ width: '100%' }}
               onChange={(value) => setStatusFilter(value)}
             >
-              <Option value={VaccineEventStatus.ONGOING}>
+              <Option value={VaccineEventStatus.Ongoing}>
                 <Space>
                   <ClockCircleOutlined />
                   Đang diễn ra
                 </Space>
               </Option>
-              <Option value={VaccineEventStatus.COMPLETED}>
+              <Option value={VaccineEventStatus.Completed}>
                 <Space>
                   <CheckCircleOutlined />
                   Hoàn thành
                 </Space>
               </Option>
-              <Option value={VaccineEventStatus.CANCELLED}>
+              <Option value={VaccineEventStatus.Cancelled}>
                 <Space>
                   <StopOutlined />
                   Đã hủy
@@ -452,6 +455,13 @@ const ResultsAfterVaccination: React.FC = () => {
                   <Space>
                     <BookOutlined className='text-purple-500' />
                     {selectedEvent.schoolYear}
+                  </Space>
+                </Descriptions.Item>
+
+                <Descriptions.Item label='Đơn vị cung cấp'>
+                  <Space>
+                    <MedicineBoxOutlined className='text-blue-500' />
+                    {selectedEvent.provider}
                   </Space>
                 </Descriptions.Item>
 
