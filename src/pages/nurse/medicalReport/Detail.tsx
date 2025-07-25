@@ -90,7 +90,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     if (medicineNames[id]) return medicineNames[id]
     try {
       const res = await getMedicineById(id)
-      const name = (res as any).data?.name || (res as any).name || 'Không rõ'
+      const name = (res as any).data?.name || (res as any).name
       setMedicineNames((prev) => ({ ...prev, [id]: name }))
       return name
     } catch {
@@ -103,11 +103,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const fetchSupplyName = async (id: string) => {
     if (supplyNames[id]) return supplyNames[id]
     try {
-      const res = await getMedicalSupplyById(Number(id))
-      const name = (res as any).data?.name || (res as any).name || 'Không rõ'
+      // Không cần chuyển đổi id sang number nữa
+      const res = await getMedicalSupplyById(id)
+      const name = (res as any).data?.name || (res as any).name
       setSupplyNames((prev) => ({ ...prev, [id]: name }))
       return name
-    } catch {
+    } catch (error) {
+      console.log("Error:", error)
       setSupplyNames((prev) => ({ ...prev, [id]: 'Không rõ' }))
       return 'Không rõ'
     }
@@ -290,12 +292,12 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                       <Text strong>{medicalEvent.student?.studentIdCode || 'N/A'}</Text>
                     </Space>
                   </Col>
-                  <Col span={8}>
+                  {/* <Col span={8}>
                     <Space direction='vertical' size={0}>
                       <Text type='secondary'>Lớp</Text>
                       <Text strong>{medicalEvent.student?.class?.name || 'N/A'}</Text>
                     </Space>
-                  </Col>
+                  </Col> */}
                 </Row>
               </Card>
 
@@ -323,17 +325,14 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                     <Text>{medicalEvent.actionTaken}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label='Mức độ nghiêm trọng'>
-                    <Tag
-                      color={severityColors[medicalEvent.severityLevel as keyof typeof severityColors]}
-                      style={{ fontWeight: 'bold' }}
-                    >
-                      {severityLevelVN[medicalEvent.severityLevel as keyof typeof severityLevelVN] || 'Không xác định'}
+                    <Tag color={severityColors[medicalEvent.severityLevel]} style={{ fontWeight: 'bold' }}>
+                      {severityLevelVN[medicalEvent.severityLevel] || 'Không xác định'}
                     </Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label='Trạng thái'>
                     <Badge
-                      status={statusColors[medicalEvent.status as keyof typeof statusColors] as any}
-                      text={statusVN[medicalEvent.status as keyof typeof statusVN] || 'Không xác định'}
+                      status={statusColors[medicalEvent.status] as any}
+                      text={statusVN[medicalEvent.status] || 'Không xác định'}
                     />
                   </Descriptions.Item>
                 </Descriptions>
@@ -360,7 +359,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                         {(medicalEvent.medicinesUsed as any[]).map((item: { medicineId: string; quantity: number }) =>
                           typeof item === 'object' && item.medicineId ? (
                             <Card key={item.medicineId} size='small' style={{ backgroundColor: '#f6ffed' }}>
-                              <Space align='center' style={{ width: '100%' }}>
+                              <Space justify='space-between' style={{ width: '100%' }}>
                                 <Text strong>{medicineNames[item.medicineId] || 'Đang tải...'}</Text>
                                 <Tag color='green'>{item.quantity} viên</Tag>
                               </Space>
@@ -382,7 +381,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                           (item: { supplyId: string; quantity: number }) =>
                             typeof item === 'object' && item.supplyId ? (
                               <Card key={item.supplyId} size='small' style={{ backgroundColor: '#fff7e6' }}>
-                                <Space align='center' style={{ width: '100%' }}>
+                                <Space justify='space-between' style={{ width: '100%' }}>
                                   <Text strong>{supplyNames[item.supplyId] || 'Đang tải...'}</Text>
                                   <Tag color='orange'>{item.quantity} thiết bị</Tag>
                                 </Space>
@@ -422,7 +421,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                   <Descriptions.Item label='Người đón'>
                     <Text>{medicalEvent.pickedUpBy || 'Không xác định'}</Text>
                   </Descriptions.Item>
-                  <Descriptions.Item label='Y tá phụ trách'>
+                  <Descriptions.Item label='Người tạo'>
                     <Text>{medicalEvent.schoolNurse?.fullName || 'N/A'}</Text>
                   </Descriptions.Item>
                   {medicalEvent.notes && (
