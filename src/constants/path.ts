@@ -31,6 +31,8 @@ const path = {
   MEDICINES: '/nurse/medicines', // kho thuốc
   MEDICAL_SUPPLIES: '/nurse/medical-supplies',
   RESULTS_AFTER_MEDICAL_CHECK: '/nurse/results-after-medical-check', //khai báo kết quả khám sức khỏe
+  APPOINTMENT_VACCINE: '/nurse/appointment-vaccine', //lịch tiêm chủng
+  REGISTER_VACCINE: '/nurse/register-vaccine', //đăng kí tiêm chủng
   //=============Admin============
   BASE_ADMIN: '/admin',
   MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh

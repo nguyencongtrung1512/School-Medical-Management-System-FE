@@ -1,16 +1,28 @@
 import axiosInstance from '../service/axiosInstance'
 
+export enum RegistrationStatus {
+  Pending = 'pending',
+  Approved = 'approved',
+  Cancelled = 'cancelled',
+  Rejected = 'rejected'
+}
+
 export interface VaccineRegistration {
   _id: string
   parentId: string
   studentId: string
   eventId: string
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  status: RegistrationStatus
   cancellationReason?: string
   note?: string
   schoolYear: string
+  approvedAt?: string
+  isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
+  parent?: { _id: string; fullName?: string; email?: string }
+  student?: { _id: string; fullName?: string }
+  event?: { _id: string; title?: string }
 }
 
 export interface CreateVaccineRegistrationDTO {
@@ -19,22 +31,12 @@ export interface CreateVaccineRegistrationDTO {
   eventId: string
   note?: string
   cancellationReason?: string
-  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  status?: RegistrationStatus
   schoolYear: string
 }
 
-export interface UpdateVaccineRegistrationDTO {
-  parentId?: string
-  studentId?: string
-  eventId?: string
-  note?: string
-  cancellationReason?: string
-  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
-  schoolYear?: string
-}
-
 export interface UpdateRegistrationStatusDTO {
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  status: RegistrationStatus
   cancellationReason?: string
 }
 
@@ -45,7 +47,7 @@ export interface SearchVaccineRegistrationParams {
   parentId?: string
   studentId?: string
   eventId?: string
-  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  status?: RegistrationStatus
 }
 
 export const vaccineRegistrationApi = {
@@ -59,7 +61,7 @@ export const vaccineRegistrationApi = {
   getById: (id: string) => {
     return axiosInstance.get(`/vaccine-registration/${id}`)
   },
-  update: (id: string, data: UpdateVaccineRegistrationDTO) => {
+  update: (id: string, data: CreateVaccineRegistrationDTO) => {
     return axiosInstance.put(`/vaccine-registration/${id}`, data)
   },
   delete: (id: string) => {
