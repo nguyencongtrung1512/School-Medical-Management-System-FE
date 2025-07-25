@@ -41,12 +41,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import {
-  deleteVaccineEvent,
-  getAllVaccineEvents,
-  updateVaccineEventStatus,
-  VaccineEventStatus
-} from '../../../api/vaccineEvent.api'
+import { vaccineEventApi, VaccineEventStatus } from '../../../api/vaccineEvent.api'
 import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
@@ -56,30 +51,26 @@ interface VaccineEvent {
   _id: string
   title: string
   gradeId: string
-  description: string
+  description?: string
   vaccineName: string
   location: string
-  startDate: string
-  eventDate: string
+  provider: string
+  startRegistrationDate: Date
+  endRegistrationDate: Date
+  eventDate: Date
   status: VaccineEventStatus
-  startRegistrationDate: string
-  endRegistrationDate: string
-  isDeleted?: boolean
   schoolYear: string
+  isDeleted?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Hàm format ngày giờ chuẩn dd/MM/yyyy HH:mm theo giờ Việt Nam (GMT+7)
-const formatDateTime = (dateString: any) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  // Cộng thêm 7 tiếng cho múi giờ Việt Nam
-  date.setHours(date.getHours() + 7)
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${day}/${month}/${year} ${hour}:${minute}`
+const formatDateTime = (dateValue: string | Date) => {
+  if (!dateValue) return ''
+  const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue
+  // Cộng thêm 7 tiếng cho múi giờ Việt Nam nếu cần, hoặc chỉ dùng date.toLocaleString('vi-VN', { hour12: false })
+  return date.toLocaleString('vi-VN', { hour12: false })
 }
 
 const CensorList: React.FC = () => {
@@ -103,9 +94,11 @@ const CensorList: React.FC = () => {
   const fetchVaccineEvents = async () => {
     setLoading(true)
     try {
-      const response = await getAllVaccineEvents(currentPage, pageSize)
-      setVaccineEvents(response.pageData)
-      setTotalItems(response.totalPage * pageSize)
+      const response = await vaccineEventApi.search({ pageNum: currentPage, pageSize })
+      const pageData = (response as unknown as { pageData: VaccineEvent[] }).pageData || []
+      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      setVaccineEvents(pageData)
+      setTotalItems(total)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -128,17 +121,17 @@ const CensorList: React.FC = () => {
 
   const getStatusConfig = (status: VaccineEventStatus) => {
     const configs = {
-      [VaccineEventStatus.ONGOING]: {
+      [VaccineEventStatus.Ongoing]: {
         color: 'processing',
         text: 'Đang diễn ra',
         icon: <ClockCircleOutlined />
       },
-      [VaccineEventStatus.COMPLETED]: {
+      [VaccineEventStatus.Completed]: {
         color: 'success',
         text: 'Hoàn thành',
         icon: <CheckCircleOutlined />
       },
-      [VaccineEventStatus.CANCELLED]: {
+      [VaccineEventStatus.Cancelled]: {
         color: 'error',
         text: 'Đã hủy',
         icon: <StopOutlined />
@@ -224,11 +217,17 @@ const CensorList: React.FC = () => {
         )
       },
       filters: [
-        { text: 'Đang diễn ra', value: VaccineEventStatus.ONGOING },
-        { text: 'Hoàn thành', value: VaccineEventStatus.COMPLETED },
-        { text: 'Đã hủy', value: VaccineEventStatus.CANCELLED }
+        { text: 'Đang diễn ra', value: VaccineEventStatus.Ongoing },
+        { text: 'Hoàn thành', value: VaccineEventStatus.Completed },
+        { text: 'Đã hủy', value: VaccineEventStatus.Cancelled }
       ],
       onFilter: (value, record) => record.status === value
+    },
+    {
+      title: 'Đơn vị cung cấp',
+      dataIndex: 'provider',
+      key: 'provider',
+      render: (provider: string) => provider || '-'
     },
     {
       title: 'Thao tác',
@@ -247,7 +246,7 @@ const CensorList: React.FC = () => {
               }}
             />
           </Tooltip>
-          {record.status === VaccineEventStatus.ONGOING && (
+          {record.status === VaccineEventStatus.Ongoing && (
             <>
               <Tooltip title='Cập nhật'>
                 <Button
@@ -275,7 +274,7 @@ const CensorList: React.FC = () => {
                       cancelText: 'Hủy',
                       onOk: async () => {
                         try {
-                          await deleteVaccineEvent(record._id)
+                          await vaccineEventApi.delete(record._id)
                           message.success('Xóa sự kiện thành công!')
                           fetchVaccineEvents()
                         } catch {
@@ -301,7 +300,7 @@ const CensorList: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: VaccineEventStatus) => {
     try {
-      await updateVaccineEventStatus(id, newStatus)
+      await vaccineEventApi.updateStatus(id, newStatus)
       message.success('Cập nhật trạng thái thành công!')
       fetchVaccineEvents() // Refresh danh sách
     } catch (error: unknown) {
@@ -317,9 +316,9 @@ const CensorList: React.FC = () => {
 
   const stats = {
     total: vaccineEvents.length,
-    ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.ONGOING).length,
-    completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.COMPLETED).length,
-    cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.CANCELLED).length
+    ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Ongoing).length,
+    completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Completed).length,
+    cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Cancelled).length
   }
 
   const filteredEvents = vaccineEvents.filter((event) => {
@@ -473,7 +472,7 @@ const CensorList: React.FC = () => {
             }}
             scroll={{ x: 1200 }}
             rowClassName={(record) =>
-              record.status === VaccineEventStatus.ONGOING
+              record.status === VaccineEventStatus.Ongoing
                 ? 'hover:bg-blue-50 transition-colors cursor-pointer'
                 : 'hover:bg-gray-50 transition-colors cursor-pointer'
             }
@@ -496,7 +495,7 @@ const CensorList: React.FC = () => {
           onCancel={() => setIsModalVisible(false)}
           width={900}
           footer={
-            selectedPlan?.status === VaccineEventStatus.ONGOING
+            selectedPlan?.status === VaccineEventStatus.Ongoing
               ? [
                   <Button key='cancel' onClick={() => setIsModalVisible(false)}>
                     Đóng
@@ -512,7 +511,7 @@ const CensorList: React.FC = () => {
                         okText: 'Xác nhận',
                         cancelText: 'Hủy',
                         onOk: () => {
-                          handleUpdateStatus(selectedPlan._id, VaccineEventStatus.CANCELLED)
+                          handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Cancelled)
                           setIsModalVisible(false)
                         }
                       })
@@ -525,9 +524,12 @@ const CensorList: React.FC = () => {
                     type='primary'
                     icon={<CheckOutlined />}
                     onClick={() => {
-                      handleUpdateStatus(selectedPlan._id, VaccineEventStatus.COMPLETED)
-                      setIsModalVisible(false)
+                      if (selectedPlan) {
+                        handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Completed)
+                        setIsModalVisible(false)
+                      }
                     }}
+                    disabled={selectedPlan ? dayjs(selectedPlan.eventDate).isAfter(dayjs()) : true}
                   >
                     Duyệt sự kiện
                   </Button>
@@ -595,6 +597,16 @@ const CensorList: React.FC = () => {
                     {(selectedPlan.startRegistrationDate ? formatDateTime(selectedPlan.startRegistrationDate) : '-') +
                       ' - ' +
                       (selectedPlan.endRegistrationDate ? formatDateTime(selectedPlan.endRegistrationDate) : '-')}
+                  </Descriptions.Item>
+                  <Descriptions.Item
+                    label={
+                      <Space>
+                        <MedicineBoxOutlined />
+                        Đơn vị cung cấp
+                      </Space>
+                    }
+                  >
+                    {selectedPlan.provider}
                   </Descriptions.Item>
                   <Descriptions.Item
                     label={

@@ -11,12 +11,7 @@ import dayjs from 'dayjs'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { getGradesAPI } from '../../../api/grade.api'
-import {
-  createVaccineEvent,
-  updateVaccineEvent,
-  type VaccineEvent,
-  VaccineEventStatus
-} from '../../../api/vaccineEvent.api'
+import { vaccineEventApi, VaccineEventStatus, type VaccineEvent } from '../../../api/vaccineEvent.api'
 
 const { Option } = Select
 const { Title, Text } = Typography
@@ -38,6 +33,7 @@ interface FormValues {
   gradeId: string
   vaccineName: string
   location: string
+  provider: string
   dateRange: [dayjs.Dayjs, dayjs.Dayjs]
   eventDate: dayjs.Dayjs
   description: string
@@ -53,9 +49,9 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
   useEffect(() => {
     fetchGrades()
     if (isEdit && eventData) {
-      // Fill form with old data
       form.setFieldsValue({
         ...eventData,
+        provider: eventData.provider,
         dateRange: [dayjs(eventData.startRegistrationDate), dayjs(eventData.endRegistrationDate)],
         eventDate: dayjs(eventData.eventDate)
       })
@@ -96,16 +92,18 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
       const { dateRange, ...rest } = values
       const data = {
         ...rest,
-        startRegistrationDate: dateRange[0].toISOString(),
-        endRegistrationDate: dateRange[1].toISOString(),
-        eventDate: values.eventDate.toISOString(),
-        schoolYear: values.schoolYear
+        provider: values.provider,
+        startRegistrationDate: dateRange[0].toDate(),
+        endRegistrationDate: dateRange[1].toDate(),
+        eventDate: values.eventDate.toDate(),
+        schoolYear: values.schoolYear,
+        status: VaccineEventStatus.Ongoing
       }
       if (isEdit && eventData) {
-        await updateVaccineEvent(eventData._id, data)
+        await vaccineEventApi.update(eventData._id, data)
         message.success('Cập nhật kế hoạch tiêm chủng thành công')
       } else {
-        await createVaccineEvent({ ...data, status: VaccineEventStatus.ONGOING })
+        await vaccineEventApi.create(data)
         message.success('Tạo kế hoạch tiêm chủng thành công')
       }
       form.resetFields()
@@ -124,8 +122,18 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
   }
 
   // Disable ngày trong quá khứ cho tất cả DatePicker
-  const disabledPastDate = (current: dayjs.Dayjs) => {
-    return current && current.isBefore(dayjs(), 'day')
+  const disabledDate = (current: dayjs.Dayjs) => {
+    return current && current.isBefore(dayjs().startOf('day'))
+  }
+  const disabledDateTime = (current: dayjs.Dayjs | null) => {
+    const now = dayjs()
+    if (!current) return {}
+    if (!current.isSame(now, 'day')) return {}
+    return {
+      disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+      disabledMinutes: (selectedHour: number) =>
+        selectedHour === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : []
+    }
   }
 
   return (
@@ -213,6 +221,21 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
 
             <Col xs={24} lg={12}>
               <Form.Item
+                name='provider'
+                label={
+                  <Space>
+                    <MedicineBoxOutlined />
+                    <span>Đơn vị cung cấp</span>
+                  </Space>
+                }
+                rules={[{ required: true, message: 'Vui lòng nhập đơn vị cung cấp' }]}
+              >
+                <Input placeholder='Nhập tên đơn vị cung cấp' className='rounded-lg' />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} lg={12}>
+              <Form.Item
                 name='dateRange'
                 label={
                   <Space>
@@ -239,7 +262,8 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
-                  disabledDate={disabledPastDate}
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
                 />
               </Form.Item>
             </Col>
@@ -272,7 +296,8 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
                   placeholder='Chọn ngày và giờ diễn ra'
-                  disabledDate={disabledPastDate}
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
                 />
               </Form.Item>
             </Col>
