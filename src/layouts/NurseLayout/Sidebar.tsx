@@ -24,12 +24,22 @@ const Sidebar: React.FC = () => {
     {
       key: path.RESULTS_AFTER_VACCINATION,
       icon: <FileSearchOutlined className='text-lg' />,
-      label: 'Kết quả tiêm'
+      label: 'Tiêm chủng'
+    },
+    {
+      key: path.REGISTER_VACCINE,
+      icon: <FileSearchOutlined className='text-lg' />,
+      label: 'Đăng kí tiêm chủng'
+    },
+    {
+      key: path.APPOINTMENT_VACCINE,
+      icon: <FileSearchOutlined className='text-lg' />,
+      label: 'Kết quả tiêm chủng'
     },
     {
       key: path.RESULTS_AFTER_MEDICAL_CHECK,
       icon: <FileSearchOutlined className='text-lg' />,
-      label: 'Kết quả khám sức khỏe'
+      label: 'Khám sức khỏe'
     },
     {
       key: path.RECEIVE_MEDICINE,

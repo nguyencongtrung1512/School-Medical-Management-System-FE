@@ -36,6 +36,8 @@ import AppointmentPage from './pages/parent/privateConsultation/AppointmentPage'
 import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationSchedule'
 import Register from './pages/register'
 import VaccineRegistrationList from './pages/admin/censorManagement/VaccineRegistrationList'
+import AppointmentVaccine from './pages/nurse/appointmentVaccine/AppointmentVaccine'
+import RegisterVaccine from './pages/registerVaccine/RegisterVaccine'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -148,6 +150,14 @@ export default function useRouteElements() {
             {
               path: path.PRIVATE_CONSULTATION,
               element: <PrivateConsultation />
+            },
+            {
+              path: path.APPOINTMENT_VACCINE,
+              element: <AppointmentVaccine />
+            },
+            {
+              path: path.REGISTER_VACCINE,
+              element: <RegisterVaccine />
             }
           ]
         }
