@@ -29,11 +29,11 @@ const Sidebar: React.FC = () => {
       icon: <MedicineBoxOutlined className='text-xl' />,
       label: 'Tiêm chủng'
     },
-    {
-      key: path.VACCINE_REGISTRATION,
-      icon: <MedicineBoxOutlined className='text-xl' />,
-      label: 'Đăng kí tiêm chủng'
-    },
+    // {
+    //   key: path.VACCINE_REGISTRATION,
+    //   icon: <MedicineBoxOutlined className='text-xl' />,
+    //   label: 'Đăng kí tiêm chủng'
+    // },
     {
       key: path.MEDICAL_PLAN,
       icon: <HeartOutlined className='text-xl' />,

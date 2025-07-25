@@ -17,9 +17,9 @@ const Sidebar: React.FC = () => {
     //   label: 'DashBoard'
     // },
     {
-      key: path.PRIVATE_CONSULTATION,
+      key: path.HEALTH_RECORD_CENSORSHIP,
       icon: <FileSearchOutlined className='text-lg' />,
-      label: 'Tư vấn'
+      label: 'Hồ sơ sức khỏe'
     },
     {
       key: path.RESULTS_AFTER_VACCINATION,
@@ -71,7 +71,12 @@ const Sidebar: React.FC = () => {
       key: path.MEDICINES,
       icon: <FileSearchOutlined className='text-lg' />,
       label: 'Kho thuốc'
-    }
+    },
+    {
+      key: path.PRIVATE_CONSULTATION,
+      icon: <FileSearchOutlined className='text-lg' />,
+      label: 'Tư vấn'
+    },
     // {
     //   key: path.MEDICAL_PLAN,
     //   icon: <FileSearchOutlined className='text-lg' />,

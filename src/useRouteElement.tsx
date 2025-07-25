@@ -113,10 +113,10 @@ export default function useRouteElements() {
           path: path.BASE_NURSE,
           element: <NurseLayout />,
           children: [
-            {
-              path: path.DASHBOARD_NURSE,
-              element: <DashBoardNurse />
-            },
+            // {
+            //   path: path.DASHBOARD_NURSE,
+            //   element: <DashBoardNurse />
+            // },
             {
               path: path.HEALTH_RECORD_CENSORSHIP,
               element: <HealthRecordCensorship />
