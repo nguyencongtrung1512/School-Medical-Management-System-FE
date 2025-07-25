@@ -4,6 +4,7 @@ export interface Medicine {
   _id: string
   name: string
   description: string
+  quantity: number
   dosage: string
   sideEffects: string
   manufacturer: string // Thêm trường hãng sản xuất

@@ -124,8 +124,8 @@ export interface CreateMedicalEventRequest {
   eventName: string
   description?: string
   actionTaken?: string
-  medicinesId?: string[]
-  medicalSuppliesId?: string[]
+  medicinesUsed: string[]
+  medicalSuppliesUsed: string[]
   severityLevel?: SeverityLevel
   status?: MedicalEventStatus
   leaveMethod?: LeaveMethod
