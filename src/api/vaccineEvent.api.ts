@@ -49,7 +49,7 @@ export interface SearchVaccineEventDTO {
 
 export const vaccineEventApi = {
   create: (data: CreateVaccineEventDTO) => {
-    return axiosInstance.post('/vaccine-events/create', data)
+  return axiosInstance.post('/vaccine-events/create', data)
   },
   search: (params: SearchVaccineEventDTO) => {
     // Nếu có pageNum và pageSize, gọi endpoint dạng /vaccine-events/search/:pageNum/:pageSize
@@ -67,5 +67,5 @@ export const vaccineEventApi = {
   },
   updateStatus: (id: string, status: VaccineEventStatus) => {
     return axiosInstance.patch(`/vaccine-events/${id}/status`, { status })
-  }
+}
 }
