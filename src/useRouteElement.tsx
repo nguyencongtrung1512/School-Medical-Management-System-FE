@@ -37,8 +37,8 @@ import VaccinationSchedule from './pages/parent/vaccinationSchedule/VaccinationS
 import Register from './pages/register'
 import VaccineRegistrationList from './pages/admin/censorManagement/VaccineRegistrationList'
 import AppointmentVaccine from './pages/nurse/appointmentVaccine/AppointmentVaccine'
-import RegisterVaccine from './pages/registerVaccine/RegisterVaccine'
-import RegisterMedicalCheck from './pages/registerMedicalCheck/RegisterMedicalCheck'
+import RegisterVaccine from './pages/nurse/registerVaccine/RegisterVaccine'
+import RegisterMedicalCheck from './pages/nurse/registerMedicalCheck/RegisterMedicalCheck'
 import AppointmentMedicalCheck from './pages/nurse/appointmentMedicalCheck/AppointmentMedicalCheck'
 
 export default function useRouteElements() {

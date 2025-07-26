@@ -22,12 +22,13 @@ import {
   Table,
   Tag,
   Typography,
-  Avatar
+  Avatar,
+  Form
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import { RegistrationStatus, vaccineRegistrationApi, type VaccineRegistration } from '../../api/vaccineRegistration.api'
+import { RegistrationStatus, vaccineRegistrationApi, type VaccineRegistration } from '../../../api/vaccineRegistration.api'
 
 const { Title } = Typography
 const { Search } = Input
@@ -48,9 +49,9 @@ const statusLabels: Record<string, string> = {
 }
 
 interface PopulatedVaccineRegistration extends VaccineRegistration {
-  parent?: { fullName?: string; email?: string }
-  student?: { fullName?: string; avatar?: string }
-  event?: { title?: string }
+  parent?: { _id: string; fullName?: string; email?: string }
+  student?: { _id: string; fullName?: string; avatar?: string }
+  event?: { _id: string; title?: string }
 }
 
 const RegisterVaccine: React.FC = () => {
@@ -63,7 +64,9 @@ const RegisterVaccine: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<RegistrationStatus | undefined>(undefined)
   const [selected, setSelected] = useState<PopulatedVaccineRegistration | null>(null)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [rejectForm] = Form.useForm()
 
   useEffect(() => {
     fetchRegistrations()
@@ -104,14 +107,15 @@ const RegisterVaccine: React.FC = () => {
   const handleExportExcel = async () => {
     setExporting(true)
     try {
-      const res = await vaccineRegistrationApi.exportExcel({})
-      const url = window.URL.createObjectURL(new Blob([res]))
+      const response = await vaccineRegistrationApi.exportExcel({ pageNum: currentPage, pageSize })
+      const blob = new Blob([response as unknown as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', 'vaccine-registrations.xlsx')
-      document.body.appendChild(link)
+      link.download = `vaccine-registrations-${dayjs().format('YYYY-MM-DD')}.xlsx`
       link.click()
-      link.parentNode?.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      message.success('Xuất Excel thành công!')
     } catch {
       message.error('Xuất Excel thất bại!')
     } finally {
@@ -128,6 +132,23 @@ const RegisterVaccine: React.FC = () => {
       fetchRegistrations()
     } catch {
       message.error('Duyệt đơn thất bại!')
+    }
+  }
+
+  const handleReject = async (values: { cancellationReason: string }) => {
+    if (!selected) return
+    try {
+      await vaccineRegistrationApi.updateStatus(selected._id, {
+        status: RegistrationStatus.Rejected,
+        cancellationReason: values.cancellationReason
+      })
+      message.success('Từ chối đơn thành công!')
+      setIsRejectModalVisible(false)
+      setIsDetailModalVisible(false)
+      rejectForm.resetFields()
+      fetchRegistrations()
+    } catch {
+      message.error('Từ chối đơn thất bại!')
     }
   }
 
@@ -202,8 +223,8 @@ const RegisterVaccine: React.FC = () => {
   const filteredRegistrations: PopulatedVaccineRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -289,6 +310,11 @@ const RegisterVaccine: React.FC = () => {
                 Duyệt đơn
               </Button>
             ),
+            selected?.status === RegistrationStatus.Pending && (
+              <Button key='reject' danger onClick={() => setIsRejectModalVisible(true)}>
+                Từ chối
+              </Button>
+            ),
             <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
               Đóng
             </Button>
@@ -329,6 +355,41 @@ const RegisterVaccine: React.FC = () => {
               </Descriptions>
             </>
           )}
+        </Modal>
+        <Modal
+          title={
+            <Space>
+              <StopOutlined className='text-red-500' />
+              Từ chối đơn đăng ký
+            </Space>
+          }
+          open={isRejectModalVisible}
+          onCancel={() => {
+            setIsRejectModalVisible(false)
+            rejectForm.resetFields()
+          }}
+          footer={[
+            <Button key='cancel' onClick={() => {
+              setIsRejectModalVisible(false)
+              rejectForm.resetFields()
+            }}>
+              Hủy
+            </Button>,
+            <Button key='submit' type='primary' danger onClick={() => rejectForm.submit()}>
+              Từ chối
+            </Button>
+          ]}
+          width={500}
+        >
+          <Form form={rejectForm} onFinish={handleReject} layout='vertical'>
+            <Form.Item
+              label='Lý do từ chối'
+              name='cancellationReason'
+              rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối!' }]}
+            >
+              <Input.TextArea rows={4} placeholder='Nhập lý do từ chối đơn đăng ký...' />
+            </Form.Item>
+          </Form>
         </Modal>
       </Card>
     </div>

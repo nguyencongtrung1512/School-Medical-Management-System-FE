@@ -1,20 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Card, Table, Button, Space, Tag, Typography, Input, Modal, Descriptions, Select, message, Row, Col, Avatar
-} from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
-  StopOutlined,
-  SearchOutlined,
+  EditOutlined,
   EyeOutlined,
-  ReloadOutlined,
   FileExcelOutlined,
-  EditOutlined
+  ReloadOutlined,
+  SearchOutlined,
+  StopOutlined
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { medicalCheckRegistrationApi, RegistrationStatus, type MedicalCheckRegistration } from '../../api/medicalCheckRegistration.api';
+import {
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Input,
+  message,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag, Typography,
+  Form
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import { medicalCheckRegistrationApi, RegistrationStatus, type MedicalCheckRegistration } from '../../../api/medicalCheckRegistration.api';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -37,7 +50,7 @@ const statusLabels: Record<string, string> = {
 interface PopulatedMedicalCheckRegistration extends MedicalCheckRegistration {
   parent?: { _id: string; fullName?: string; email?: string };
   student?: { _id: string; fullName?: string; avatar?: string };
-  event?: { _id: string; title?: string };
+  event?: { _id: string; eventName?: string };
 }
 
 const RegisterMedicalCheck: React.FC = () => {
@@ -50,7 +63,9 @@ const RegisterMedicalCheck: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<RegistrationStatus | undefined>(undefined);
   const [selected, setSelected] = useState<PopulatedMedicalCheckRegistration | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [rejectForm] = Form.useForm();
 
   useEffect(() => {
     fetchRegistrations();
@@ -91,14 +106,15 @@ const RegisterMedicalCheck: React.FC = () => {
   const handleExportExcel = async () => {
     setExporting(true);
     try {
-      const res = await medicalCheckRegistrationApi.exportExcel({});
-      const url = window.URL.createObjectURL(new Blob([res]));
+      const response = await medicalCheckRegistrationApi.exportExcel({ pageNum: currentPage, pageSize });
+      const blob = new Blob([response as unknown as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'medical-check-registrations.xlsx');
-      document.body.appendChild(link);
+      link.download = `medical-check-registrations-${dayjs().format('YYYY-MM-DD')}.xlsx`;
       link.click();
-      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success('Xuất Excel thành công!');
     } catch {
       message.error('Xuất Excel thất bại!');
     } finally {
@@ -118,6 +134,23 @@ const RegisterMedicalCheck: React.FC = () => {
     }
   };
 
+  const handleReject = async (values: { cancellationReason: string }) => {
+    if (!selected) return;
+    try {
+      await medicalCheckRegistrationApi.updateStatus(selected._id, {
+        status: RegistrationStatus.Rejected,
+        cancellationReason: values.cancellationReason
+      });
+      message.success('Từ chối đơn thành công!');
+      setIsRejectModalVisible(false);
+      setIsDetailModalVisible(false);
+      rejectForm.resetFields();
+      fetchRegistrations();
+    } catch {
+      message.error('Từ chối đơn thất bại!');
+    }
+  };
+
   const columns: ColumnsType<PopulatedMedicalCheckRegistration> = [
     {
       title: 'Học sinh',
@@ -129,7 +162,7 @@ const RegisterMedicalCheck: React.FC = () => {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.event?.title || record.eventId,
+      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.event?.eventName || record.eventId,
     },
     {
       title: 'Phụ huynh',
@@ -189,8 +222,8 @@ const RegisterMedicalCheck: React.FC = () => {
   const filteredRegistrations: PopulatedMedicalCheckRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true;
     const matchesStatus = statusFilter ? item.status === statusFilter : true;
     return matchesSearch && matchesStatus;
@@ -273,6 +306,11 @@ const RegisterMedicalCheck: React.FC = () => {
                 Duyệt đơn
               </Button>
             ),
+            selected?.status === RegistrationStatus.Pending && (
+              <Button key='reject' danger onClick={() => setIsRejectModalVisible(true)}>
+                Từ chối
+              </Button>
+            ),
             <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
               Đóng
             </Button>
@@ -290,7 +328,7 @@ const RegisterMedicalCheck: React.FC = () => {
                 </div>
               </div>
               <Descriptions bordered column={1} size='small'>
-                <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Sự kiện'>{selected.event?.eventName || selected.eventId}</Descriptions.Item>
                 <Descriptions.Item label='Phụ huynh'>{selected.parent?.fullName || selected.parentId}</Descriptions.Item>
                 <Descriptions.Item label='Trạng thái'>{statusLabels[selected.status]}</Descriptions.Item>
                 <Descriptions.Item label='Lý do'>{selected.cancellationReason || '-'}</Descriptions.Item>
@@ -302,6 +340,41 @@ const RegisterMedicalCheck: React.FC = () => {
               </Descriptions>
             </>
           )}
+        </Modal>
+        <Modal
+          title={
+            <Space>
+              <StopOutlined className='text-red-500' />
+              Từ chối đơn đăng ký
+            </Space>
+          }
+          open={isRejectModalVisible}
+          onCancel={() => {
+            setIsRejectModalVisible(false);
+            rejectForm.resetFields();
+          }}
+          footer={[
+            <Button key='cancel' onClick={() => {
+              setIsRejectModalVisible(false);
+              rejectForm.resetFields();
+            }}>
+              Hủy
+            </Button>,
+            <Button key='submit' type='primary' danger onClick={() => rejectForm.submit()}>
+              Từ chối
+            </Button>
+          ]}
+          width={500}
+        >
+          <Form form={rejectForm} onFinish={handleReject} layout='vertical'>
+            <Form.Item
+              label='Lý do từ chối'
+              name='cancellationReason'
+              rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối!' }]}
+            >
+              <Input.TextArea rows={4} placeholder='Nhập lý do từ chối đơn đăng ký...' />
+            </Form.Item>
+          </Form>
         </Modal>
       </Card>
     </div>
