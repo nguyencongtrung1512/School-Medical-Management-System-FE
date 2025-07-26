@@ -6,7 +6,7 @@ export enum AppointmentStatus {
   Ineligible = 'ineligible',
   Vaccinated = 'vaccinated',
   Cancelled = 'cancelled',
-  MedicalChecked = 'medicalCheckedAt',
+  MedicalChecked = 'medicalChecked'
 }
 
 export enum PostMedicalCheckStatus {
@@ -14,7 +14,7 @@ export enum PostMedicalCheckStatus {
   Healthy = 'healthy',
   NeedFollowUp = 'need_follow_up',
   Sick = 'sick',
-  Other = 'other',
+  Other = 'other'
 }
 
 export interface MedicalCheckAppointment {
@@ -95,8 +95,8 @@ export const medicalCheckAppointmentApi = {
     return axiosInstance.post('/medical-check-appoinments/create', data)
   },
   search: (params: SearchMedicalCheckAppointmentDTO) => {
-    const { pageNum = 1, pageSize = 10, ...rest } = params || {};
-    return axiosInstance.get(`/medical-check-appoinments/search/${pageNum}/${pageSize}`, { params: rest });
+    const { pageNum = 1, pageSize = 10, ...rest } = params || {}
+    return axiosInstance.get(`/medical-check-appoinments/search/${pageNum}/${pageSize}`, { params: rest })
   },
   getById: (id: string) => {
     return axiosInstance.get(`/medical-check-appoinments/${id}`)

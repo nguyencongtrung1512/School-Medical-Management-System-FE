@@ -24,7 +24,7 @@ const statusOptions = [
   { value: AppointmentStatus.Checked, label: 'Đã kiểm tra', icon: <CheckCircleOutlined /> },
   { value: AppointmentStatus.Ineligible, label: 'Không đủ điều kiện', icon: <StopOutlined /> },
   { value: AppointmentStatus.Cancelled, label: 'Đã hủy', icon: <StopOutlined /> },
-  { value: AppointmentStatus.MedicalChecked, label: 'Đã khám', icon: <CheckCircleOutlined /> },
+  { value: AppointmentStatus.MedicalChecked, label: 'Đã khám sức khỏe', icon: <CheckCircleOutlined /> },
 ];
 
 const postMedicalCheckStatusLabels: Record<string, string> = {
@@ -181,7 +181,7 @@ const AppointmentMedicalCheck: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: PopulatedMedicalCheckAppointment) => (
         <Space>
-          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked || record.status === AppointmentStatus.Ineligible) && (
+          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) && (
             <Button type='primary' onClick={() => handleOpenCheck(record)}>Đánh dấu đã khám</Button>
           )}
           {record.status === AppointmentStatus.MedicalChecked &&
@@ -199,7 +199,7 @@ const AppointmentMedicalCheck: React.FC = () => {
   const filteredAppointments: PopulatedMedicalCheckAppointment[] = appointments.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true;
     const matchesStatus = statusFilter ? item.status === statusFilter : true;
     return matchesSearch && matchesStatus;

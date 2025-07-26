@@ -437,13 +437,17 @@ const ReceiveMedicine: React.FC = () => {
       // reload data
       setCurrentPage(1)
       // fetch lại chi tiết đơn thuốc nếu đang mở modal chi tiết
+      window.location.reload()
       if (selectedRequest) {
         try {
           const detailRes = await getMedicineSubmissionById(selectedRequest._id)
           console.log('detailRes', detailRes)
+          if (!detailRes.student?._id || !detailRes.parent?._id) {
+            throw new Error('Missing student or parent ID')
+          }
           const [studentResponse, parentResponse] = await Promise.all([
-            getStudentByIdAPI(detailRes.data.student._id as string),
-            getUserByIdAPI(detailRes.data.parent._id)
+            getStudentByIdAPI(detailRes.student._id),
+            getUserByIdAPI(detailRes.parent._id)
           ])
           setSelectedRequest({
             ...detailRes,
@@ -456,8 +460,11 @@ const ReceiveMedicine: React.FC = () => {
               updatedAt: med.updatedAt || ''
             }))
           })
-        } catch {
-          // ignore
+        } catch (error) {
+          console.error('Error refreshing modal details:', error)
+          // Nếu không fetch được chi tiết mới, ít nhất cũng refresh lại danh sách chính
+          // Trigger useEffect để reload data
+          setCurrentPage(prev => prev)
         }
       }
     } catch (error: unknown) {
@@ -612,22 +619,37 @@ const ReceiveMedicine: React.FC = () => {
                     size='small'
                   />
                 </div>
-                {selectedRequest.status === 'pending' && (
-                  <div className='flex justify-end gap-2 mt-6'>
-                    <Button
-                      type='primary'
-                      onClick={() => setConfirmModal({ open: true, type: 'approve', id: selectedRequest._id })}
-                    >
-                      Duyệt đơn
-                    </Button>
-                    <Button
-                      danger
-                      onClick={() => setConfirmModal({ open: true, type: 'reject', id: selectedRequest._id })}
-                    >
-                      Từ chối
-                    </Button>
-                  </div>
-                )}
+                {selectedRequest.status === 'pending' && (() => {
+                  // Kiểm tra có slot nào đã trễ không
+                  const now = new Date()
+                  const hasLateSlot = selectedRequest.medicines.some((med) =>
+                    (med.timeSlots || []).some(
+                      (time) => {
+                        const slotTime = new Date(time)
+                        return slotTime < now
+                      }
+                    )
+                  )
+
+                  return (
+                    <div className='flex justify-end gap-2 mt-6'>
+                      {!hasLateSlot && (
+                        <Button
+                          type='primary'
+                          onClick={() => setConfirmModal({ open: true, type: 'approve', id: selectedRequest._id })}
+                        >
+                          Duyệt đơn
+                        </Button>
+                      )}
+                      <Button
+                        danger
+                        onClick={() => setConfirmModal({ open: true, type: 'reject', id: selectedRequest._id })}
+                      >
+                        Từ chối
+                      </Button>
+                    </div>
+                  )
+                })()}
               </div>
             )}
           </Modal>

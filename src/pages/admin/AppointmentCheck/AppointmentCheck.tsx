@@ -78,7 +78,8 @@ function AppointmentCheck() {
   const fetchNurses = async (search?: string) => {
     try {
       const res = await searchNurseUsersAPI(1, 10, search)
-      setNurses(Array.isArray(res.pageData) ? res.pageData : [])
+      const responseData = (res as unknown as { pageData: Nurse[] })
+      setNurses(Array.isArray(responseData.pageData) ? responseData.pageData : [])
     } catch {
       setNurses([])
     }
@@ -136,14 +137,27 @@ function AppointmentCheck() {
     if (!selectedAppointment || !selectedNurse) return
     setAssigning(true)
     try {
-      await appointmentApi.approve(selectedAppointment._id, {
+      const response = await appointmentApi.approve(selectedAppointment._id, {
         status: ParentNurseAppointmentStatus.Approved,
         schoolNurseId: selectedNurse
       })
+
+      // Cập nhật appointment trong state với data mới từ response
+      const responseData = (response as unknown as { success: boolean; data: ParentNurseAppointment })
+      if (responseData.success && responseData.data) {
+        setAppointments(prev =>
+          prev.map(apt =>
+            apt._id === selectedAppointment._id
+              ? { ...apt, ...responseData.data, status: responseData.data.status }
+              : apt
+          )
+        )
+      }
+
       message.success('Giao y tá thành công!')
       setModalOpen(false)
       setSelectedNurse('')
-      fetchAppointments()
+      setSelectedAppointment(null)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
