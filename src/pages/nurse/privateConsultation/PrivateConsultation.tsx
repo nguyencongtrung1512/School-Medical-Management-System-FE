@@ -53,6 +53,7 @@ function PrivateConsultation() {
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [doneNote, setDoneNote] = useState('')
   const [cancelReason, setCancelReason] = useState('')
+  const [cancelNote, setCancelNote] = useState('')
   const [updating, setUpdating] = useState(false)
 
   // Filter states
@@ -65,7 +66,7 @@ function PrivateConsultation() {
     setLoading(true)
     try {
       const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
-      console.log("data", res)
+      console.log('data', res)
       setAppointments(res)
     } catch (error: unknown) {
       console.log('error', error)
@@ -203,8 +204,11 @@ function PrivateConsultation() {
       width: 120,
       render: (status) => getStatusTag(status),
       filters: [
+        { text: 'Chờ duyệt', value: 'pending' },
+        { text: 'Đã xác nhận', value: 'approved' },
         { text: 'Hoàn thành', value: 'done' },
-        { text: 'Đã hủy', value: 'cancelled' }
+        { text: 'Đã hủy', value: 'cancelled' },
+        { text: 'Từ chối', value: 'rejected' }
       ],
       onFilter: (value, record) => record.status === value
     },
@@ -235,6 +239,7 @@ function PrivateConsultation() {
   const handleCancelClick = (appt: ParentNurseAppointment) => {
     setSelectedAppointment(appt)
     setCancelModalOpen(true)
+    setCancelNote('')
     setCancelReason('')
   }
 
@@ -244,11 +249,13 @@ function PrivateConsultation() {
     try {
       await appointmentApi.updateStatus(selectedAppointment._id, {
         status: ParentNurseAppointmentStatus.Done,
-        note: doneNote
+        note: doneNote || undefined // Chỉ gửi note nếu có giá trị
       })
       message.success('Đánh dấu hoàn thành thành công!')
       setDoneModalOpen(false)
-      fetchAppointments()
+      setSelectedAppointment(null) // Reset selected appointment
+      setDoneNote('') // Reset note
+      await fetchAppointments() // Reload data
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -263,28 +270,27 @@ function PrivateConsultation() {
   }
 
   const confirmCancel = async () => {
-    if (!selectedAppointment || !cancelReason.trim()) {
-      message.error('Vui lòng nhập lý do hủy!')
+    if (!selectedAppointment || !cancelReason.trim() || !cancelNote.trim()) {
+      message.error('Vui lòng nhập đầy đủ lý do hủy và ghi chú!')
       return
     }
     setUpdating(true)
     try {
       await appointmentApi.updateStatus(selectedAppointment._id, {
         status: ParentNurseAppointmentStatus.Cancelled,
-        cancellationReason: cancelReason
+        cancellationReason: cancelReason.trim(),
+        note: cancelNote.trim(),
+        schoolNurseId: user?.id
       })
       message.success('Hủy lịch hẹn thành công!')
       setCancelModalOpen(false)
-      fetchAppointments()
+      setSelectedAppointment(null) // Reset selected appointment
+      setCancelReason('') // Reset reason
+      setCancelNote('') // Reset note
+      await fetchAppointments() // Reload data
     } catch (error: unknown) {
-      console.log('error', error)
       const err = error as { message?: string }
-      if (err.message) {
-        message.error(err.message)
-      } else {
-        message.error('Hủy lịch thất bại!')
-      }
-      message.error('Hủy lịch thất bại!')
+      message.error(err.message || 'Hủy lịch thất bại!')
     } finally {
       setUpdating(false)
     }
@@ -333,6 +339,9 @@ function PrivateConsultation() {
                 <Badge count={statusCounts.done || 0} color='green'>
                   <Tag color='green'>Hoàn thành</Tag>
                 </Badge>
+                <Badge count={statusCounts.cancelled || 0} color='red'>
+                  <Tag color='red'>Đã hủy</Tag>
+                </Badge>
               </Space>
             </Col>
           </Row>
@@ -362,12 +371,13 @@ function PrivateConsultation() {
                 value={statusFilter}
                 onChange={setStatusFilter}
                 allowClear
-                style={{ width: 120 }}
+                style={{ width: 150 }}
               >
                 <Option value='pending'>Chờ duyệt</Option>
                 <Option value='approved'>Đã xác nhận</Option>
                 <Option value='done'>Hoàn thành</Option>
                 <Option value='cancelled'>Đã hủy</Option>
+                <Option value='rejected'>Từ chối</Option>
               </Select>
             </Col>
             <Col>
@@ -479,6 +489,23 @@ function PrivateConsultation() {
                     </div>
                   </div>
                 )}
+                {/* Hiển thị lý do hủy nếu có */}
+                {selectedAppointment.cancellationReason && (
+                  <div>
+                    <Text strong>Lý do hủy: </Text>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        padding: 12,
+                        background: '#fff2f0',
+                        borderRadius: 6,
+                        border: '1px solid #ffccc7'
+                      }}
+                    >
+                      <Text type='danger'>{selectedAppointment.cancellationReason}</Text>
+                    </div>
+                  </div>
+                )}
               </Space>
             </Card>
           </div>
@@ -518,15 +545,25 @@ function PrivateConsultation() {
         okText='Xác nhận hủy'
         cancelText='Đóng'
         confirmLoading={updating}
-        okButtonProps={{ danger: true, disabled: !cancelReason.trim() }}
+        okButtonProps={{ danger: true, disabled: !cancelReason.trim() || !cancelNote.trim() }}
       >
         <div className='space-y-2'>
-          <Text strong>Lý do hủy</Text>
+          <Text strong>Lý do hủy *</Text>
           <TextArea
             rows={3}
             placeholder='Nhập lý do hủy...'
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </div>
+
+        <div className='space-y-2' style={{ marginTop: 12 }}>
+          <Text strong>Ghi chú *</Text>
+          <TextArea
+            rows={3}
+            placeholder='Nhập ghi chú...'
+            value={cancelNote}
+            onChange={(e) => setCancelNote(e.target.value)}
           />
         </div>
       </Modal>

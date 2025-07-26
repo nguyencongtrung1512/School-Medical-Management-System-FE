@@ -43,6 +43,7 @@ export interface ParentNurseAppointment {
   studentId: string
   schoolNurseId?: string
   appointmentTime: string
+  cancellationReason: string
   reason: string
   type: AppointmentType
   status: ParentNurseAppointmentStatus
