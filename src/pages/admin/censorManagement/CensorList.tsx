@@ -11,7 +11,6 @@ import {
   EditOutlined,
   EnvironmentOutlined,
   ExclamationCircleOutlined,
-  ExportOutlined,
   EyeOutlined,
   MedicineBoxOutlined,
   PlusOutlined,
@@ -42,6 +41,7 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { vaccineEventApi, VaccineEventStatus } from '../../../api/vaccineEvent.api'
+import { searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
 import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
@@ -52,7 +52,7 @@ interface VaccineEvent {
   title: string
   gradeId: string
   description?: string
-  vaccineName: string
+  vaccineTypeId: string
   location: string
   provider: string
   startRegistrationDate: Date
@@ -86,9 +86,11 @@ const CensorList: React.FC = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
   const [editEvent, setEditEvent] = useState<VaccineEvent | null>(null)
+  const [vaccineTypes, setVaccineTypes] = useState<VaccineType[]>([])
 
   useEffect(() => {
     fetchVaccineEvents()
+    fetchVaccineTypes()
   }, [currentPage, pageSize])
 
   const fetchVaccineEvents = async () => {
@@ -109,6 +111,22 @@ const CensorList: React.FC = () => {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchVaccineTypes = async () => {
+    try {
+      const response = await searchVaccineTypesAPI(1, 100)
+      const vaccineTypesData = response?.pageData || []
+      setVaccineTypes(vaccineTypesData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách loại vaccine')
+      }
     }
   }
 
@@ -155,7 +173,10 @@ const CensorList: React.FC = () => {
           <div>
             <div className='font-medium text-gray-900'>{record.title}</div>
             <Text type='secondary' className='text-sm'>
-              {record.vaccineName}
+              {(() => {
+                const vaccineType = vaccineTypes.find(vt => vt._id === record.vaccineTypeId)
+                return vaccineType ? `${vaccineType.name} (${vaccineType.code})` : `Vaccine Type ID: ${record.vaccineTypeId}`
+              })()}
             </Text>
           </div>
         </Space>
@@ -207,7 +228,7 @@ const CensorList: React.FC = () => {
         const config = getStatusConfig(status)
         return (
           <Badge
-            status={config.color as any}
+            status={config.color as 'success' | 'processing' | 'error' | 'default'}
             text={
               <Tag color={config.color} icon={config.icon}>
                 {config.text}
@@ -324,8 +345,8 @@ const CensorList: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -475,10 +496,10 @@ const CensorList: React.FC = () => {
                 ? 'hover:bg-blue-50 transition-colors cursor-pointer'
                 : 'hover:bg-gray-50 transition-colors cursor-pointer'
             }
-            // Bỏ onRow event handler để tránh conflict với button clicks
-            // onRow={(record) => ({
-            //   onClick: () => handleViewDetails(record)
-            // })}
+          // Bỏ onRow event handler để tránh conflict với button clicks
+          // onRow={(record) => ({
+          //   onClick: () => handleViewDetails(record)
+          // })}
           />
         </Card>
 
@@ -494,50 +515,51 @@ const CensorList: React.FC = () => {
           onCancel={() => setIsModalVisible(false)}
           width={900}
           footer={
-            selectedPlan?.status === VaccineEventStatus.Ongoing
-              ? [
-                  <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                    Đóng
-                  </Button>,
-                  <Button
-                    key='reject'
-                    danger
-                    icon={<CloseOutlined />}
-                    onClick={() => {
-                      Modal.confirm({
-                        title: 'Xác nhận hủy sự kiện',
-                        content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedPlan?.title}"?`,
-                        okText: 'Xác nhận',
-                        cancelText: 'Hủy',
-                        onOk: () => {
-                          handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Cancelled)
-                          setIsModalVisible(false)
-                        }
-                      })
-                    }}
-                  >
-                    Hủy sự kiện
-                  </Button>,
-                  <Button
-                    key='approve'
-                    type='primary'
-                    icon={<CheckOutlined />}
-                    onClick={() => {
-                      if (selectedPlan) {
-                        handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Completed)
-                      setIsModalVisible(false)
+            selectedPlan?.status === VaccineEventStatus.Ongoing ?
+              <>
+                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>,
+                <Button
+                  key='reject'
+                  danger
+                  icon={<CloseOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Xác nhận hủy sự kiện',
+                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedPlan?.title}"?`,
+                      okText: 'Xác nhận',
+                      cancelText: 'Hủy',
+                      onOk: () => {
+                        handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Cancelled)
+                        setIsModalVisible(false)
                       }
-                    }}
-                    disabled={selectedPlan ? dayjs(selectedPlan.eventDate).isAfter(dayjs()) : true}
-                  >
-                    Duyệt sự kiện
-                  </Button>
-                ]
-              : [
-                  <Button key='close' onClick={() => setIsModalVisible(false)}>
-                    Đóng
-                  </Button>
-                ]
+                    })
+                  }}
+                >
+                  Hủy sự kiện
+                </Button>,
+                <Button
+                  key='approve'
+                  type='primary'
+                  icon={<CheckOutlined />}
+                  onClick={() => {
+                    if (selectedPlan) {
+                      handleUpdateStatus(selectedPlan._id, VaccineEventStatus.Completed)
+                      setIsModalVisible(false)
+                    }
+                  }}
+                  disabled={selectedPlan ? dayjs(selectedPlan.eventDate).isAfter(dayjs()) : true}
+                >
+                  Duyệt sự kiện
+                </Button>
+              </>
+              :
+              <>
+                <Button key='close' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>
+              </>
           }
         >
           {selectedPlan && (
@@ -554,7 +576,10 @@ const CensorList: React.FC = () => {
                         {selectedPlan.title}
                       </Title>
                       <Text type='secondary' className='text-lg'>
-                        {selectedPlan.vaccineName}
+                        {(() => {
+                          const vaccineType = vaccineTypes.find(vt => vt._id === selectedPlan.vaccineTypeId)
+                          return vaccineType ? `${vaccineType.name} (${vaccineType.code})` : `Vaccine Type ID: ${selectedPlan.vaccineTypeId}`
+                        })()}
                       </Text>
                       <div className='mt-2'>{getStatusConfig(selectedPlan.status).icon}</div>
                     </Space>

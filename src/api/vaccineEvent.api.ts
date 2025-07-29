@@ -11,7 +11,7 @@ export interface VaccineEvent {
   title: string
   gradeId: string
   description?: string
-  vaccineName: string
+  vaccineTypeId: string
   location: string
   provider: string
   startRegistrationDate: Date
@@ -28,15 +28,17 @@ export interface CreateVaccineEventDTO {
   title: string
   gradeId: string
   description?: string
-  vaccineName: string
+  vaccineTypeId: string
   location: string
   provider: string
   startRegistrationDate: Date
   endRegistrationDate: Date
   eventDate: Date
-  status: VaccineEventStatus
+  status?: VaccineEventStatus
   schoolYear: string
 }
+
+export type UpdateVaccineEventDTO = Partial<CreateVaccineEventDTO>
 
 export interface SearchVaccineEventDTO {
   pageNum?: number
@@ -45,14 +47,18 @@ export interface SearchVaccineEventDTO {
   gradeId?: string
   schoolYear?: string
   status?: VaccineEventStatus
+  isDeleted?: string
+}
+
+export interface UpdateEventStatusDTO {
+  status: VaccineEventStatus
 }
 
 export const vaccineEventApi = {
   create: (data: CreateVaccineEventDTO) => {
-  return axiosInstance.post('/vaccine-events/create', data)
+    return axiosInstance.post('/vaccine-events/create', data)
   },
   search: (params: SearchVaccineEventDTO) => {
-    // Nếu có pageNum và pageSize, gọi endpoint dạng /vaccine-events/search/:pageNum/:pageSize
     const { pageNum = 1, pageSize = 10, ...rest } = params
     return axiosInstance.get(`/vaccine-events/search/${pageNum}/${pageSize}`, { params: rest })
   },
@@ -67,5 +73,5 @@ export const vaccineEventApi = {
   },
   updateStatus: (id: string, status: VaccineEventStatus) => {
     return axiosInstance.patch(`/vaccine-events/${id}/status`, { status })
-}
+  }
 }

@@ -12,6 +12,7 @@ import type React from 'react'
 import { useEffect, useState } from 'react'
 import { getGradesAPI } from '../../../api/grade.api'
 import { vaccineEventApi, VaccineEventStatus, type VaccineEvent } from '../../../api/vaccineEvent.api'
+import { searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
 
 const { Option } = Select
 const { Title, Text } = Typography
@@ -31,10 +32,11 @@ interface CreateVaccineEventProps {
 interface FormValues {
   title: string
   gradeId: string
-  vaccineName: string
+  vaccineTypeId: string
   location: string
   provider: string
-  dateRange: [dayjs.Dayjs, dayjs.Dayjs]
+  startRegistrationDate: dayjs.Dayjs
+  endRegistrationDate: dayjs.Dayjs
   eventDate: dayjs.Dayjs
   description: string
   schoolYear: string
@@ -43,16 +45,19 @@ interface FormValues {
 const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, eventData, isEdit }) => {
   const [form] = Form.useForm()
   const [grades, setGrades] = useState<Grade[]>([])
+  const [vaccineTypes, setVaccineTypes] = useState<VaccineType[]>([])
   const [loading, setLoading] = useState(false)
   const [schoolYear, setSchoolYear] = useState<string>('')
 
   useEffect(() => {
     fetchGrades()
+    fetchVaccineTypes()
     if (isEdit && eventData) {
       form.setFieldsValue({
         ...eventData,
         provider: eventData.provider,
-        dateRange: [dayjs(eventData.startRegistrationDate), dayjs(eventData.endRegistrationDate)],
+        startRegistrationDate: dayjs(eventData.startRegistrationDate),
+        endRegistrationDate: dayjs(eventData.endRegistrationDate),
         eventDate: dayjs(eventData.eventDate)
       })
       setSchoolYear(eventData.schoolYear)
@@ -86,15 +91,30 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
     }
   }
 
+  const fetchVaccineTypes = async () => {
+    try {
+      const response = await searchVaccineTypesAPI(1, 100) // Get all vaccine types
+      const vaccineTypesData = response.data?.pageData || []
+      setVaccineTypes(vaccineTypesData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách loại vaccine')
+      }
+    }
+  }
+
   const handleSubmit = async (values: FormValues) => {
     try {
       setLoading(true)
-      const { dateRange, ...rest } = values
       const data = {
-        ...rest,
+        ...values,
         provider: values.provider,
-        startRegistrationDate: dateRange[0].toDate(),
-        endRegistrationDate: dateRange[1].toDate(),
+        startRegistrationDate: values.startRegistrationDate.toDate(),
+        endRegistrationDate: values.endRegistrationDate.toDate(),
         eventDate: values.eventDate.toDate(),
         schoolYear: values.schoolYear,
         status: VaccineEventStatus.Ongoing
@@ -142,10 +162,10 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
         <div className='mb-6'>
           <Title level={2} className='text-center mb-2'>
             <MedicineBoxOutlined className='mr-3 text-blue-500' />
-            Tạo Kế Hoạch Tiêm Chủng
+            {isEdit ? 'Cập Nhật Kế Hoạch Tiêm Chủng' : 'Tạo Kế Hoạch Tiêm Chủng'}
           </Title>
           <Text type='secondary' className='block text-center'>
-            Điền thông tin chi tiết để tạo kế hoạch tiêm chủng mới
+            {isEdit ? 'Cập nhật thông tin kế hoạch tiêm chủng' : 'Điền thông tin chi tiết để tạo kế hoạch tiêm chủng mới'}
           </Text>
         </div>
 
@@ -191,16 +211,28 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
 
             <Col xs={24} lg={12}>
               <Form.Item
-                name='vaccineName'
+                name='vaccineTypeId'
                 label={
                   <Space>
                     <MedicineBoxOutlined />
-                    <span>Tên vaccine</span>
+                    <span>Loại vaccine</span>
                   </Space>
                 }
-                rules={[{ required: true, message: 'Vui lòng nhập tên vaccine' }]}
+                rules={[{ required: true, message: 'Vui lòng chọn loại vaccine' }]}
               >
-                <Input placeholder='Nhập tên vaccine (VD: Vaccine COVID-19)' className='rounded-lg' />
+                <Select
+                  placeholder='Chọn loại vaccine'
+                  className='rounded-lg'
+                  showSearch
+                  optionFilterProp='children'
+                  loading={vaccineTypes.length === 0}
+                >
+                  {vaccineTypes.map((vaccineType) => (
+                    <Option key={vaccineType._id} value={vaccineType._id}>
+                      {vaccineType.name} ({vaccineType.code})
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
 
@@ -236,20 +268,20 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
 
             <Col xs={24} lg={12}>
               <Form.Item
-                name='dateRange'
+                name='startRegistrationDate'
                 label={
                   <Space>
                     <CalendarOutlined />
-                    <span>Thời gian đăng ký</span>
+                    <span>Thời gian bắt đầu đăng ký</span>
                   </Space>
                 }
                 rules={[
-                  { required: true, message: 'Vui lòng chọn thời gian đăng ký' },
+                  { required: true, message: 'Vui lòng chọn thời gian bắt đầu đăng ký' },
                   () => ({
                     validator(_, value) {
-                      if (!value || !value[0]) return Promise.resolve()
+                      if (!value) return Promise.resolve()
                       const now = dayjs()
-                      if (value[0].isBefore(now, 'minute')) {
+                      if (value.isBefore(now, 'minute')) {
                         return Promise.reject('Ngày bắt đầu đăng ký không được nhỏ hơn hiện tại!')
                       }
                       return Promise.resolve()
@@ -257,11 +289,45 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   })
                 ]}
               >
-                <DatePicker.RangePicker
+                <DatePicker
                   showTime
                   format='DD/MM/YYYY HH:mm'
                   className='w-full rounded-lg'
-                  placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                  placeholder='Chọn ngày và giờ bắt đầu'
+                  disabledDate={disabledDate}
+                  disabledTime={(date) => disabledDateTime(date)}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} lg={12}>
+              <Form.Item
+                name='endRegistrationDate'
+                label={
+                  <Space>
+                    <CalendarOutlined />
+                    <span>Thời gian kết thúc đăng ký</span>
+                  </Space>
+                }
+                rules={[
+                  { required: true, message: 'Vui lòng chọn thời gian kết thúc đăng ký' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const startDate = getFieldValue('startRegistrationDate')
+                      if (!value || !startDate) return Promise.resolve()
+                      if (value.isBefore(startDate)) {
+                        return Promise.reject('Thời gian kết thúc phải lớn hơn thời gian bắt đầu!')
+                      }
+                      return Promise.resolve()
+                    }
+                  })
+                ]}
+              >
+                <DatePicker
+                  showTime
+                  format='DD/MM/YYYY HH:mm'
+                  className='w-full rounded-lg'
+                  placeholder='Chọn ngày và giờ kết thúc'
                   disabledDate={disabledDate}
                   disabledTime={(date) => disabledDateTime(date)}
                 />
@@ -281,9 +347,9 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
                   { required: true, message: 'Vui lòng chọn ngày diễn ra sự kiện' },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
-                      const dateRange = getFieldValue('dateRange')
-                      if (!value || !dateRange || !dateRange[1]) return Promise.resolve()
-                      if (value.isAfter(dateRange[1])) {
+                      const endRegistrationDate = getFieldValue('endRegistrationDate')
+                      if (!value || !endRegistrationDate) return Promise.resolve()
+                      if (value.isAfter(endRegistrationDate)) {
                         return Promise.resolve()
                       }
                       return Promise.reject('Ngày diễn ra sự kiện phải lớn hơn thời gian đăng ký kết thúc!')
