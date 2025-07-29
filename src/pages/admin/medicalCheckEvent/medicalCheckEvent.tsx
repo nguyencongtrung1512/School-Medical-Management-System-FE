@@ -157,8 +157,8 @@ const MedicalCheckEvent: React.FC = () => {
       title: 'Hạn đăng ký',
       key: 'deadline',
       render: (_, record) => {
-        const start = record.startRegistrationDate ? formatDateTime(record.startRegistrationDate) : '-'
-        const end = record.endRegistrationDate ? formatDateTime(record.endRegistrationDate) : '-'
+        const start = record.startRegistrationDate ? dayjs(record.startRegistrationDate).format('DD/MM/YYYY') : '-'
+        const end = record.endRegistrationDate ? dayjs(record.endRegistrationDate).format('DD/MM/YYYY') : '-'
         const isExpired = record.endRegistrationDate && dayjs(record.endRegistrationDate).isBefore(dayjs())
         return (
           <Space>
@@ -280,8 +280,8 @@ const MedicalCheckEvent: React.FC = () => {
   const filteredEvents = events.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     return matchesSearch
   })
@@ -466,46 +466,46 @@ const MedicalCheckEvent: React.FC = () => {
         footer={
           selectedEvent?.status === EventStatus.Ongoing
             ? [
-                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>,
-                <Button
-                  key='reject'
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Xác nhận hủy sự kiện',
-                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
-                      okText: 'Xác nhận',
-                      cancelText: 'Hủy',
-                      onOk: () => {
-                        handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
-                        setIsModalVisible(false)
-                      }
-                    })
-                  }}
-                >
-                  Hủy sự kiện
-                </Button>,
-                <Button
-                  key='approve'
-                  type='primary'
-                  icon={<CheckOutlined />}
-                  onClick={() => {
-                    handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
-                    setIsModalVisible(false)
-                  }}
-                  disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
-                >
-                  Hoàn thành
-                </Button>
-              ]
+              <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>,
+              <Button
+                key='reject'
+                danger
+                icon={<CloseOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Xác nhận hủy sự kiện',
+                    content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
+                    okText: 'Xác nhận',
+                    cancelText: 'Hủy',
+                    onOk: () => {
+                      handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
+                      setIsModalVisible(false)
+                    }
+                  })
+                }}
+              >
+                Hủy sự kiện
+              </Button>,
+              <Button
+                key='approve'
+                type='primary'
+                icon={<CheckOutlined />}
+                onClick={() => {
+                  handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
+                  setIsModalVisible(false)
+                }}
+                disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
+              >
+                Hoàn thành
+              </Button>
+            ]
             : [
-                <Button key='close' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>
-              ]
+              <Button key='close' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>
+            ]
         }
       >
         {selectedEvent && (
