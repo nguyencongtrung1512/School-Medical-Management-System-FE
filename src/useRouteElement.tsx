@@ -21,7 +21,7 @@ import GradeList from './pages/admin/gradeManagement/GradeList'
 import MedicalCheckEvent from './pages/admin/medicalCheckEvent'
 import StudentList from './pages/admin/studentManagement/StudentList'
 import UserList from './pages/admin/userManagement/UserList'
-import DashBoardNurse from './pages/nurse/dashboardNurse/DashBoardNurse'
+// import DashBoardNurse from './pages/nurse/dashboardNurse/DashBoardNurse'
 import MedicalReport from './pages/nurse/medicalReport/MedicalReport'
 import MedicalSuppliesList from './pages/nurse/medicalSupplies/MedicalSuppliesList'
 import MedicinesList from './pages/nurse/medicines/MedicinesList'
@@ -40,6 +40,7 @@ import AppointmentVaccine from './pages/nurse/appointmentVaccine/AppointmentVacc
 import RegisterVaccine from './pages/nurse/registerVaccine/RegisterVaccine'
 import RegisterMedicalCheck from './pages/nurse/registerMedicalCheck/RegisterMedicalCheck'
 import AppointmentMedicalCheck from './pages/nurse/appointmentMedicalCheck/AppointmentMedicalCheck'
+import VaccineList from './pages/admin/VaccineType/VaccineList'
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -230,6 +231,10 @@ export default function useRouteElements() {
             {
               path: path.VACCINE_REGISTRATION,
               element: <VaccineRegistrationList />
+            },
+            {
+              path: path.VACCINE_TYPE,
+              element: <VaccineList />
             }
           ]
         }

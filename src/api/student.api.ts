@@ -7,6 +7,7 @@ export interface StudentProfile {
   studentCode: string
   studentIdCode: string
   class: string | { name?: string }
+  status: 'active' | 'graduated' | 'transferred' | 'reserved'
 }
 
 // Lấy danh sách học sinh có tìm kiếm và phân trang
@@ -45,6 +46,7 @@ export const updateStudentAPI = (
     parentId?: string
     classId?: string
     avatar?: string
+    status?: 'active' | 'graduated' | 'transferred' | 'reserved'
   }
 ) => {
   return axiosInstance.put(`/students/${id}`, data)

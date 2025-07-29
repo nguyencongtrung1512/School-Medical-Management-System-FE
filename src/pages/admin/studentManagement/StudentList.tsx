@@ -30,7 +30,10 @@ import {
   Table,
   Tag,
   Tooltip,
-  Typography
+  Typography,
+  Form,
+  Select,
+  Descriptions
 } from 'antd'
 import type React from 'react'
 import { useEffect, useState } from 'react'
@@ -57,6 +60,7 @@ interface Student {
   parentName?: string
   parentPhone?: string
   isDeleted?: boolean
+  status: 'active' | 'graduated' | 'transferred' | 'reserved'
 }
 
 interface Classroom {
@@ -128,6 +132,7 @@ const StudentList: React.FC = () => {
     try {
       const res = await getStudentByIdAPI(updatedStudentId)
       setStudentDetail(res.data)
+      await fetchClassData(); // Thêm dòng này để cập nhật lại danh sách
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -246,6 +251,37 @@ const StudentList: React.FC = () => {
         { text: 'Nữ', value: 'female' }
       ],
       onFilter: (value, record) => record.gender === value
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={
+          status === 'active'
+            ? 'blue'
+            : status === 'graduated'
+              ? 'green'
+              : status === 'transferred'
+                ? 'orange'
+                : 'red'
+        }>
+          {status === 'active'
+            ? 'Đang học'
+            : status === 'graduated'
+              ? 'Đã tốt nghiệp'
+              : status === 'transferred'
+                ? 'Chuyển trường'
+                : 'Bảo lưu'}
+        </Tag>
+      ),
+      filters: [
+        { text: 'Đang học', value: 'active' },
+        { text: 'Đã tốt nghiệp', value: 'graduated' },
+        { text: 'Chuyển trường', value: 'transferred' },
+        { text: 'Bảo lưu', value: 'reserved' }
+      ],
+      onFilter: (value, record) => record.status === value
     },
     {
       title: 'Thao tác',

@@ -165,6 +165,18 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
               <Form.Item name='dob' label='Ngày sinh' rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}>
                 <DatePicker />
               </Form.Item>
+              <Form.Item
+                name='status'
+                label='Trạng thái'
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
+              >
+                <Select>
+                  <Select.Option value='active'>Đang học</Select.Option>
+                  <Select.Option value='graduated'>Đã tốt nghiệp</Select.Option>
+                  <Select.Option value='transferred'>Chuyển trường</Select.Option>
+                  <Select.Option value='reserved'>Bảo lưu</Select.Option>
+                </Select>
+              </Form.Item>
               <Form.Item>
                 <Space>
                   <Button type='primary' loading={saving} onClick={handleSave}>
@@ -180,6 +192,15 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
                 <Descriptions.Item label='Ngày sinh'>{formatDate(student.dob)}</Descriptions.Item>
                 <Descriptions.Item label='Giới tính'>
                   {student.gender === 'male' ? 'Nam' : student.gender === 'female' ? 'Nữ' : 'Khác'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Trạng thái'>
+                  {student.status === 'active'
+                    ? 'Đang học'
+                    : student.status === 'graduated'
+                      ? 'Đã tốt nghiệp'
+                      : student.status === 'transferred'
+                        ? 'Chuyển trường'
+                        : 'Bảo lưu'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Phụ huynh'>
                   {Array.isArray(student.parentInfos) && student.parentInfos.length > 0 ? (

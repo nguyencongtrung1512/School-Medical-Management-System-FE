@@ -1,7 +1,6 @@
 import {
   AuditOutlined,
   BookOutlined,
-  DashboardOutlined,
   EditOutlined,
   HeartOutlined,
   MedicineBoxOutlined,
@@ -28,6 +27,11 @@ const Sidebar: React.FC = () => {
       key: path.CENSOR_LIST,
       icon: <MedicineBoxOutlined className='text-xl' />,
       label: 'Tiêm chủng'
+    },
+    {
+      key: path.VACCINE_TYPE,
+      icon: <MedicineBoxOutlined className='text-xl' />,
+      label: 'Loại Vaccine'
     },
     // {
     //   key: path.VACCINE_REGISTRATION,

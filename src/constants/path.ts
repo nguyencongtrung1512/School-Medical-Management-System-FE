@@ -41,6 +41,7 @@ const path = {
   Appointment_Check: '/admin/appointment-check',
   DASHBOARD_ADMIN: '/admin/dashboard',
   CENSOR_LIST: '/admin/censor-list',
+  VACCINE_TYPE: '/admin/vaccine-type',
   USER_MANAGEMENT: '/admin/user-management',
   GRADE_MANAGEMENT: '/admin/student-management/grades',
   CLASS_MANAGEMENT: '/admin/student-management/grades/:gradeId/classes',

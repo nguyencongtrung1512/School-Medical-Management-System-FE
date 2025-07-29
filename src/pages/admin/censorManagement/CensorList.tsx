@@ -360,7 +360,6 @@ const CensorList: React.FC = () => {
               <Text type='secondary'>Duyệt và quản lý các sự kiện tiêm vaccine trong trường</Text>
             </div>
             <Space>
-              <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
               <Button icon={<ReloadOutlined />} onClick={fetchVaccineEvents} loading={loading}>
                 Làm mới
               </Button>
