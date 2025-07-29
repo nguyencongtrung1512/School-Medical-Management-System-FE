@@ -39,7 +39,7 @@ const path = {
   BASE_ADMIN: '/admin',
   MEDICAL_PLAN: '/admin/medical-check-event', //kế hoạch khám bệnh
   Appointment_Check: '/admin/appointment-check',
-  DASHBOARD_ADMIN: '/admin/dashboard',
+  // DASHBOARD_ADMIN: '/admin/dashboard',
   CENSOR_LIST: '/admin/censor-list',
   VACCINE_TYPE: '/admin/vaccine-type',
   USER_MANAGEMENT: '/admin/user-management',

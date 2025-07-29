@@ -62,7 +62,7 @@ function Header() {
       </div>
       {/* Menu */}
       <nav className='flex space-x-8 text-lg font-medium flex-1 mt-2'>
-        <a href={path.healthRecord} className='text-gray-900 hover:text-blue-500 transition-colors'>
+        {/* <a href={path.healthRecord} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Khai báo sức khỏe
         </a>
         <a href={path.vaccinationSchedule} className='text-gray-900 hover:text-blue-500 transition-colors'>
@@ -76,7 +76,7 @@ function Header() {
         </a>
         <a href={path.Appointment} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Đặt lịch tư vấn
-        </a>
+        </a> */}
         <a href={path.blog} className='text-gray-900 hover:text-blue-500 transition-colors'>
           Blog
         </a>
@@ -101,13 +101,13 @@ function Header() {
         )}
         {open && (
           <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 transform transition-all duration-200 ease-in-out'>
-            <div className='px-4 py-2 text-gray-900 font-bold'>{userProfile?.fullName}</div>
+            {/* <div className='px-4 py-2 text-gray-900 font-bold'>{userProfile?.fullName}</div>
             <a
               href={path.profileParent}
               className='block px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors duration-200'
             >
               Hồ sơ của tôi
-            </a>
+            </a> */}
             <button
               className='w-full text-left px-4 py-2 text-red-500 hover:bg-blue-50 transition-colors duration-200'
               onClick={handleLogout}

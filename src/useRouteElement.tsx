@@ -16,7 +16,7 @@ import BlogList from './pages/admin/BlogManagement/Bloglist'
 import CategoryManagement from './pages/admin/CategoryManagement/CategoryManagement'
 import CensorList from './pages/admin/censorManagement/CensorList'
 import ClassList from './pages/admin/classroomManagement/Classlist'
-import DashBoardAdmin from './pages/admin/dashBoardAdmin/DashBoardAdmin'
+// import DashBoardAdmin from './pages/admin/dashBoardAdmin/DashBoardAdmin'
 import GradeList from './pages/admin/gradeManagement/GradeList'
 import MedicalCheckEvent from './pages/admin/medicalCheckEvent'
 import StudentList from './pages/admin/studentManagement/StudentList'
@@ -184,10 +184,10 @@ export default function useRouteElements() {
           path: path.BASE_ADMIN,
           element: <AdminLayout />,
           children: [
-            {
-              path: path.DASHBOARD_ADMIN,
-              element: <DashBoardAdmin />
-            },
+            // {
+            //   path: path.DASHBOARD_ADMIN,
+            //   element: <DashBoardAdmin />
+            // },
             {
               path: path.MEDICAL_PLAN,
               element: <MedicalCheckEvent />

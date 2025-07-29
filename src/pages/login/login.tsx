@@ -75,10 +75,10 @@ const Login: React.FC = () => {
           // Chuyển hướng dựa vào role
           switch (decodedToken.role.toUpperCase()) {
             case 'ADMIN':
-              navigate(path.DASHBOARD_ADMIN)
+              navigate(path.CENSOR_LIST)
               break
             case 'SCHOOL-NURSE':
-              navigate(path.BASE_NURSE)
+              navigate(path.HEALTH_RECORD_CENSORSHIP)
               break
             case 'PARENT':
               navigate(path.home)
