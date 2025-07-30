@@ -35,6 +35,18 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
   const maxDate = dayjs().subtract(6, 'year')
   const minDate = dayjs().subtract(15, 'year')
 
+  // Hàm reset form hoàn toàn
+  const resetFormCompletely = () => {
+    form.resetFields()
+    setAvatarUrl(undefined)
+    // Đặt lại parents mặc định sau khi reset
+    setTimeout(() => {
+      form.setFieldsValue({
+        parents: [{ type: '', email: '' }]
+      })
+    }, 0)
+  }
+
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
@@ -60,8 +72,7 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
 
       await createStudentAPI(data)
       message.success('Tạo học sinh thành công')
-      form.resetFields()
-      setAvatarUrl(undefined)
+      resetFormCompletely() // Sử dụng hàm reset mới
       onOk()
     } catch (error: unknown) {
       console.log('error', error)
@@ -72,6 +83,11 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
         message.error('Không thể tạo học sinh mới')
       }
     }
+  }
+
+  const handleCancel = () => {
+    resetFormCompletely() // Sử dụng hàm reset mới
+    onCancel()
   }
 
   const handleAvatarUpload = async (file: File) => {
@@ -110,13 +126,17 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
   }
 
   React.useEffect(() => {
-    if (!isModalVisible) {
-      setAvatarUrl(undefined)
+    if (isModalVisible) {
+      // Chỉ khởi tạo khi modal mở và form chưa có dữ liệu
+      const currentParents = form.getFieldValue('parents')
+      if (!currentParents || currentParents.length === 0) {
+        form.setFieldsValue({
+          parents: [{ type: '', email: '' }]
+        })
+      }
     } else {
-      // Khởi tạo với 1 parent mặc định
-      form.setFieldsValue({
-        parents: [{ type: '', email: '' }]
-      })
+      // Reset khi modal đóng
+      resetFormCompletely()
     }
   }, [isModalVisible, form])
 
@@ -125,14 +145,12 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
       title='Thêm học sinh mới'
       open={isModalVisible}
       onOk={handleOk}
-      onCancel={() => {
-        form.resetFields()
-        setAvatarUrl(undefined)
-        onCancel()
-      }}
+      onCancel={handleCancel}
       width={700}
       okText='Tạo học sinh'
       cancelText='Hủy'
+      // Thêm destroyOnClose để đảm bảo component được tạo mới mỗi lần
+      destroyOnClose={true}
     >
       <Form form={form} layout='vertical'>
         <Form.Item

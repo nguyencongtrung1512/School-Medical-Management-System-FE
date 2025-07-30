@@ -155,20 +155,6 @@ const GradeList: React.FC = () => {
     {
       title: (
         <Space>
-          <BookOutlined />
-          <span>Thông tin khối</span>
-        </Space>
-      ),
-      key: 'gradeInfo',
-      render: (_, record: Grade) => (
-        <div>
-          <div className='font-semibold text-gray-800 mb-1'>Khối {record.name}</div>
-        </div>
-      )
-    },
-    {
-      title: (
-        <Space>
           <NumberOutlined />
           <span>Thứ tự</span>
         </Space>
@@ -182,6 +168,20 @@ const GradeList: React.FC = () => {
         </Tag>
       ),
       sorter: (a: Grade, b: Grade) => a.positionOrder - b.positionOrder
+    },
+    {
+      title: (
+        <Space>
+          <BookOutlined />
+          <span>Thông tin khối</span>
+        </Space>
+      ),
+      key: 'gradeInfo',
+      render: (_, record: Grade) => (
+        <div>
+          <div className='font-semibold text-gray-800 mb-1'>Khối {record.name}</div>
+        </div>
+      )
     },
     {
       title: (

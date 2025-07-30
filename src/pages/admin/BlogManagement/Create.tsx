@@ -24,14 +24,17 @@ interface BlogFormValues {
   content: string
   categoryId: string
   image: string
+  banner: string
 }
 
 function CreateBlog({ onBlogCreated }: CreateBlogProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [imageUrl, setImageUrl] = useState<string>('')
+  const [bannerUrl, setBannerUrl] = useState<string>('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -42,8 +45,8 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
           pageSize: 100,
           query: ''
         })
-        if (response.data.pageData) {
-          setCategories(response.data.pageData)
+        if (response.pageData) {
+          setCategories(response.pageData)
         }
       } catch (error: unknown) {
         console.log('error', error)
@@ -64,6 +67,11 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
     form.setFieldValue('image', url)
   }
 
+  const handleBannerUploadSuccess = (type: 'video' | 'image', url: string) => {
+    setBannerUrl(url)
+    form.setFieldValue('banner', url)
+  }
+
   const handleSubmit = async (values: BlogFormValues) => {
     try {
       setLoading(true)
@@ -72,7 +80,8 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
         description: values.description,
         content: values.content,
         categoryId: values.categoryId,
-        image: values.image
+        image: values.image,
+        banner: values.banner
       } as unknown as Parameters<typeof blogApi.createBlogApi>[0])
 
       if (response.data) {
@@ -114,6 +123,24 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
     }
   }
 
+  const handleBannerUpload: UploadProps['customRequest'] = (options) => {
+    const { file, onSuccess, onError } = options
+    if (file instanceof File) {
+      customUploadHandler(
+        {
+          file,
+          onSuccess: (url: string) => onSuccess?.(url),
+          onError: () => onError?.(new Error('Upload failed'))
+        },
+        'image',
+        setUploadingBanner,
+        handleBannerUploadSuccess
+      )
+    } else {
+      onError?.(new Error('Invalid file type'))
+    }
+  }
+
   return (
     <Form form={form} layout='vertical' onFinish={handleSubmit}>
       <Form.Item name='categoryId' label='Danh mục' rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>
@@ -143,6 +170,19 @@ function CreateBlog({ onBlogCreated }: CreateBlogProps) {
         {imageUrl && (
           <div style={{ marginTop: 16 }}>
             <img src={imageUrl} alt='Ảnh bìa' style={{ maxWidth: '100%', maxHeight: 200 }} />
+          </div>
+        )}
+      </Form.Item>
+
+      <Form.Item name='banner' label='Ảnh banner' rules={[{ required: true, message: 'Vui lòng tải lên ảnh banner!' }]}>
+        <Upload customRequest={handleBannerUpload} showUploadList={false} accept='image/*'>
+          <Button icon={<UploadOutlined />} loading={uploadingBanner}>
+            Tải lên ảnh banner
+          </Button>
+        </Upload>
+        {bannerUrl && (
+          <div style={{ marginTop: 16 }}>
+            <img src={bannerUrl} alt='Ảnh banner' style={{ maxWidth: '100%', maxHeight: 200 }} />
           </div>
         )}
       </Form.Item>

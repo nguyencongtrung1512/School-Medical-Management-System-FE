@@ -7,6 +7,7 @@ export interface Blog {
   content: string
   description: string
   image?: string
+  banner?: string
   userId?: string
   createdAt?: string
   updatedAt?: string
@@ -62,6 +63,8 @@ export const blogApi = {
     content: string
     categoryId: string
     image?: string
+    banner?: string
+    userId?: string
   }) => {
     return axiosInstance.post<Blog>('/blogs/create', data)
   },

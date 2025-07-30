@@ -25,6 +25,7 @@ function BlogList() {
           pageSize: 10,
           categoryId: categoryId
         })
+        console.log('response', response)
         if (response.pageData) {
           setBlogs(response.pageData)
         }
@@ -66,6 +67,7 @@ function BlogList() {
             pageSize: 10,
             categoryId: categoryId
           })
+          
           if (response.pageData) {
             setBlogs(response.pageData)
           }

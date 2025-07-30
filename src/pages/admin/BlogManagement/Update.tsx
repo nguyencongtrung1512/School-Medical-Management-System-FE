@@ -1,10 +1,13 @@
-import { Button, Form, Input, message, Select } from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
+import type { UploadProps } from 'antd'
+import { Button, Form, Input, message, Select, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import { blogApi } from '../../../api/blog.api'
 import { categoryApi } from '../../../api/category.api'
+import { customUploadHandler } from '../../../utils/upload'
 
 interface Category {
   _id: string
@@ -20,13 +23,19 @@ interface BlogFormValues {
   description: string
   content: string
   categoryId: string
+  image: string
+  banner: string
 }
 
 function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [imageUrl, setImageUrl] = useState<string>('')
+  const [bannerUrl, setBannerUrl] = useState<string>('')
   const navigate = useNavigate()
   const { _id } = useParams()
 
@@ -41,8 +50,8 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
           pageSize: 100,
           query: ''
         })
-        if (categoriesResponse.data.pageData) {
-          setCategories(categoriesResponse.data.pageData)
+        if (categoriesResponse.pageData) {
+          setCategories(categoriesResponse.pageData)
         }
 
         // Fetch blog
@@ -52,8 +61,12 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
             title: blogResponse.data.title,
             description: blogResponse.data.description,
             content: blogResponse.data.content,
-            categoryId: blogResponse.data.categoryId
+            categoryId: blogResponse.data.categoryId,
+            image: blogResponse.data.image,
+            banner: blogResponse.data.banner
           })
+          setImageUrl(blogResponse.data.image || '')
+          setBannerUrl(blogResponse.data.banner || '')
         }
       } catch (error: unknown) {
         console.log('error', error)
@@ -71,6 +84,16 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
     fetchData()
   }, [_id, form])
 
+  const handleUploadSuccess = (type: 'video' | 'image', url: string) => {
+    setImageUrl(url)
+    form.setFieldValue('image', url)
+  }
+
+  const handleBannerUploadSuccess = (type: 'video' | 'image', url: string) => {
+    setBannerUrl(url)
+    form.setFieldValue('banner', url)
+  }
+
   const handleSubmit = async (values: BlogFormValues) => {
     try {
       setLoading(true)
@@ -80,7 +103,9 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
         title: values.title,
         description: values.description,
         content: values.content,
-        categoryId: values.categoryId
+        categoryId: values.categoryId,
+        image: values.image,
+        banner: values.banner
       })
 
       if (response.data) {
@@ -100,6 +125,42 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUpload: UploadProps['customRequest'] = (options) => {
+    const { file, onSuccess, onError } = options
+    if (file instanceof File) {
+      customUploadHandler(
+        {
+          file,
+          onSuccess: (url: string) => onSuccess?.(url),
+          onError: () => onError?.(new Error('Upload failed'))
+        },
+        'image',
+        setUploading,
+        handleUploadSuccess
+      )
+    } else {
+      onError?.(new Error('Invalid file type'))
+    }
+  }
+
+  const handleBannerUpload: UploadProps['customRequest'] = (options) => {
+    const { file, onSuccess, onError } = options
+    if (file instanceof File) {
+      customUploadHandler(
+        {
+          file,
+          onSuccess: (url: string) => onSuccess?.(url),
+          onError: () => onError?.(new Error('Upload failed'))
+        },
+        'image',
+        setUploadingBanner,
+        handleBannerUploadSuccess
+      )
+    } else {
+      onError?.(new Error('Invalid file type'))
     }
   }
 
@@ -125,6 +186,32 @@ function UpdateBlog({ onBlogUpdated }: UpdateBlogProps) {
 
       <Form.Item name='description' label='Mô tả' rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}>
         <Input.TextArea rows={4} placeholder='Nhập mô tả blog' />
+      </Form.Item>
+
+      <Form.Item name='image' label='Ảnh bìa' rules={[{ required: true, message: 'Vui lòng tải lên ảnh bìa!' }]}>
+        <Upload customRequest={handleUpload} showUploadList={false} accept='image/*'>
+          <Button icon={<UploadOutlined />} loading={uploading}>
+            Tải lên ảnh bìa
+          </Button>
+        </Upload>
+        {imageUrl && (
+          <div style={{ marginTop: 16 }}>
+            <img src={imageUrl} alt='Ảnh bìa' style={{ maxWidth: '100%', maxHeight: 200 }} />
+          </div>
+        )}
+      </Form.Item>
+
+      <Form.Item name='banner' label='Ảnh banner' rules={[{ required: true, message: 'Vui lòng tải lên ảnh banner!' }]}>
+        <Upload customRequest={handleBannerUpload} showUploadList={false} accept='image/*'>
+          <Button icon={<UploadOutlined />} loading={uploadingBanner}>
+            Tải lên ảnh banner
+          </Button>
+        </Upload>
+        {bannerUrl && (
+          <div style={{ marginTop: 16 }}>
+            <img src={bannerUrl} alt='Ảnh banner' style={{ maxWidth: '100%', maxHeight: 200 }} />
+          </div>
+        )}
       </Form.Item>
 
       <Form.Item name='content' label='Nội dung' rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}>

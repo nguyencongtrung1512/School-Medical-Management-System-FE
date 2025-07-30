@@ -11,15 +11,23 @@ interface CreateMedicineFormProps {
 const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCancel }) => {
   const [form] = Form.useForm()
 
-  const onFinish = async (values: { name: string; description: string; dosage: string; sideEffects: string; manufacturer: string; manufactureDate: dayjs.Dayjs; expiryDate: dayjs.Dayjs; quantity: number }) => {
+  const onFinish = async (values: {
+    name: string
+    description: string
+    dosage: string
+    sideEffects: string
+    manufacturer: string
+    manufactureDate: dayjs.Dayjs
+    expiryDate: dayjs.Dayjs
+    quantity: number
+  }) => {
     try {
       const payload = {
         ...values,
         manufactureDate: values.manufactureDate.toDate(),
-        expiryDate: values.expiryDate.toDate(),
+        expiryDate: values.expiryDate.toDate()
       }
       await createMedicine(payload)
-      message.success('Thêm thuốc mới thành công')
       form.resetFields()
       onSuccess()
     } catch (error: unknown) {
@@ -47,7 +55,11 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
         <Input placeholder='Nhập liều lượng' />
       </Form.Item>
 
-      <Form.Item name='manufacturer' label='Hãng sản xuất' rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}>
+      <Form.Item
+        name='manufacturer'
+        label='Hãng sản xuất'
+        rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}
+      >
         <Input placeholder='Nhập hãng sản xuất' />
       </Form.Item>
 
@@ -55,7 +67,6 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
         name='manufactureDate'
         label='Ngày sản xuất'
         rules={[
-          { required: true, message: 'Vui lòng chọn ngày sản xuất!' },
           {
             validator(_, value) {
               if (!value) return Promise.reject('Vui lòng chọn ngày sản xuất!')
@@ -71,14 +82,18 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => {
+          disabledDate={(current) => {
             // Disable today and future dates
             return current && current >= dayjs().startOf('day')
           }}
         />
       </Form.Item>
 
-      <Form.Item name='sideEffects' label='Tác dụng phụ' rules={[{ required: true, message: 'Vui lòng nhập tác dụng phụ!' }]}>
+      <Form.Item
+        name='sideEffects'
+        label='Tác dụng phụ'
+        rules={[{ required: true, message: 'Vui lòng nhập tác dụng phụ!' }]}
+      >
         <Input.TextArea rows={4} placeholder='Nhập tác dụng phụ' />
       </Form.Item>
 
@@ -99,15 +114,16 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
         name='expiryDate'
         label='Ngày hết hạn'
         rules={[
-          { required: true, message: 'Vui lòng chọn ngày hết hạn!' },
           {
             validator(_, value) {
               if (!value) return Promise.reject('Vui lòng chọn ngày hết hạn!')
               const now = dayjs().startOf('day')
               const minDate = now.add(6, 'month')
               const maxDate = now.add(6, 'year')
-              if (value.isBefore(minDate, 'day')) return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
-              if (value.isAfter(maxDate, 'day')) return Promise.reject('Ngày hết hạn không được quá 6 năm kể từ hôm nay!')
+              if (value.isBefore(minDate, 'day'))
+                return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
+              if (value.isAfter(maxDate, 'day'))
+                return Promise.reject('Ngày hết hạn không được quá 6 năm kể từ hôm nay!')
               return Promise.resolve()
             }
           }
@@ -116,7 +132,7 @@ const CreateMedicineForm: React.FC<CreateMedicineFormProps> = ({ onSuccess, onCa
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => {
+          disabledDate={(current) => {
             // Disable past dates and dates less than 6 months from today
             const now = dayjs().startOf('day')
             const minDate = now.add(6, 'month')

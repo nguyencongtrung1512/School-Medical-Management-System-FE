@@ -104,6 +104,21 @@ function BlogDetail() {
       </Space>
 
       <Card title={blog.title}>
+        {blog.banner && (
+          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <img
+              src={blog.banner}
+              alt='Ảnh banner blog'
+              style={{
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+          </div>
+        )}
+
         {blog.image && (
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
             <img

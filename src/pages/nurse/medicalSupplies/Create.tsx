@@ -19,7 +19,7 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         manufactureDate: (values.manufactureDate as any).format('YYYY-MM-DD')
       }
       await createMedicalSupply(formattedValues)
-      message.success('Thêm vật tư y tế mới thành công')
+      // message.success('Thêm vật tư y tế mới thành công')
       form.resetFields()
       onSuccess()
     } catch (error: unknown) {
@@ -62,7 +62,6 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         name='expiryDate'
         label='Ngày hết hạn'
         rules={[
-          { required: true, message: 'Vui lòng chọn ngày hết hạn!' },
           {
             validator(_, value) {
               if (!value) return Promise.reject('Vui lòng chọn ngày hết hạn!')

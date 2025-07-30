@@ -146,7 +146,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       }
 
       await medicalEventApi.create(medicalEventData)
-      message.success('Tạo sự kiện y tế thành công!')
+      // message.success('Tạo sự kiện y tế thành công!')
       form.resetFields()
       setSelectedStudent(null)
       setImageUrls([])
@@ -337,6 +337,8 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                   placeholder='Chọn thuốc'
                   loading={loading}
                   size='large'
+                  showSearch
+                  filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                   value={selectedMedicines.map((m) => m.id)}
                   onChange={(ids: string[]) => {
                     setSelectedMedicines((prev) => {
@@ -409,6 +411,8 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                   placeholder='Chọn vật tư y tế'
                   loading={loading}
                   size='large'
+                  showSearch
+                  filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                   value={selectedSupplies.map((s) => s.id)}
                   onChange={(ids: string[]) => {
                     setSelectedSupplies((prev) => {
