@@ -53,6 +53,9 @@ const HealthRecordCensorship: React.FC = () => {
   const [createForm] = Form.useForm()
   const [editForm] = Form.useForm()
   const [vaccineTypeCache, setVaccineTypeCache] = useState<Record<string, VaccineType>>({})
+  const [genderFilter, setGenderFilter] = useState<string>('')
+  const [studentIdFilter, setStudentIdFilter] = useState<string>('')
+  const [isDeletedFilter, setIsDeletedFilter] = useState<string>('')
 
   useEffect(() => {
     fetchHealthRecords()
@@ -86,7 +89,9 @@ const HealthRecordCensorship: React.FC = () => {
         pageNum: currentPage,
         pageSize,
         query: searchKeyword,
-        schoolYear: schoolYearFilter
+        schoolYear: schoolYearFilter,
+        studentId: studentIdFilter,
+        isDeleted: isDeletedFilter
       })
       const responseData = (response as unknown as { pageData: HealthRecord[] })
       const pageInfo = (response as unknown as { pageInfo?: { totalItems: number } })
@@ -111,7 +116,14 @@ const HealthRecordCensorship: React.FC = () => {
         })
       )
 
-      setHealthRecords(populatedRecords)
+      // Filter theo gender ở FE nếu có
+      let records = populatedRecords
+      if (genderFilter) {
+        records = records.filter(
+          r => r.student?.gender === genderFilter || r.gender === genderFilter
+        )
+      }
+      setHealthRecords(records)
       setTotalItems(pageInfo.pageInfo?.totalItems || 0)
     } catch {
       message.error('Không thể tải danh sách hồ sơ sức khỏe')
@@ -427,6 +439,21 @@ const HealthRecordCensorship: React.FC = () => {
     }
   ]
 
+  // Tạo danh sách năm học từ 2020-2021 đến hiện tại
+  const getSchoolYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    // Nếu tháng >= 8 thì đã sang năm học mới
+    const endYear = currentMonth >= 8 ? currentYear + 1 : currentYear;
+    const startYear = 2020;
+    const options = [];
+    for (let y = endYear; y >= startYear; y--) {
+      options.push(`${y - 1}-${y}`);
+    }
+    return options;
+  };
+  const schoolYearOptions = getSchoolYearOptions();
+
   return (
     <div className='p-6'>
       <Card className='shadow-sm'>
@@ -443,36 +470,82 @@ const HealthRecordCensorship: React.FC = () => {
           </Col> */}
         </Row>
 
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Input
-              placeholder='Tìm kiếm theo tên học sinh...'
-              allowClear
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onPressEnter={handleSearch}
-              suffix={<SearchOutlined />}
-            />
-          </Col>
-          <Col xs={24} md={8}>
-            <Select
-              placeholder='Lọc theo năm học'
-              allowClear
-              style={{ width: '100%' }}
-              value={schoolYearFilter}
-              onChange={setSchoolYearFilter}
-            >
-              <Option value='2024-2025'>2024-2025</Option>
-              <Option value='2023-2024'>2023-2024</Option>
-              <Option value='2022-2023'>2022-2023</Option>
-            </Select>
-          </Col>
-          <Col xs={24} md={4}>
-            <Button type='primary' onClick={handleSearch} loading={loading}>
-              Tìm kiếm
-            </Button>
-          </Col>
-        </Row>
+        <Form layout='vertical'>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={6} className='h-fit'>
+              <Form.Item label='Tên học sinh'>
+                <Input
+                  placeholder='Tìm kiếm theo tên học sinh...'
+                  allowClear
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onPressEnter={handleSearch}
+                  suffix={<SearchOutlined />}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='ID học sinh'>
+                <Input
+                  placeholder='Nhập ID học sinh'
+                  allowClear
+                  value={studentIdFilter}
+                  onChange={e => setStudentIdFilter(e.target.value)}
+                  onPressEnter={handleSearch}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Giới tính'>
+                <Select
+                  placeholder='Chọn giới tính'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={genderFilter}
+                  onChange={setGenderFilter}
+                >
+                  <Option value='male'>Nam</Option>
+                  <Option value='female'>Nữ</Option>
+                  <Option value='other'>Khác</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Trạng thái'>
+                <Select
+                  placeholder='Chọn trạng thái'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={isDeletedFilter}
+                  onChange={setIsDeletedFilter}
+                >
+                  <Option value='false'>Hoạt động</Option>
+                  <Option value='true'>Đã xóa</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Năm học'>
+                <Select
+                  placeholder='Chọn năm học'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={schoolYearFilter}
+                  onChange={setSchoolYearFilter}
+                >
+                  {schoolYearOptions.map((year) => (
+                    <Option key={year} value={year}>{year}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={2} className='my-auto'>
+              <Button type='primary' onClick={handleSearch} loading={loading} style={{ width: '100%' }}>
+                Tìm kiếm
+              </Button>
+            </Col>
+          </Row>
+        </Form>
 
         <Table
           columns={columns}
