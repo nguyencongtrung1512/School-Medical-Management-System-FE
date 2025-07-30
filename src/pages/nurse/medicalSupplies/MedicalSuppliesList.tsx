@@ -9,7 +9,8 @@ import {
   FilterOutlined,
   ReloadOutlined,
   ExclamationCircleOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  MedicineBoxOutlined
 } from '@ant-design/icons'
 import {
   Button,
@@ -141,7 +142,7 @@ const MedicalSuppliesList: React.FC = () => {
 
       // Get current filtered and sorted data
       const dataToExport = sortedSupplies.map((item, index) => ({
-        'STT': index + 1,
+        STT: index + 1,
         'Tên vật tư': item.name,
         'Số lượng': item.quantity,
         'Đơn vị': item.unit,
@@ -160,17 +161,17 @@ const MedicalSuppliesList: React.FC = () => {
 
       // Set column widths for better formatting
       const colWidths = [
-        { wch: 5 },   // STT
-        { wch: 25 },  // Tên vật tư
-        { wch: 10 },  // Số lượng
-        { wch: 10 },  // Đơn vị
-        { wch: 20 },  // Hãng sản xuất
-        { wch: 20 },  // Nhà cung cấp
-        { wch: 15 },  // Ngày sản xuất
-        { wch: 15 },  // Ngày hết hạn
-        { wch: 15 },  // Số ngày còn lại
-        { wch: 15 },  // Trạng thái
-        { wch: 30 }   // Mô tả
+        { wch: 5 }, // STT
+        { wch: 25 }, // Tên vật tư
+        { wch: 10 }, // Số lượng
+        { wch: 10 }, // Đơn vị
+        { wch: 20 }, // Hãng sản xuất
+        { wch: 20 }, // Nhà cung cấp
+        { wch: 15 }, // Ngày sản xuất
+        { wch: 15 }, // Ngày hết hạn
+        { wch: 15 }, // Số ngày còn lại
+        { wch: 15 }, // Trạng thái
+        { wch: 30 } // Mô tả
       ]
       ws['!cols'] = colWidths
 
@@ -180,9 +181,9 @@ const MedicalSuppliesList: React.FC = () => {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col })
         if (!ws[cellRef]) continue
         ws[cellRef].s = {
-          font: { bold: true, color: { rgb: "FFFFFF" } },
-          fill: { fgColor: { rgb: "366092" } },
-          alignment: { horizontal: "center", vertical: "center" }
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '366092' } },
+          alignment: { horizontal: 'center', vertical: 'center' }
         }
       }
 
@@ -191,19 +192,19 @@ const MedicalSuppliesList: React.FC = () => {
         const statusCell = XLSX.utils.encode_cell({ r: row, c: 9 }) // Trạng thái column
         if (ws[statusCell]) {
           const status = ws[statusCell].v
-          let fillColor = "FFFFFF" // default white
+          let fillColor = 'FFFFFF' // default white
 
-          if (status === "Đã hết hạn") {
-            fillColor = "FFEBEE" // light red
-          } else if (status === "Sắp hết hạn") {
-            fillColor = "FFF3E0" // light orange
-          } else if (status === "Còn hạn") {
-            fillColor = "E8F5E8" // light green
+          if (status === 'Đã hết hạn') {
+            fillColor = 'FFEBEE' // light red
+          } else if (status === 'Sắp hết hạn') {
+            fillColor = 'FFF3E0' // light orange
+          } else if (status === 'Còn hạn') {
+            fillColor = 'E8F5E8' // light green
           }
 
           ws[statusCell].s = {
             fill: { fgColor: { rgb: fillColor } },
-            alignment: { horizontal: "center", vertical: "center" }
+            alignment: { horizontal: 'center', vertical: 'center' }
           }
         }
       }
@@ -214,9 +215,18 @@ const MedicalSuppliesList: React.FC = () => {
       // Add summary sheet
       const summaryData = [
         { 'Thống kê': 'Tổng số vật tư', 'Số lượng': sortedSupplies.length },
-        { 'Thống kê': 'Đã hết hạn', 'Số lượng': sortedSupplies.filter(item => getExpiryStatus(item.expiryDate).text === 'Đã hết hạn').length },
-        { 'Thống kê': 'Sắp hết hạn (≤30 ngày)', 'Số lượng': sortedSupplies.filter(item => getExpiryStatus(item.expiryDate).text === 'Sắp hết hạn').length },
-        { 'Thống kê': 'Còn hạn', 'Số lượng': sortedSupplies.filter(item => getExpiryStatus(item.expiryDate).text === 'Còn hạn').length },
+        {
+          'Thống kê': 'Đã hết hạn',
+          'Số lượng': sortedSupplies.filter((item) => getExpiryStatus(item.expiryDate).text === 'Đã hết hạn').length
+        },
+        {
+          'Thống kê': 'Sắp hết hạn (≤30 ngày)',
+          'Số lượng': sortedSupplies.filter((item) => getExpiryStatus(item.expiryDate).text === 'Sắp hết hạn').length
+        },
+        {
+          'Thống kê': 'Còn hạn',
+          'Số lượng': sortedSupplies.filter((item) => getExpiryStatus(item.expiryDate).text === 'Còn hạn').length
+        },
         { 'Thống kê': '', 'Số lượng': '' },
         { 'Thống kê': 'Ngày xuất báo cáo', 'Số lượng': dayjs().format('DD/MM/YYYY HH:mm:ss') },
         { 'Thống kê': 'Người xuất', 'Số lượng': 'Hệ thống quản lý vật tư y tế' }
@@ -253,7 +263,7 @@ const MedicalSuppliesList: React.FC = () => {
       setExportLoading(true)
 
       const dataToExport = sortedSupplies.map((item, index) => ({
-        'STT': index + 1,
+        STT: index + 1,
         'Tên vật tư': item.name,
         'Số lượng': item.quantity,
         'Đơn vị': item.unit,
@@ -269,8 +279,16 @@ const MedicalSuppliesList: React.FC = () => {
       const ws = XLSX.utils.json_to_sheet(dataToExport)
 
       ws['!cols'] = [
-        { wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 20 },
-        { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }
+        { wch: 5 },
+        { wch: 25 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 30 }
       ]
 
       XLSX.utils.book_append_sheet(wb, ws, 'Dữ liệu đã lọc')
@@ -422,84 +440,87 @@ const MedicalSuppliesList: React.FC = () => {
 
   return (
     <div className='p-6'>
-      <Card bordered={false} className='shadow-sm'>
-        <Row gutter={[16, 16]} align='middle' justify='space-between'>
-          <Col>
-            <Title level={2} style={{ margin: 0 }}>
-              Quản lý vật tư y tế
-            </Title>
-          </Col>
-          <Col>
-            <Space>
-              <Dropdown overlay={exportMenu} trigger={['click']}>
+      <Card>
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <MedicineBoxOutlined style={{ marginRight: 12 }} />
+                Quản lý vật tư y tế
+              </Title>
+              <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Sử dụng cho học sinh trong nhà trường</Text>
+            </Col>
+          </Row>
+        </Card>
+        <Card bordered={false} className='shadow-sm mt-6'>
+          <Row gutter={[16, 16]} align='middle' justify='space-between'>
+            <Col>
+              <Space>
+                <Dropdown overlay={exportMenu} trigger={['click']}>
+                  <Button icon={<DownloadOutlined />} size='large' loading={exportLoading}>
+                    Xuất Excel
+                  </Button>
+                </Dropdown>
                 <Button
-                  icon={<DownloadOutlined />}
+                  type='primary'
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsCreateModalVisible(true)}
                   size='large'
-                  loading={exportLoading}
                 >
-                  Xuất Excel
+                  Thêm vật tư mới
                 </Button>
-              </Dropdown>
-              <Button
-                type='primary'
-                icon={<PlusOutlined />}
-                onClick={() => setIsCreateModalVisible(true)}
-                size='large'
-              >
-                Thêm vật tư mới
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+              </Space>
+            </Col>
+          </Row>
 
-        <Divider />
+          <Divider />
 
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Search
-              placeholder='Tìm kiếm vật tư y tế'
-              allowClear
-              enterButton={<SearchOutlined />}
-              size='middle'
-              onSearch={handleSearch}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </Col>
-          <Col>
-            <Space>
-              <Dropdown overlay={filterMenu} trigger={['click']}>
-                <Button icon={<FilterOutlined />}>Lọc</Button>
-              </Dropdown>
-              <Tooltip title='Làm mới dữ liệu'>
-                <Button icon={<ReloadOutlined />} onClick={fetchMedicalSupplies} loading={loading} />
-              </Tooltip>
-            </Space>
-          </Col>
-        </Row>
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Search
+                placeholder='Tìm kiếm vật tư y tế'
+                allowClear
+                enterButton={<SearchOutlined />}
+                size='middle'
+                onSearch={handleSearch}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </Col>
+            <Col>
+              <Space>
+                <Dropdown overlay={filterMenu} trigger={['click']}>
+                  <Button icon={<FilterOutlined />}>Lọc</Button>
+                </Dropdown>
+                <Tooltip title='Làm mới dữ liệu'>
+                  <Button icon={<ReloadOutlined />} onClick={fetchMedicalSupplies} loading={loading} />
+                </Tooltip>
+              </Space>
+            </Col>
+          </Row>
 
-        <Table
-          columns={columns}
-          dataSource={sortedSupplies}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `Tổng cộng ${total} vật tư`,
-            onChange: (page, pageSize) => {
-              setCurrentPage(page)
-              setPageSize(pageSize || 10)
-            }
-          }}
-          bordered
-          size='middle'
-          scroll={{ x: 'max-content' }}
-        />
+          <Table
+            columns={columns}
+            dataSource={sortedSupplies}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `Tổng cộng ${total} vật tư`,
+              onChange: (page, pageSize) => {
+                setCurrentPage(page)
+                setPageSize(pageSize || 10)
+              }
+            }}
+            bordered
+            size='middle'
+            scroll={{ x: 'max-content' }}
+          />
+        </Card>
       </Card>
-
       <Modal
         title={<Title level={4}>Thêm vật tư y tế mới</Title>}
         open={isCreateModalVisible}

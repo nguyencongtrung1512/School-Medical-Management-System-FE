@@ -357,36 +357,28 @@ const MedicalReport: React.FC = () => {
       <Card bordered={false} className='shadow-sm'>
         <Space direction='vertical' style={{ width: '100%' }}>
           {/* Header */}
-          <Row
-            style={{
-              background: 'linear-gradient(135deg, #7c91ef 0%, #2171cc 100%)',
-              borderRadius: '10px',
-              padding: '16px'
-            }}
-            gutter={[16, 16]}
-            align='middle'
-            justify='space-between'
-          >
-            <Col>
-              <Title level={3} style={{ color: 'white', margin: 0 }}>
-                <Space>
-                  <MedicineBoxOutlined />
-                  Báo cáo sự kiện y tế
-                </Space>
-              </Title>
-            </Col>
-            <Col>
-              <Button
-                color='danger'
-                variant='solid'
-                icon={<PlusOutlined />}
-                onClick={() => setIsCreateModalVisible(true)}
-                size='large'
-              >
-                Tạo báo cáo
-              </Button>
-            </Col>
-          </Row>
+          <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+            <Row justify='space-between' align='middle'>
+              <Col>
+                <Title level={3} style={{ color: 'white', margin: 0 }}>
+                  <MedicineBoxOutlined style={{ marginRight: 12 }} />
+                  Báo cáo sự cố y tế
+                </Title>
+              </Col>
+              <Col>
+                <Button
+                  color='danger'
+                  variant='solid'
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsCreateModalVisible(true)}
+                  size='large'
+                >
+                  Tạo báo cáo
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+
 
           <Divider style={{ margin: '16px 0' }} />
 

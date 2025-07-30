@@ -4,6 +4,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileExcelOutlined,
+  FormOutlined,
   ReloadOutlined,
   SearchOutlined,
   StopOutlined
@@ -28,7 +29,11 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import { RegistrationStatus, vaccineRegistrationApi, type VaccineRegistration } from '../../../api/vaccineRegistration.api'
+import {
+  RegistrationStatus,
+  vaccineRegistrationApi,
+  type VaccineRegistration
+} from '../../../api/vaccineRegistration.api'
 
 const { Title } = Typography
 const { Search } = Input
@@ -108,7 +113,9 @@ const RegisterVaccine: React.FC = () => {
     setExporting(true)
     try {
       const response = await vaccineRegistrationApi.exportExcel({ pageNum: currentPage, pageSize })
-      const blob = new Blob([response as unknown as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const blob = new Blob([response as unknown as BlobPart], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -223,8 +230,8 @@ const RegisterVaccine: React.FC = () => {
   const filteredRegistrations: PopulatedVaccineRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -232,165 +239,174 @@ const RegisterVaccine: React.FC = () => {
 
   return (
     <div className='p-6'>
-      <Card className='shadow-sm'>
-        <Row justify='space-between' align='middle' className='mb-4'>
-          <Col>
-            <Title level={2} className='m-0 flex items-center gap-2'>
-              <EditOutlined className='text-blue-600' />
-              Quản lý đơn đăng ký tiêm chủng
-            </Title>
-          </Col>
-          <Col>
-            <Space>
-              <Button icon={<FileExcelOutlined />} loading={exporting} onClick={handleExportExcel}>
-                Xuất Excel
+      <Card>
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <FormOutlined style={{ marginRight: 12 }} />
+                Quản lý đơn đăng ký tiêm chủng
+              </Title>
+            </Col>
+          </Row>
+        </Card>
+        <Card className='shadow-sm mt-6'>
+          <Row justify='space-between' align='middle' className='mb-4'>
+            <Col>
+              <Space>
+                <Button icon={<ReloadOutlined />} onClick={fetchRegistrations} loading={loading}>
+                  Làm mới
+                </Button>
+                <Button icon={<FileExcelOutlined />} loading={exporting} onClick={handleExportExcel}>
+                  Xuất Excel
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} md={12}>
+              <Search
+                placeholder='Tìm kiếm học sinh, sự kiện, phụ huynh...'
+                allowClear
+                enterButton={<SearchOutlined />}
+                onSearch={(value) => setSearchKeyword(value)}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Select
+                placeholder='Lọc theo trạng thái'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => setStatusFilter(value)}
+              >
+                {statusOptions.map((s) => (
+                  <Option key={s.value} value={s.value}>
+                    <Space>
+                      {s.icon}
+                      {s.label}
+                    </Space>
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+          </Row>
+          <Table
+            columns={columns}
+            dataSource={filteredRegistrations}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn đăng ký`,
+              onChange: handleTableChange
+            }}
+            scroll={{ x: 1000 }}
+          />
+          <Modal
+            title={
+              <Space>
+                <EditOutlined className='text-blue-500' />
+                Chi tiết đơn đăng ký tiêm chủng
+              </Space>
+            }
+            open={isDetailModalVisible}
+            onCancel={() => setIsDetailModalVisible(false)}
+            footer={[
+              selected?.status === RegistrationStatus.Pending && (
+                <Button key='approve' type='primary' onClick={handleApprove}>
+                  Duyệt đơn
+                </Button>
+              ),
+              selected?.status === RegistrationStatus.Pending && (
+                <Button key='reject' danger onClick={() => setIsRejectModalVisible(true)}>
+                  Từ chối
+                </Button>
+              ),
+              <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                Đóng
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchRegistrations} loading={loading}>
-                Làm mới
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Search
-              placeholder='Tìm kiếm học sinh, sự kiện, phụ huynh...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              onSearch={(value) => setSearchKeyword(value)}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} md={12}>
-            <Select
-              placeholder='Lọc theo trạng thái'
-              allowClear
-              style={{ width: '100%' }}
-              onChange={(value) => setStatusFilter(value)}
-            >
-              {statusOptions.map((s) => (
-                <Option key={s.value} value={s.value}>
-                  <Space>
-                    {s.icon}
-                    {s.label}
-                  </Space>
-                </Option>
-              ))}
-            </Select>
-          </Col>
-        </Row>
-        <Table
-          columns={columns}
-          dataSource={filteredRegistrations}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn đăng ký`,
-            onChange: handleTableChange
-          }}
-          scroll={{ x: 1000 }}
-        />
-        <Modal
-          title={
-            <Space>
-              <EditOutlined className='text-blue-500' />
-              Chi tiết đơn đăng ký tiêm chủng
-            </Space>
-          }
-          open={isDetailModalVisible}
-          onCancel={() => setIsDetailModalVisible(false)}
-          footer={[
-            selected?.status === RegistrationStatus.Pending && (
-              <Button key='approve' type='primary' onClick={handleApprove}>
-                Duyệt đơn
-              </Button>
-            ),
-            selected?.status === RegistrationStatus.Pending && (
-              <Button key='reject' danger onClick={() => setIsRejectModalVisible(true)}>
-                Từ chối
-              </Button>
-            ),
-            <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-              Đóng
-            </Button>
-          ]}
-          width={700}
-        >
-          {selected && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                {selected.student?.avatar && (
-                  <Avatar src={selected.student.avatar} size={64} style={{ marginRight: 16 }} />
-                )}
-                <div>
-                  <span style={{ fontWeight: 600, fontSize: 18 }}>
-                    {selected.student?.fullName || selected.studentId}
-                  </span>
+            ]}
+            width={700}
+          >
+            {selected && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                  {selected.student?.avatar && (
+                    <Avatar src={selected.student.avatar} size={64} style={{ marginRight: 16 }} />
+                  )}
+                  <div>
+                    <span style={{ fontWeight: 600, fontSize: 18 }}>
+                      {selected.student?.fullName || selected.studentId}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <Descriptions bordered column={1} size='small'>
-                {/* Bỏ dòng Học sinh vì đã hiển thị avatar + tên ở trên */}
-                <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
-                <Descriptions.Item label='Phụ huynh'>
-                  {selected.parent?.fullName || selected.parentId}
-                </Descriptions.Item>
-                <Descriptions.Item label='Trạng thái'>{statusLabels[selected.status]}</Descriptions.Item>
-                <Descriptions.Item label='Lý do'>{selected.cancellationReason || '-'}</Descriptions.Item>
-                <Descriptions.Item label='Ghi chú'>{selected.note || '-'}</Descriptions.Item>
-                <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
-                <Descriptions.Item label='Ngày duyệt'>
-                  {selected.approvedAt ? formatDateTime(selected.approvedAt) : '-'}
-                </Descriptions.Item>
-                <Descriptions.Item label='Ngày tạo'>
-                  {selected.createdAt ? formatDateTime(selected.createdAt) : '-'}
-                </Descriptions.Item>
-                <Descriptions.Item label='Ngày cập nhật'>
-                  {selected.updatedAt ? formatDateTime(selected.updatedAt) : '-'}
-                </Descriptions.Item>
-              </Descriptions>
-            </>
-          )}
-        </Modal>
-        <Modal
-          title={
-            <Space>
-              <StopOutlined className='text-red-500' />
-              Từ chối đơn đăng ký
-            </Space>
-          }
-          open={isRejectModalVisible}
-          onCancel={() => {
-            setIsRejectModalVisible(false)
-            rejectForm.resetFields()
-          }}
-          footer={[
-            <Button key='cancel' onClick={() => {
+                <Descriptions bordered column={1} size='small'>
+                  {/* Bỏ dòng Học sinh vì đã hiển thị avatar + tên ở trên */}
+                  <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                  <Descriptions.Item label='Phụ huynh'>
+                    {selected.parent?.fullName || selected.parentId}
+                  </Descriptions.Item>
+                  <Descriptions.Item label='Trạng thái'>{statusLabels[selected.status]}</Descriptions.Item>
+                  <Descriptions.Item label='Lý do'>{selected.cancellationReason || '-'}</Descriptions.Item>
+                  <Descriptions.Item label='Ghi chú'>{selected.note || '-'}</Descriptions.Item>
+                  <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
+                  <Descriptions.Item label='Ngày duyệt'>
+                    {selected.approvedAt ? formatDateTime(selected.approvedAt) : '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label='Ngày tạo'>
+                    {selected.createdAt ? formatDateTime(selected.createdAt) : '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label='Ngày cập nhật'>
+                    {selected.updatedAt ? formatDateTime(selected.updatedAt) : '-'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </>
+            )}
+          </Modal>
+          <Modal
+            title={
+              <Space>
+                <StopOutlined className='text-red-500' />
+                Từ chối đơn đăng ký
+              </Space>
+            }
+            open={isRejectModalVisible}
+            onCancel={() => {
               setIsRejectModalVisible(false)
               rejectForm.resetFields()
-            }}>
-              Hủy
-            </Button>,
-            <Button key='submit' type='primary' danger onClick={() => rejectForm.submit()}>
-              Từ chối
-            </Button>
-          ]}
-          width={500}
-        >
-          <Form form={rejectForm} onFinish={handleReject} layout='vertical'>
-            <Form.Item
-              label='Lý do từ chối'
-              name='cancellationReason'
-              rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối!' }]}
-            >
-              <Input.TextArea rows={4} placeholder='Nhập lý do từ chối đơn đăng ký...' />
-            </Form.Item>
-          </Form>
-        </Modal>
+            }}
+            footer={[
+              <Button
+                key='cancel'
+                onClick={() => {
+                  setIsRejectModalVisible(false)
+                  rejectForm.resetFields()
+                }}
+              >
+                Hủy
+              </Button>,
+              <Button key='submit' type='primary' danger onClick={() => rejectForm.submit()}>
+                Từ chối
+              </Button>
+            ]}
+            width={500}
+          >
+            <Form form={rejectForm} onFinish={handleReject} layout='vertical'>
+              <Form.Item
+                label='Lý do từ chối'
+                name='cancellationReason'
+                rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối!' }]}
+              >
+                <Input.TextArea rows={4} placeholder='Nhập lý do từ chối đơn đăng ký...' />
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Card>
       </Card>
     </div>
   )

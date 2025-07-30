@@ -1,4 +1,4 @@
-import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
+import { EyeOutlined, FileTextOutlined, SearchOutlined, UsergroupDeleteOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, Tabs, Tag, Typography, message } from 'antd'
 import dayjs from 'dayjs'
@@ -456,19 +456,18 @@ const HealthRecordCensorship: React.FC = () => {
 
   return (
     <div className='p-6'>
-      <Card className='shadow-sm'>
-        <Row justify='space-between' align='middle' className='mb-4'>
+      <Card>
+      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+        <Row justify='space-between' align='middle'>
           <Col>
-            <Title level={2} className='m-0'>
-              Quản lý hồ sơ sức khỏe học sinh
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              <FileTextOutlined style={{ marginRight: 12 }} />
+              Quản lý hồ sơ sức khỏe
             </Title>
           </Col>
-          {/* <Col>
-            <Button type='primary' icon={<PlusOutlined />} onClick={showCreateModal}>
-              Thêm hồ sơ
-            </Button>
-          </Col> */}
         </Row>
+      </Card>
+      <Card className='shadow-sm mt-6'>
 
         <Form layout='vertical'>
           <Row gutter={[16, 16]}>
@@ -562,7 +561,8 @@ const HealthRecordCensorship: React.FC = () => {
             onChange: handleTableChange,
           }}
         />
-      </Card>
+        </Card>
+        </Card>
 
       {/* Modal xem chi tiết */}
       <Modal

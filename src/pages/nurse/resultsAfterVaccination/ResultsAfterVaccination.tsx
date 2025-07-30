@@ -4,6 +4,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
+  ExperimentOutlined,
   EyeOutlined,
   MedicineBoxOutlined,
   ReloadOutlined,
@@ -252,8 +253,8 @@ const ResultsAfterVaccination: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      event.vaccineName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -263,24 +264,27 @@ const ResultsAfterVaccination: React.FC = () => {
 
   return (
     <div className='p-6'>
-      <Card className='shadow-sm'>
-        <div className='flex justify-between items-center mb-6'>
-          <div>
-            <Title level={2} className='m-0 flex items-center gap-2'>
-              <MedicineBoxOutlined className='text-blue-600' />
+      <Card>
+      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+        <Row justify='space-between' align='middle'>
+          <Col>
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              <ExperimentOutlined style={{ marginRight: 12 }} />
               Quản lý sự kiện tiêm chủng
             </Title>
-            <Text type='secondary'>Cập nhật trạng thái các sự kiện tiêm vaccine trong trường</Text>
-          </div>
+            <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Cập nhật trạng thái các sự kiện tiêm vaccine trong trường</Text>
+          </Col>
           <Space>
             <Button icon={<ReloadOutlined />} onClick={fetchVaccineEvents} loading={loading}>
               Làm mới
             </Button>
           </Space>
-        </div>
+        </Row>
+      </Card>
+      <Card className='shadow-sm mt-6'>
 
         {/* Statistics */}
-        <Row gutter={[16, 16]} className='mb-6'>
+        <Row gutter={[16, 16]} className='mb-6 '>
           <Col xs={24} sm={12} md={6}>
             <Card size='small' className='text-center'>
               <Statistic
@@ -484,7 +488,8 @@ const ResultsAfterVaccination: React.FC = () => {
             </div>
           )}
         </Modal>
-      </Card>
+        </Card>
+        </Card>
     </div>
   )
 }

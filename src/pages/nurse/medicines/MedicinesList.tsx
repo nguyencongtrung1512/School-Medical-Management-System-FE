@@ -481,12 +481,12 @@ const MedicinesList: React.FC = () => {
 
   const filteredMedicines = searchText
     ? medicines.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.dosage?.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.manufacturer?.toLowerCase().includes(searchText.toLowerCase())
-      )
+      (item) =>
+        item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.dosage?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.manufacturer?.toLowerCase().includes(searchText.toLowerCase())
+    )
     : medicines
 
   const sortedMedicines = (() => {
@@ -542,80 +542,85 @@ const MedicinesList: React.FC = () => {
   )
   return (
     <div className='p-6'>
-      <Card bordered={false} className='shadow-sm'>
-        <Row gutter={[16, 16]} align='middle' justify='space-between'>
-          <Col>
-            <Title level={2} style={{ margin: 0 }}>
-              <Space>
-                <MedicineBoxOutlined style={{ color: '#1890ff' }} />
+      <Card>
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <MedicineBoxOutlined style={{ marginRight: 12 }} />
                 Quản lý thuốc
-              </Space>
-            </Title>
-          </Col>
-          <Col>
-            <Space>
-              <Dropdown overlay={exportMenu} trigger={['click']}>
-                <Button icon={<DownloadOutlined />} size='large' loading={exportLoading}>
-                  Xuất Excel
+              </Title>
+              <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Sử dụng cho học sinh trong nhà trường</Text>
+            </Col>
+          </Row>
+        </Card>
+        <Card bordered={false} className='shadow-sm mt-6'>
+          <Row gutter={[16, 16]} align='middle' justify='space-between'>
+            <Col>
+              <Space>
+                <Dropdown overlay={exportMenu} trigger={['click']}>
+                  <Button icon={<DownloadOutlined />} size='large' loading={exportLoading}>
+                    Xuất Excel
+                  </Button>
+                </Dropdown>
+                <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size='large'>
+                  Thêm thuốc mới
                 </Button>
-              </Dropdown>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size='large'>
-                Thêm thuốc mới
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+              </Space>
+            </Col>
+          </Row>
 
-        <Divider />
+          <Divider />
 
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Search
-              placeholder='Tìm kiếm thuốc'
-              allowClear
-              enterButton={<SearchOutlined />}
-              size='middle'
-              onSearch={handleSearch}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </Col>
-          <Col>
-            <Space>
-              <Dropdown overlay={filterMenu} trigger={['click']}>
-                <Button icon={<FilterOutlined />}>Lọc</Button>
-              </Dropdown>
-              <Tooltip title='Làm mới dữ liệu'>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={() => fetchMedicines(currentPage, pageSize)}
-                  loading={loading}
-                />
-              </Tooltip>
-            </Space>
-          </Col>
-        </Row>
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Search
+                placeholder='Tìm kiếm thuốc'
+                allowClear
+                enterButton={<SearchOutlined />}
+                size='middle'
+                onSearch={handleSearch}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </Col>
+            <Col>
+              <Space>
+                <Dropdown overlay={filterMenu} trigger={['click']}>
+                  <Button icon={<FilterOutlined />}>Lọc</Button>
+                </Dropdown>
+                <Tooltip title='Làm mới dữ liệu'>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => fetchMedicines(currentPage, pageSize)}
+                    loading={loading}
+                  />
+                </Tooltip>
+              </Space>
+            </Col>
+          </Row>
 
-        <Table
-          columns={columns}
-          dataSource={sortedMedicines}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `Tổng cộng ${total} loại thuốc`,
-            onChange: (page, size) => {
-              setCurrentPage(page)
-              setPageSize(size || 10)
-            }
-          }}
-          bordered
-          size='middle'
-          scroll={{ x: 'max-content' }}
-        />
+          <Table
+            columns={columns}
+            dataSource={sortedMedicines}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `Tổng cộng ${total} loại thuốc`,
+              onChange: (page, size) => {
+                setCurrentPage(page)
+                setPageSize(size || 10)
+              }
+            }}
+            bordered
+            size='middle'
+            scroll={{ x: 'max-content' }}
+          />
+        </Card>
       </Card>
 
       {/* Modal thêm thuốc mới */}

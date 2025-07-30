@@ -1,7 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
-  Card, Table, Button, Space, Tag, Typography, Input, Modal, Descriptions, Select, message, Row, Col, Form, DatePicker
-} from 'antd';
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Typography,
+  Input,
+  Modal,
+  Descriptions,
+  Select,
+  message,
+  Row,
+  Col,
+  Form,
+  DatePicker
+} from 'antd'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -9,90 +23,96 @@ import {
   SearchOutlined,
   EyeOutlined,
   ReloadOutlined,
-  EditOutlined
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { medicalCheckAppointmentApi, AppointmentStatus, PostMedicalCheckStatus, type MedicalCheckAppointment } from '../../../api/medicalCheckAppointment.api';
-import type { ColumnsType } from 'antd/es/table';
+  EditOutlined,
+  FileDoneOutlined
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
+import {
+  medicalCheckAppointmentApi,
+  AppointmentStatus,
+  PostMedicalCheckStatus,
+  type MedicalCheckAppointment
+} from '../../../api/medicalCheckAppointment.api'
+import type { ColumnsType } from 'antd/es/table'
 
-const { Title } = Typography;
-const { Search } = Input;
-const { Option } = Select;
+const { Title } = Typography
+const { Search } = Input
+const { Option } = Select
 
 const statusOptions = [
   { value: AppointmentStatus.Pending, label: 'Chờ khám', icon: <ClockCircleOutlined /> },
   { value: AppointmentStatus.Checked, label: 'Đã kiểm tra', icon: <CheckCircleOutlined /> },
   { value: AppointmentStatus.Ineligible, label: 'Không đủ điều kiện', icon: <StopOutlined /> },
   { value: AppointmentStatus.Cancelled, label: 'Đã hủy', icon: <StopOutlined /> },
-  { value: AppointmentStatus.MedicalChecked, label: 'Đã khám sức khỏe', icon: <CheckCircleOutlined /> },
-];
+  { value: AppointmentStatus.MedicalChecked, label: 'Đã khám sức khỏe', icon: <CheckCircleOutlined /> }
+]
 
 const postMedicalCheckStatusLabels: Record<string, string> = {
   not_checked: 'Chưa đánh giá',
   healthy: 'Bình thường, khỏe mạnh',
   need_follow_up: 'Cần theo dõi thêm',
   sick: 'Phát hiện bệnh',
-  other: 'Khác',
-};
+  other: 'Khác'
+}
 
 interface PopulatedMedicalCheckAppointment extends MedicalCheckAppointment {
-  student?: { _id: string; fullName?: string; avatar?: string };
-  event?: { _id: string; title?: string };
+  student?: { _id: string; fullName?: string; avatar?: string }
+  event?: { _id: string; title?: string }
 }
 
 const AppointmentMedicalCheck: React.FC = () => {
-  const [appointments, setAppointments] = useState<PopulatedMedicalCheckAppointment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | undefined>(undefined);
-  const [selected, setSelected] = useState<PopulatedMedicalCheckAppointment | null>(null);
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null);
-  const [checkForm] = Form.useForm();
-  const [postForm] = Form.useForm();
+  const [appointments, setAppointments] = useState<PopulatedMedicalCheckAppointment[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | undefined>(undefined)
+  const [selected, setSelected] = useState<PopulatedMedicalCheckAppointment | null>(null)
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
+  const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null)
+  const [checkForm] = Form.useForm()
+  const [postForm] = Form.useForm()
 
   useEffect(() => {
-    fetchAppointments();
-  }, [currentPage, pageSize]);
+    fetchAppointments()
+  }, [currentPage, pageSize])
 
   const fetchAppointments = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await medicalCheckAppointmentApi.search({ pageNum: currentPage, pageSize });
-      const pageData = ((response as unknown) as { pageData: PopulatedMedicalCheckAppointment[] }).pageData || [];
-      const total = ((response as unknown) as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0;
-      setAppointments(pageData);
-      setTotalItems(total);
+      const response = await medicalCheckAppointmentApi.search({ pageNum: currentPage, pageSize })
+      const pageData = (response as unknown as { pageData: PopulatedMedicalCheckAppointment[] }).pageData || []
+      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      setAppointments(pageData)
+      setTotalItems(total)
     } catch {
-      message.error('Không thể tải danh sách lịch hẹn');
+      message.error('Không thể tải danh sách lịch hẹn')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleTableChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) setPageSize(pageSize);
-  };
+    setCurrentPage(page)
+    if (pageSize) setPageSize(pageSize)
+  }
 
   const formatDateTime = (dateValue: string | Date) => {
-    if (!dateValue) return '';
-    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-    return dayjs(date).format('DD/MM/YYYY HH:mm');
-  };
+    if (!dateValue) return ''
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue
+    return dayjs(date).format('DD/MM/YYYY HH:mm')
+  }
 
   const getStatusTag = (status: AppointmentStatus) => {
-    const found = statusOptions.find((s) => s.value === status);
-    if (!found) return <Tag>{status}</Tag>;
-    return <Tag icon={found.icon}>{found.label}</Tag>;
-  };
+    const found = statusOptions.find((s) => s.value === status)
+    if (!found) return <Tag>{status}</Tag>
+    return <Tag icon={found.icon}>{found.label}</Tag>
+  }
 
   const handleOpenCheck = (record: PopulatedMedicalCheckAppointment) => {
-    setSelected(record);
-    setModalType('check');
+    setSelected(record)
+    setModalType('check')
     checkForm.setFieldsValue({
       height: record.height,
       weight: record.weight,
@@ -103,64 +123,64 @@ const AppointmentMedicalCheck: React.FC = () => {
       isHealthy: record.isHealthy,
       reasonIfUnhealthy: record.reasonIfUnhealthy,
       notes: record.notes,
-      checkedAt: record.checkedAt ? dayjs(record.checkedAt) : dayjs(),
-    });
-    setIsDetailModalVisible(true);
-  };
+      checkedAt: record.checkedAt ? dayjs(record.checkedAt) : dayjs()
+    })
+    setIsDetailModalVisible(true)
+  }
   const handleOpenPost = (record: PopulatedMedicalCheckAppointment) => {
-    setSelected(record);
-    setModalType('post');
+    setSelected(record)
+    setModalType('post')
     postForm.setFieldsValue({
       postMedicalCheckStatus: record.postMedicalCheckStatus,
-      postMedicalCheckNotes: record.postMedicalCheckNotes,
-    });
-    setIsDetailModalVisible(true);
-  };
+      postMedicalCheckNotes: record.postMedicalCheckNotes
+    })
+    setIsDetailModalVisible(true)
+  }
   const handleOpenView = (record: PopulatedMedicalCheckAppointment) => {
-    setSelected(record);
-    setModalType('view');
-    setIsDetailModalVisible(true);
-  };
+    setSelected(record)
+    setModalType('view')
+    setIsDetailModalVisible(true)
+  }
   const handleCheck = async () => {
-    if (!selected) return;
+    if (!selected) return
     try {
-      const values = await checkForm.validateFields();
+      const values = await checkForm.validateFields()
       await medicalCheckAppointmentApi.nurseCheck(selected._id, {
         ...values,
-        checkedAt: values.checkedAt ? values.checkedAt.toDate() : undefined,
-      });
-      message.success('Đánh dấu đã khám thành công!');
-      setIsDetailModalVisible(false);
-      fetchAppointments();
+        checkedAt: values.checkedAt ? values.checkedAt.toDate() : undefined
+      })
+      message.success('Đánh dấu đã khám thành công!')
+      setIsDetailModalVisible(false)
+      fetchAppointments()
     } catch {
-      message.error('Đánh dấu đã khám thất bại!');
+      message.error('Đánh dấu đã khám thất bại!')
     }
-  };
+  }
   const handlePost = async () => {
-    if (!selected) return;
+    if (!selected) return
     try {
-      const values = await postForm.validateFields();
-      await medicalCheckAppointmentApi.updatePostMedicalCheck(selected._id, values);
-      message.success('Xác nhận sau khám thành công!');
-      setIsDetailModalVisible(false);
-      fetchAppointments();
+      const values = await postForm.validateFields()
+      await medicalCheckAppointmentApi.updatePostMedicalCheck(selected._id, values)
+      message.success('Xác nhận sau khám thành công!')
+      setIsDetailModalVisible(false)
+      fetchAppointments()
     } catch {
-      message.error('Xác nhận sau khám thất bại!');
+      message.error('Xác nhận sau khám thất bại!')
     }
-  };
+  }
 
   const columns: ColumnsType<PopulatedMedicalCheckAppointment> = [
     {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.student?.fullName || record.studentId,
+      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.student?.fullName || record.studentId
     },
     {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.event?.title || record.eventId,
+      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.event?.title || record.eventId
     },
     {
       title: 'Trạng thái',
@@ -168,13 +188,13 @@ const AppointmentMedicalCheck: React.FC = () => {
       key: 'status',
       render: (status: AppointmentStatus) => getStatusTag(status),
       filters: statusOptions.map((s) => ({ text: s.label, value: s.value })),
-      onFilter: (value, record) => record.status === value,
+      onFilter: (value, record) => record.status === value
     },
     {
       title: 'Ngày khám',
       dataIndex: 'checkedAt',
       key: 'checkedAt',
-      render: (date: string) => (date ? formatDateTime(date) : '-'),
+      render: (date: string) => (date ? formatDateTime(date) : '-')
     },
     {
       title: 'Thao tác',
@@ -182,39 +202,50 @@ const AppointmentMedicalCheck: React.FC = () => {
       render: (_: unknown, record: PopulatedMedicalCheckAppointment) => (
         <Space>
           {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) && (
-            <Button type='primary' onClick={() => handleOpenCheck(record)}>Đánh dấu đã khám</Button>
+            <Button type='primary' onClick={() => handleOpenCheck(record)}>
+              Đánh dấu đã khám
+            </Button>
           )}
           {record.status === AppointmentStatus.MedicalChecked &&
             (!record.postMedicalCheckStatus || record.postMedicalCheckStatus === PostMedicalCheckStatus.NotChecked) && (
-              <Button type='primary' onClick={() => handleOpenPost(record)}>Xác nhận sau khám</Button>
+              <Button type='primary' onClick={() => handleOpenPost(record)}>
+                Xác nhận sau khám
+              </Button>
             )}
           {record.postMedicalCheckStatus && record.postMedicalCheckStatus !== PostMedicalCheckStatus.NotChecked && (
-            <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Xem kết quả</Button>
+            <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
+              Xem kết quả
+            </Button>
           )}
         </Space>
-      ),
-    },
-  ];
+      )
+    }
+  ]
 
   const filteredAppointments: PopulatedMedicalCheckAppointment[] = appointments.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
-      : true;
-    const matchesStatus = statusFilter ? item.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
-  });
+        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      : true
+    const matchesStatus = statusFilter ? item.status === statusFilter : true
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <div className='p-6'>
-      <Card className='shadow-sm'>
-        <Row justify='space-between' align='middle' className='mb-4'>
+      <Card>
+      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+        <Row justify='space-between' align='middle'>
           <Col>
-            <Title level={2} className='m-0 flex items-center gap-2'>
-              <EditOutlined className='text-blue-600' />
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              <FileDoneOutlined style={{ marginRight: 12 }} />
               Quản lý lịch hẹn khám sức khỏe
             </Title>
           </Col>
+        </Row>
+      </Card>
+      <Card className='shadow-sm mt-6'>
+        <Row justify='space-between' align='middle' className='mb-4'>
           <Col>
             <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
               Làm mới
@@ -240,7 +271,10 @@ const AppointmentMedicalCheck: React.FC = () => {
             >
               {statusOptions.map((s) => (
                 <Option key={s.value} value={s.value}>
-                  <Space>{s.icon}{s.label}</Space>
+                  <Space>
+                    {s.icon}
+                    {s.label}
+                  </Space>
                 </Option>
               ))}
             </Select>
@@ -258,25 +292,44 @@ const AppointmentMedicalCheck: React.FC = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`,
-            onChange: handleTableChange,
+            onChange: handleTableChange
           }}
           scroll={{ x: 1000 }}
         />
         <Modal
           title={
-            modalType === 'check' ? 'Đánh dấu đã khám' : modalType === 'post' ? 'Xác nhận sau khám' : 'Kết quả khám sức khỏe'}
+            modalType === 'check'
+              ? 'Đánh dấu đã khám'
+              : modalType === 'post'
+                ? 'Xác nhận sau khám'
+                : 'Kết quả khám sức khỏe'
+          }
           open={isDetailModalVisible}
           onCancel={() => setIsDetailModalVisible(false)}
           footer={
-            modalType === 'check' ? [
-              <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>Hủy</Button>,
-              <Button key='save' type='primary' onClick={handleCheck}>Lưu</Button>,
-            ] : modalType === 'post' ? [
-              <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>Hủy</Button>,
-              <Button key='save' type='primary' onClick={handlePost}>Lưu</Button>,
-            ] : [
-              <Button key='close' onClick={() => setIsDetailModalVisible(false)}>Đóng</Button>
-            ]
+            modalType === 'check'
+              ? [
+                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                    Hủy
+                  </Button>,
+                  <Button key='save' type='primary' onClick={handleCheck}>
+                    Lưu
+                  </Button>
+                ]
+              : modalType === 'post'
+                ? [
+                    <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                      Hủy
+                    </Button>,
+                    <Button key='save' type='primary' onClick={handlePost}>
+                      Lưu
+                    </Button>
+                  ]
+                : [
+                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                      Đóng
+                    </Button>
+                  ]
           }
           width={600}
         >
@@ -300,7 +353,11 @@ const AppointmentMedicalCheck: React.FC = () => {
               <Form.Item name='heartRate' label='Nhịp tim'>
                 <Input type='number' placeholder='Nhập nhịp tim' />
               </Form.Item>
-              <Form.Item name='isHealthy' label='Đủ điều kiện khám' rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}>
+              <Form.Item
+                name='isHealthy'
+                label='Đủ điều kiện khám'
+                rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
+              >
                 <Select>
                   <Option value={true}>Có</Option>
                   <Option value={false}>Không</Option>
@@ -312,20 +369,38 @@ const AppointmentMedicalCheck: React.FC = () => {
               <Form.Item name='notes' label='Ghi chú'>
                 <Input.TextArea rows={2} maxLength={300} />
               </Form.Item>
-              <Form.Item name='checkedAt' label='Thời gian khám' rules={[{ required: true, message: 'Chọn thời gian khám' }]}>
+              <Form.Item
+                name='checkedAt'
+                label='Thời gian khám'
+                rules={[{ required: true, message: 'Chọn thời gian khám' }]}
+              >
                 <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
               </Form.Item>
             </Form>
           )}
           {selected && modalType === 'post' && (
             <Form form={postForm} layout='vertical'>
-              <Form.Item name='postMedicalCheckStatus' label='Tình trạng sau khám' rules={[{ required: true, message: 'Chọn tình trạng' }]}>
+              <Form.Item
+                name='postMedicalCheckStatus'
+                label='Tình trạng sau khám'
+                rules={[{ required: true, message: 'Chọn tình trạng' }]}
+              >
                 <Select>
-                  <Option value={PostMedicalCheckStatus.NotChecked}>{postMedicalCheckStatusLabels[PostMedicalCheckStatus.NotChecked]}</Option>
-                  <Option value={PostMedicalCheckStatus.Healthy}>{postMedicalCheckStatusLabels[PostMedicalCheckStatus.Healthy]}</Option>
-                  <Option value={PostMedicalCheckStatus.NeedFollowUp}>{postMedicalCheckStatusLabels[PostMedicalCheckStatus.NeedFollowUp]}</Option>
-                  <Option value={PostMedicalCheckStatus.Sick}>{postMedicalCheckStatusLabels[PostMedicalCheckStatus.Sick]}</Option>
-                  <Option value={PostMedicalCheckStatus.Other}>{postMedicalCheckStatusLabels[PostMedicalCheckStatus.Other]}</Option>
+                  <Option value={PostMedicalCheckStatus.NotChecked}>
+                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NotChecked]}
+                  </Option>
+                  <Option value={PostMedicalCheckStatus.Healthy}>
+                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Healthy]}
+                  </Option>
+                  <Option value={PostMedicalCheckStatus.NeedFollowUp}>
+                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NeedFollowUp]}
+                  </Option>
+                  <Option value={PostMedicalCheckStatus.Sick}>
+                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Sick]}
+                  </Option>
+                  <Option value={PostMedicalCheckStatus.Other}>
+                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Other]}
+                  </Option>
                 </Select>
               </Form.Item>
               <Form.Item name='postMedicalCheckNotes' label='Ghi chú sau khám'>
@@ -345,17 +420,22 @@ const AppointmentMedicalCheck: React.FC = () => {
               <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
               <Descriptions.Item label='Nhịp tim'>{selected.heartRate || '-'}</Descriptions.Item>
               <Descriptions.Item label='Đủ điều kiện khám'>{selected.isHealthy ? 'Có' : 'Không'}</Descriptions.Item>
-              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>{selected.reasonIfUnhealthy || '-'}</Descriptions.Item>
+              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
+                {selected.reasonIfUnhealthy || '-'}
+              </Descriptions.Item>
               <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Tình trạng sau khám'>{postMedicalCheckStatusLabels[selected.postMedicalCheckStatus || 'not_checked']}</Descriptions.Item>
+              <Descriptions.Item label='Tình trạng sau khám'>
+                {postMedicalCheckStatusLabels[selected.postMedicalCheckStatus || 'not_checked']}
+              </Descriptions.Item>
               <Descriptions.Item label='Ghi chú sau khám'>{selected.postMedicalCheckNotes || '-'}</Descriptions.Item>
               <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
             </Descriptions>
           )}
         </Modal>
-      </Card>
+        </Card>
+        </Card>
     </div>
-  );
-};
+  )
+}
 
-export default AppointmentMedicalCheck;
+export default AppointmentMedicalCheck

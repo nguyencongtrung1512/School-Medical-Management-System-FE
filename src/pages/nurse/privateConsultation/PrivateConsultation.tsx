@@ -4,6 +4,7 @@ import {
   CloseCircleOutlined,
   EyeOutlined,
   FilterOutlined,
+  MedicineBoxOutlined,
   MoreOutlined,
   UserOutlined
 } from '@ant-design/icons'
@@ -317,17 +318,24 @@ function PrivateConsultation() {
   }
 
   return (
-    <div style={{ padding: '20px', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ padding: '20px', minHeight: '100vh' }}>
+      {/* Header */}
       <Card>
+      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+        <Row justify='space-between' align='middle'>
+          <Col>
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              <MedicineBoxOutlined style={{ marginRight: 12 }} />
+              Quản lý tư vấn sức khỏe riêng
+            </Title>
+            <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Theo dõi và xử lý các yêu cầu tư vấn từ phụ huynh</Text>
+          </Col>
+        </Row>
+      </Card>
+      <Card className='mt-6'>
         {/* Header with stats */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 24 }} >
           <Row justify='space-between' align='middle'>
-            <Col>
-              <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                <CalendarOutlined style={{ marginRight: 8 }} />
-                Lịch Tư Vấn
-              </Title>
-            </Col>
             <Col>
               <Space size='large'>
                 <Badge count={statusCounts.pending || 0} color='orange'>
@@ -405,7 +413,8 @@ function PrivateConsultation() {
           }}
           scroll={{ x: 800 }}
         />
-      </Card>
+        </Card>
+        </Card>
 
       {/* Detail Modal */}
       <Modal

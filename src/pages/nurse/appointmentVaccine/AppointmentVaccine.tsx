@@ -66,9 +66,9 @@ const AppointmentVaccine: React.FC = () => {
   const [form] = Form.useForm()
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [createForm] = Form.useForm()
-  const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null);
-  const [checkForm] = Form.useForm();
-  const [postForm] = Form.useForm();
+  const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null)
+  const [checkForm] = Form.useForm()
+  const [postForm] = Form.useForm()
 
   useEffect(() => {
     fetchAppointments()
@@ -160,58 +160,58 @@ const AppointmentVaccine: React.FC = () => {
   }
 
   const handleOpenCheck = (record: PopulatedVaccineAppointment) => {
-    setSelected(record);
-    setModalType('check');
+    setSelected(record)
+    setModalType('check')
     checkForm.setFieldsValue({
       bloodPressure: record.bloodPressure,
       isEligible: record.isEligible,
       reasonIfIneligible: record.reasonIfIneligible,
       notes: record.notes,
-      vaccinatedAt: record.vaccinatedAt ? dayjs(record.vaccinatedAt) : dayjs(),
-    });
-    setIsDetailModalVisible(true);
-  };
+      vaccinatedAt: record.vaccinatedAt ? dayjs(record.vaccinatedAt) : dayjs()
+    })
+    setIsDetailModalVisible(true)
+  }
   const handleOpenPost = (record: PopulatedVaccineAppointment) => {
-    setSelected(record);
-    setModalType('post');
+    setSelected(record)
+    setModalType('post')
     postForm.setFieldsValue({
       postVaccinationStatus: record.postVaccinationStatus,
-      postVaccinationNotes: record.postVaccinationNotes,
-    });
-    setIsDetailModalVisible(true);
-  };
+      postVaccinationNotes: record.postVaccinationNotes
+    })
+    setIsDetailModalVisible(true)
+  }
   const handleOpenView = (record: PopulatedVaccineAppointment) => {
-    setSelected(record);
-    setModalType('view');
-    setIsDetailModalVisible(true);
-  };
+    setSelected(record)
+    setModalType('view')
+    setIsDetailModalVisible(true)
+  }
   const handleCheck = async () => {
-    if (!selected) return;
+    if (!selected) return
     try {
-      const values = await checkForm.validateFields();
+      const values = await checkForm.validateFields()
       await vaccineAppointmentApi.check(selected._id, {
         ...values,
-        vaccinatedAt: values.vaccinatedAt ? values.vaccinatedAt.toDate() : undefined,
-      });
-      message.success('Đánh dấu đã tiêm thành công!');
-      setIsDetailModalVisible(false);
-      fetchAppointments();
+        vaccinatedAt: values.vaccinatedAt ? values.vaccinatedAt.toDate() : undefined
+      })
+      message.success('Đánh dấu đã tiêm thành công!')
+      setIsDetailModalVisible(false)
+      fetchAppointments()
     } catch {
-      message.error('Đánh dấu đã tiêm thất bại!');
+      message.error('Đánh dấu đã tiêm thất bại!')
     }
-  };
+  }
   const handlePost = async () => {
-    if (!selected) return;
+    if (!selected) return
     try {
-      const values = await postForm.validateFields();
-      await vaccineAppointmentApi.updatePostVaccination(selected._id, values);
-      message.success('Xác nhận sau tiêm thành công!');
-      setIsDetailModalVisible(false);
-      fetchAppointments();
+      const values = await postForm.validateFields()
+      await vaccineAppointmentApi.updatePostVaccination(selected._id, values)
+      message.success('Xác nhận sau tiêm thành công!')
+      setIsDetailModalVisible(false)
+      fetchAppointments()
     } catch {
-      message.error('Xác nhận sau tiêm thất bại!');
+      message.error('Xác nhận sau tiêm thất bại!')
     }
-  };
+  }
 
   const columns: ColumnsType<PopulatedVaccineAppointment> = [
     {
@@ -245,15 +245,23 @@ const AppointmentVaccine: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: PopulatedVaccineAppointment) => (
         <Space>
-          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked || record.status === AppointmentStatus.Ineligible) && (
-            <Button type='primary' onClick={() => handleOpenCheck(record)}>Đánh dấu đã tiêm</Button>
-          )}
+          {(record.status === AppointmentStatus.Pending ||
+            record.status === AppointmentStatus.Checked ||
+            record.status === AppointmentStatus.Ineligible) && (
+              <Button type='primary' onClick={() => handleOpenCheck(record)}>
+                Đánh dấu đã tiêm
+              </Button>
+            )}
           {record.status === AppointmentStatus.Vaccinated &&
             (!record.postVaccinationStatus || record.postVaccinationStatus === PostVaccinationStatus.NotChecked) && (
-              <Button type='primary' onClick={() => handleOpenPost(record)}>Xác nhận sau tiêm</Button>
+              <Button type='primary' onClick={() => handleOpenPost(record)}>
+                Xác nhận sau tiêm
+              </Button>
             )}
           {record.postVaccinationStatus && (
-            <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Xem kết quả</Button>
+            <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
+              Xem kết quả
+            </Button>
           )}
         </Space>
       )
@@ -263,7 +271,7 @@ const AppointmentVaccine: React.FC = () => {
   const filteredAppointments: PopulatedVaccineAppointment[] = appointments.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -279,14 +287,19 @@ const AppointmentVaccine: React.FC = () => {
 
   return (
     <div className='p-6'>
-      <Card className='shadow-sm'>
-        <Row justify='space-between' align='middle' className='mb-4'>
+      <Card>
+      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+        <Row justify='space-between' align='middle'>
           <Col>
-            <Title level={2} className='m-0 flex items-center gap-2'>
-              <MedicineBoxOutlined className='text-blue-600' />
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              <CheckCircleOutlined style={{ marginRight: 12 }} />
               Quản lý lịch hẹn tiêm chủng
             </Title>
           </Col>
+        </Row>
+      </Card>
+      <Card className='shadow-sm mt-6'>
+        <Row justify='space-between' align='middle' className='mb-4'>
           <Col>
             <Space>
               <Button type='primary' onClick={handleOpenCreate}>
@@ -344,19 +357,38 @@ const AppointmentVaccine: React.FC = () => {
         />
         <Modal
           title={
-            modalType === 'check' ? 'Đánh dấu đã tiêm' : modalType === 'post' ? 'Xác nhận sau tiêm' : 'Kết quả tiêm chủng'}
+            modalType === 'check'
+              ? 'Đánh dấu đã tiêm'
+              : modalType === 'post'
+                ? 'Xác nhận sau tiêm'
+                : 'Kết quả tiêm chủng'
+          }
           open={isDetailModalVisible}
           onCancel={() => setIsDetailModalVisible(false)}
           footer={
-            modalType === 'check' ? [
-              <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>Hủy</Button>,
-              <Button key='save' type='primary' onClick={handleCheck}>Lưu</Button>,
-            ] : modalType === 'post' ? [
-              <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>Hủy</Button>,
-              <Button key='save' type='primary' onClick={handlePost}>Lưu</Button>,
-            ] : [
-              <Button key='close' onClick={() => setIsDetailModalVisible(false)}>Đóng</Button>
-            ]
+            modalType === 'check'
+              ? [
+                <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                  Hủy
+                </Button>,
+                <Button key='save' type='primary' onClick={handleCheck}>
+                  Lưu
+                </Button>
+              ]
+              : modalType === 'post'
+                ? [
+                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                    Hủy
+                  </Button>,
+                  <Button key='save' type='primary' onClick={handlePost}>
+                    Lưu
+                  </Button>
+                ]
+                : [
+                  <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                    Đóng
+                  </Button>
+                ]
           }
           width={600}
         >
@@ -365,7 +397,11 @@ const AppointmentVaccine: React.FC = () => {
               <Form.Item name='bloodPressure' label='Huyết áp'>
                 <Input placeholder='Nhập huyết áp' />
               </Form.Item>
-              <Form.Item name='isEligible' label='Đủ điều kiện tiêm' rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}>
+              <Form.Item
+                name='isEligible'
+                label='Đủ điều kiện tiêm'
+                rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
+              >
                 <Select>
                   <Option value={true}>Có</Option>
                   <Option value={false}>Không</Option>
@@ -377,14 +413,22 @@ const AppointmentVaccine: React.FC = () => {
               <Form.Item name='notes' label='Ghi chú'>
                 <Input.TextArea rows={2} maxLength={300} />
               </Form.Item>
-              <Form.Item name='vaccinatedAt' label='Thời gian tiêm' rules={[{ required: true, message: 'Chọn thời gian tiêm' }]}>
+              <Form.Item
+                name='vaccinatedAt'
+                label='Thời gian tiêm'
+                rules={[{ required: true, message: 'Chọn thời gian tiêm' }]}
+              >
                 <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
               </Form.Item>
             </Form>
           )}
           {selected && modalType === 'post' && (
             <Form form={postForm} layout='vertical'>
-              <Form.Item name='postVaccinationStatus' label='Tình trạng sau tiêm' rules={[{ required: true, message: 'Chọn tình trạng' }]}>
+              <Form.Item
+                name='postVaccinationStatus'
+                label='Tình trạng sau tiêm'
+                rules={[{ required: true, message: 'Chọn tình trạng' }]}
+              >
                 <Select>
                   <Option value={PostVaccinationStatus.NotChecked}>Chưa kiểm tra</Option>
                   <Option value={PostVaccinationStatus.Healthy}>Bình thường, khỏe mạnh</Option>
@@ -403,12 +447,18 @@ const AppointmentVaccine: React.FC = () => {
               <Descriptions.Item label='Học sinh'>{selected.student?.fullName || selected.studentId}</Descriptions.Item>
               <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
               <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
-              <Descriptions.Item label='Ngày tiêm'>{selected.vaccinatedAt ? formatDateTime(selected.vaccinatedAt) : '-'}</Descriptions.Item>
+              <Descriptions.Item label='Ngày tiêm'>
+                {selected.vaccinatedAt ? formatDateTime(selected.vaccinatedAt) : '-'}
+              </Descriptions.Item>
               <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
               <Descriptions.Item label='Đủ điều kiện tiêm'>{selected.isEligible ? 'Có' : 'Không'}</Descriptions.Item>
-              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>{selected.reasonIfIneligible || '-'}</Descriptions.Item>
+              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
+                {selected.reasonIfIneligible || '-'}
+              </Descriptions.Item>
               <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Tình trạng sau tiêm'>{postVaccinationStatusLabels[selected.postVaccinationStatus || 'not_checked']}</Descriptions.Item>
+              <Descriptions.Item label='Tình trạng sau tiêm'>
+                {postVaccinationStatusLabels[selected.postVaccinationStatus || 'not_checked']}
+              </Descriptions.Item>
               <Descriptions.Item label='Ghi chú sau tiêm'>{selected.postVaccinationNotes || '-'}</Descriptions.Item>
               <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
             </Descriptions>
@@ -480,7 +530,8 @@ const AppointmentVaccine: React.FC = () => {
             </Form.Item>
           </Form>
         </Modal>
-      </Card>
+        </Card>
+        </Card>
     </div>
   )
 }

@@ -485,28 +485,20 @@ const ReceiveMedicine: React.FC = () => {
       <Card>
         <Space direction='vertical' style={{ width: '100%' }}>
           {/* header */}
-          <Row
-            style={{
-              background: 'linear-gradient(135deg, #7c91ef 0%, #2171cc 100%)',
-              borderRadius: '10px',
-              padding: '16px'
-            }}
-            gutter={[16, 16]}
-            align='middle'
-            justify='space-between'
-          >
-            <Col>
-              <Title level={3} style={{ color: 'white', margin: 0 }}>
-                <Space>
-                  <MedicineBoxOutlined />
+          <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+            <Row justify='space-between' align='middle'>
+              <Col>
+                <Title level={3} style={{ color: 'white', margin: 0 }}>
+                  <MedicineBoxOutlined style={{ marginRight: 12 }} />
                   Nhận thuốc từ phụ huynh
-                </Space>
-              </Title>
-            </Col>
-          </Row>
+                </Title>
+
+              </Col>
+            </Row>
+          </Card>
 
           {/* Thống kê */}
-          <Row gutter={16} style={{ marginBottom: 24 }} justify='space-between'>
+          <Row className='mt-6' gutter={16} style={{ marginBottom: 24 }} justify='space-between'>
             <Col flex='1'>
               <Card hoverable>
                 <Statistic title='Tổng số đơn' value={stats.total} prefix={<MedicineBoxOutlined />} />
