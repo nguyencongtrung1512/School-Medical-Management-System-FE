@@ -35,7 +35,11 @@ import {
   WarningOutlined,
   PlusOutlined
 } from '@ant-design/icons'
-import { type MedicalEvent, medicalEventApi } from '../../../api/medicalEvent.api'
+import {
+  type MedicalEvent,
+  medicalEventApi,
+  ParentContactStatus // thêm enum mới
+} from '../../../api/medicalEvent.api'
 import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import type { Medicine } from '../../../api/medicines.api'
@@ -71,6 +75,11 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const [selectedMedicines, setSelectedMedicines] = useState<{ id: string; quantity: number }[]>([])
   const [selectedSupplies, setSelectedSupplies] = useState<{ id: string; quantity: number }[]>([])
   const [loading, setLoading] = useState(false)
+
+  // States for new fields
+  const [actions, setActions] = useState<{ time: string; description: string; performedBy?: string }[]>([])
+  const [parentContactStatus, setParentContactStatus] = useState<ParentContactStatus | undefined>()
+  const [parentContactedAt, setParentContactedAt] = useState<string | undefined>()
 
   // Fetch medicines and supplies when modal opens
   React.useEffect(() => {
@@ -144,8 +153,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
         medicinesId: response.data.medicinesId,
         medicalSuppliesId: response.data.medicalSuppliesId,
         severityLevel: response.data.severityLevel,
-        notes: response.data.notes
+        notes: response.data.notes,
+        initialCondition: response.data.initialCondition,
+        firstAid: response.data.firstAid
       })
+      setActions(response.data.actions || [])
+      setParentContactStatus(response.data.parentContactStatus)
+      setParentContactedAt(response.data.parentContactedAt)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -188,6 +202,12 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     transferred: 'warning'
   }
 
+  const parentContactStatusOptions = [
+    { value: ParentContactStatus.NOT_CONTACTED, label: 'Chưa liên hệ' },
+    { value: ParentContactStatus.CONTACTING, label: 'Đang liên hệ' },
+    { value: ParentContactStatus.CONTACTED, label: 'Đã liên hệ' }
+  ]
+
   // Handle edit mode
   const handleEdit = () => {
     if (!medicalEvent) return
@@ -212,8 +232,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       leaveMethod: medicalEvent.leaveMethod,
       leaveTime: medicalEvent.leaveTime ? dayjs(medicalEvent.leaveTime) : null,
       pickedUpBy: medicalEvent.pickedUpBy,
-      notes: medicalEvent.notes
+      notes: medicalEvent.notes,
+      initialCondition: medicalEvent.initialCondition,
+      firstAid: medicalEvent.firstAid
     })
+    setActions(medicalEvent.actions || [])
+    setParentContactStatus(medicalEvent.parentContactStatus)
+    setParentContactedAt(medicalEvent.parentContactedAt)
     setImageUrls(medicalEvent.images || [])
     setIsEditing(true)
   }
@@ -225,9 +250,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     try {
       const medicinesUsed = selectedMedicines.map((item) => ({ medicineId: item.id, quantity: item.quantity }))
       const medicalSuppliesUsed = selectedSupplies.map((item) => ({ supplyId: item.id, quantity: item.quantity }))
-
       const updateData = {
         ...values,
+        initialCondition: values.initialCondition,
+        firstAid: values.firstAid,
+        actions,
+        parentContactStatus,
+        parentContactedAt,
         medicinesUsed,
         medicalSuppliesUsed,
         images: imageUrls,
@@ -749,6 +778,93 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
                 <Form.Item name='notes' label='Ghi chú'>
                   <TextArea rows={2} placeholder='Nhập ghi chú thêm' />
+                </Form.Item>
+              </Card>
+
+              {/* New Fields for Edit */}
+              <Card
+                title={
+                  <Space>
+                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    <Text strong>Thông tin bổ sung</Text>
+                  </Space>
+                }
+                size='small'
+                style={{ marginBottom: '16px' }}
+              >
+                <Row gutter={24}>
+                  <Col span={12}>
+                    <Form.Item label="Tình trạng ban đầu" name="initialCondition">
+                      <Input placeholder="Nhập tình trạng ban đầu của học sinh" disabled={!isEditing} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Sơ cứu ban đầu" name="firstAid">
+                      <Input placeholder="Nhập biện pháp sơ cứu ban đầu (nếu có)" disabled={!isEditing} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                {/* Danh sách thao tác xử lý */}
+                <Form.Item label="Các thao tác xử lý">
+                  <Button type="dashed" onClick={() => isEditing && setActions([...actions, { time: new Date().toISOString(), description: '' }])} icon={<PlusOutlined />} disabled={!isEditing}>Thêm thao tác</Button>
+                  {actions.map((action, idx) => (
+                    <Space key={idx} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                      <DatePicker
+                        showTime
+                        value={action.time ? dayjs(action.time) : undefined}
+                        onChange={date => {
+                          if (!isEditing) return
+                          const newActions = [...actions]
+                          newActions[idx].time = date ? date.toISOString() : ''
+                          setActions(newActions)
+                        }}
+                        disabled={!isEditing}
+                      />
+                      <Input
+                        placeholder="Mô tả thao tác"
+                        value={action.description}
+                        onChange={e => {
+                          if (!isEditing) return
+                          const newActions = [...actions]
+                          newActions[idx].description = e.target.value
+                          setActions(newActions)
+                        }}
+                        disabled={!isEditing}
+                      />
+                      <Input
+                        placeholder="Người thực hiện (tùy chọn)"
+                        value={action.performedBy}
+                        onChange={e => {
+                          if (!isEditing) return
+                          const newActions = [...actions]
+                          newActions[idx].performedBy = e.target.value
+                          setActions(newActions)
+                        }}
+                        disabled={!isEditing}
+                      />
+                      {isEditing && <Button danger icon={<CloseOutlined />} onClick={() => setActions(actions.filter((_, i) => i !== idx))} />}
+                    </Space>
+                  ))}
+                </Form.Item>
+                <Form.Item label="Trạng thái liên hệ phụ huynh">
+                  <Select
+                    options={parentContactStatusOptions}
+                    value={parentContactStatus}
+                    onChange={setParentContactStatus}
+                    placeholder="Chọn trạng thái liên hệ phụ huynh"
+                    allowClear
+                    disabled={!isEditing}
+                  />
+                </Form.Item>
+                <Form.Item label="Thời gian liên hệ phụ huynh">
+                  <DatePicker
+                    showTime
+                    value={parentContactedAt ? dayjs(parentContactedAt) : undefined}
+                    onChange={date => isEditing && setParentContactedAt(date ? date.toISOString() : undefined)}
+                    placeholder="Chọn thời gian liên hệ phụ huynh"
+                    style={{ width: '100%' }}
+                    disabled={!isEditing}
+                  />
                 </Form.Item>
               </Card>
 

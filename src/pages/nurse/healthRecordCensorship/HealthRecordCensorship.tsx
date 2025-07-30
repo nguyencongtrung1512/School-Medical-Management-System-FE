@@ -1,10 +1,11 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, Tabs, Tag, Typography, message } from 'antd'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import { healthRecordApi, type CreateHealthRecordDTO, type HealthRecord, type UpdateHealthRecordDTO } from '../../../api/healthRecord.api'
+import { healthRecordApi, type CreateHealthRecordDTO, type HealthRecord, type UpdateHealthRecordDTO, type VaccinationHistory } from '../../../api/healthRecord.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
+import { getVaccineTypeByIdAPI, type VaccineType } from '../../../api/vaccineType.api'
 
 interface StudentProfile {
   _id: string
@@ -31,8 +32,9 @@ interface StudentProfile {
 const { Title, Text } = Typography
 const { Option } = Select
 
-interface PopulatedHealthRecord extends HealthRecord {
+interface PopulatedHealthRecord extends Omit<HealthRecord, 'vaccinationHistory'> {
   student?: StudentProfile
+  vaccinationHistory?: (string | VaccinationHistory)[]
 }
 
 const HealthRecordCensorship: React.FC = () => {
@@ -50,10 +52,35 @@ const HealthRecordCensorship: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<PopulatedHealthRecord | null>(null)
   const [createForm] = Form.useForm()
   const [editForm] = Form.useForm()
+  const [vaccineTypeCache, setVaccineTypeCache] = useState<Record<string, VaccineType>>({})
+  const [genderFilter, setGenderFilter] = useState<string>('')
+  const [studentIdFilter, setStudentIdFilter] = useState<string>('')
+  const [isDeletedFilter, setIsDeletedFilter] = useState<string>('')
 
   useEffect(() => {
     fetchHealthRecords()
   }, [currentPage, pageSize])
+
+  // Fetch vaccine type info when selectedRecord changes (modal open)
+  useEffect(() => {
+    if (!selectedRecord?.vaccinationHistory) return;
+    const ids = selectedRecord.vaccinationHistory
+      .filter(v => typeof v === 'object' && (v as any).vaccineTypeId)
+      .map(v => (v as any).vaccineTypeId);
+    const idsToFetch = ids.filter(id => !vaccineTypeCache[id]);
+    if (idsToFetch.length === 0) return;
+    Promise.all(
+      idsToFetch.map(async (id) => {
+        try {
+          const res = await getVaccineTypeByIdAPI(id);
+          const vaccineType = (res as any).data as VaccineType;
+          setVaccineTypeCache(prev => ({ ...prev, [id]: vaccineType }));
+        } catch {
+          // ignore
+        }
+      })
+    );
+  }, [selectedRecord]);
 
   const fetchHealthRecords = async () => {
     setLoading(true)
@@ -62,7 +89,9 @@ const HealthRecordCensorship: React.FC = () => {
         pageNum: currentPage,
         pageSize,
         query: searchKeyword,
-        schoolYear: schoolYearFilter
+        schoolYear: schoolYearFilter,
+        studentId: studentIdFilter,
+        isDeleted: isDeletedFilter
       })
       const responseData = (response as unknown as { pageData: HealthRecord[] })
       const pageInfo = (response as unknown as { pageInfo?: { totalItems: number } })
@@ -87,7 +116,14 @@ const HealthRecordCensorship: React.FC = () => {
         })
       )
 
-      setHealthRecords(populatedRecords)
+      // Filter theo gender ở FE nếu có
+      let records = populatedRecords
+      if (genderFilter) {
+        records = records.filter(
+          r => r.student?.gender === genderFilter || r.gender === genderFilter
+        )
+      }
+      setHealthRecords(records)
       setTotalItems(pageInfo.pageInfo?.totalItems || 0)
     } catch {
       message.error('Không thể tải danh sách hồ sơ sức khỏe')
@@ -184,7 +220,7 @@ const HealthRecordCensorship: React.FC = () => {
             </div>
             <div>
               <Text strong>Mã học sinh:</Text>
-              <Text className='ml-2'>{selectedRecord?.student?.studentIdCode || selectedRecord?.studentIdCode}</Text>
+              <Text className='ml-2'>{selectedRecord?.student?.studentIdCode || selectedRecord?.studentCode}</Text>
             </div>
             <div>
               <Text strong>Giới tính:</Text>
@@ -200,11 +236,11 @@ const HealthRecordCensorship: React.FC = () => {
             </div>
             <div>
               <Text strong>Chiều cao:</Text>
-              <Text className='ml-2'>{selectedRecord?.height}</Text>
+              <Text className='ml-2'>{selectedRecord?.height} cm</Text>
             </div>
             <div>
               <Text strong>Cân nặng:</Text>
-              <Text className='ml-2'>{selectedRecord?.weight}</Text>
+              <Text className='ml-2'>{selectedRecord?.weight} kg</Text>
             </div>
             <div>
               <Text strong>Năm học:</Text>
@@ -280,12 +316,50 @@ const HealthRecordCensorship: React.FC = () => {
       children: (
         <div className='space-y-4'>
           {selectedRecord?.vaccinationHistory && selectedRecord.vaccinationHistory.length > 0 ? (
-            <div className='flex flex-wrap gap-2'>
-              {selectedRecord.vaccinationHistory.map((vaccine, index) => (
-                <Tag key={index} color='green'>
-                  {vaccine}
-                </Tag>
-              ))}
+            <div className='space-y-3'>
+              {selectedRecord.vaccinationHistory.map((vaccine, index) => {
+                if (typeof vaccine === 'string') {
+                  return (
+                    <Card key={index} size='small' className='border border-green-200'>
+                      <div className='text-sm'>
+                        <Text strong>Vaccine:</Text>
+                        <Text className='ml-2'>{vaccine}</Text>
+                      </div>
+                    </Card>
+                  )
+                } else {
+                  let vaccineName = '-';
+                  if (vaccine.vaccineTypeId && vaccineTypeCache[vaccine.vaccineTypeId]) {
+                    vaccineName = vaccineTypeCache[vaccine.vaccineTypeId].name;
+                  }
+                  return (
+                    <Card key={index} size='small' className='border border-green-200'>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        <div>
+                          <Text strong>Loại vaccine:</Text>
+                          <Text className='ml-2'>{vaccineName}</Text>
+                        </div>
+                        <div>
+                          <Text strong>Ngày tiêm:</Text>
+                          <Text className='ml-2'>{formatDate(vaccine.injectedAt)}</Text>
+                        </div>
+                        {vaccine.provider && (
+                          <div>
+                            <Text strong>Nhà cung cấp:</Text>
+                            <Text className='ml-2'>{vaccine.provider}</Text>
+                          </div>
+                        )}
+                        {vaccine.note && (
+                          <div className='col-span-2'>
+                            <Text strong>Ghi chú:</Text>
+                            <Text className='ml-2'>{vaccine.note}</Text>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )
+                }
+              })}
             </div>
           ) : (
             <Text type='secondary'>Không có lịch sử tiêm chủng</Text>
@@ -308,7 +382,7 @@ const HealthRecordCensorship: React.FC = () => {
       dataIndex: 'student',
       key: 'studentCode',
       render: (_: unknown, record: PopulatedHealthRecord) =>
-        record.student?.studentIdCode || record.studentIdCode || '-'
+        record.student?.studentIdCode || record.studentCode || '-'
     },
     {
       title: 'Giới tính',
@@ -322,17 +396,19 @@ const HealthRecordCensorship: React.FC = () => {
       dataIndex: 'birthday',
       key: 'birthday',
       render: (_: unknown, record: PopulatedHealthRecord) =>
-        formatDate(record.student?.dob || record.dob || '')
+        formatDate(record.student?.dob || record.birthday || '')
     },
     {
       title: 'Chiều cao',
       dataIndex: 'height',
-      key: 'height'
+      key: 'height',
+      render: (height: number) => `${height} cm`
     },
     {
       title: 'Cân nặng',
       dataIndex: 'weight',
-      key: 'weight'
+      key: 'weight',
+      render: (weight: number) => `${weight} kg`
     },
     {
       title: 'Năm học',
@@ -363,6 +439,21 @@ const HealthRecordCensorship: React.FC = () => {
     }
   ]
 
+  // Tạo danh sách năm học từ 2020-2021 đến hiện tại
+  const getSchoolYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    // Nếu tháng >= 8 thì đã sang năm học mới
+    const endYear = currentMonth >= 8 ? currentYear + 1 : currentYear;
+    const startYear = 2020;
+    const options = [];
+    for (let y = endYear; y >= startYear; y--) {
+      options.push(`${y - 1}-${y}`);
+    }
+    return options;
+  };
+  const schoolYearOptions = getSchoolYearOptions();
+
   return (
     <div className='p-6'>
       <Card className='shadow-sm'>
@@ -379,36 +470,82 @@ const HealthRecordCensorship: React.FC = () => {
           </Col> */}
         </Row>
 
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Input
-              placeholder='Tìm kiếm theo tên học sinh...'
-              allowClear
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onPressEnter={handleSearch}
-              suffix={<SearchOutlined />}
-            />
-          </Col>
-          <Col xs={24} md={8}>
-            <Select
-              placeholder='Lọc theo năm học'
-              allowClear
-              style={{ width: '100%' }}
-              value={schoolYearFilter}
-              onChange={setSchoolYearFilter}
-            >
-              <Option value='2024-2025'>2024-2025</Option>
-              <Option value='2023-2024'>2023-2024</Option>
-              <Option value='2022-2023'>2022-2023</Option>
-            </Select>
-          </Col>
-          <Col xs={24} md={4}>
-            <Button type='primary' onClick={handleSearch} loading={loading}>
-              Tìm kiếm
-            </Button>
-          </Col>
-        </Row>
+        <Form layout='vertical'>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={6} className='h-fit'>
+              <Form.Item label='Tên học sinh'>
+                <Input
+                  placeholder='Tìm kiếm theo tên học sinh...'
+                  allowClear
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onPressEnter={handleSearch}
+                  suffix={<SearchOutlined />}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='ID học sinh'>
+                <Input
+                  placeholder='Nhập ID học sinh'
+                  allowClear
+                  value={studentIdFilter}
+                  onChange={e => setStudentIdFilter(e.target.value)}
+                  onPressEnter={handleSearch}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Giới tính'>
+                <Select
+                  placeholder='Chọn giới tính'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={genderFilter}
+                  onChange={setGenderFilter}
+                >
+                  <Option value='male'>Nam</Option>
+                  <Option value='female'>Nữ</Option>
+                  <Option value='other'>Khác</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Trạng thái'>
+                <Select
+                  placeholder='Chọn trạng thái'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={isDeletedFilter}
+                  onChange={setIsDeletedFilter}
+                >
+                  <Option value='false'>Hoạt động</Option>
+                  <Option value='true'>Đã xóa</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={4}>
+              <Form.Item label='Năm học'>
+                <Select
+                  placeholder='Chọn năm học'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={schoolYearFilter}
+                  onChange={setSchoolYearFilter}
+                >
+                  {schoolYearOptions.map((year) => (
+                    <Option key={year} value={year}>{year}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={2} className='my-auto'>
+              <Button type='primary' onClick={handleSearch} loading={loading} style={{ width: '100%' }}>
+                Tìm kiếm
+              </Button>
+            </Col>
+          </Row>
+        </Form>
 
         <Table
           columns={columns}

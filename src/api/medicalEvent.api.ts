@@ -18,6 +18,12 @@ export enum LeaveMethod {
   HOSPITAL_TRANSFER = 'hospital_transfer'
 }
 
+export enum ParentContactStatus {
+  NOT_CONTACTED = 'not_contacted',
+  CONTACTING = 'contacting',
+  CONTACTED = 'contacted'
+}
+
 export interface Class {
   _id: string
   name: string
@@ -76,6 +82,22 @@ export interface MedicalSupply {
   updatedAt: string
 }
 
+export interface MedicineUsage {
+  medicineId: string
+  quantity: number
+}
+
+export interface MedicalSupplyUsage {
+  supplyId: string
+  quantity: number
+}
+
+export interface ActionLog {
+  time: string
+  description: string
+  performedBy?: string
+}
+
 export interface MedicalEvent {
   _id: string
   studentId: string
@@ -97,8 +119,15 @@ export interface MedicalEvent {
   isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
-  medicinesUsed: string[]
-  medicalSuppliesUsed: string[]
+  // cập nhật các trường mới
+  initialCondition?: string
+  firstAid?: string
+  actions?: ActionLog[]
+  medicinesUsed?: MedicineUsage[]
+  medicalSuppliesUsed?: MedicalSupplyUsage[]
+  parentContactStatus?: ParentContactStatus
+  parentContactedAt?: string
+  // các trường cũ giữ nguyên
   student?: Student
   parent?: User
   schoolNurse?: User
@@ -115,19 +144,26 @@ export interface SearchMedicalEventParams {
   schoolNurseId?: string
   medicinesId?: string[]
   medicalSuppliesId?: string[]
+  severityLevel?: SeverityLevel
+  parentContactStatus?: ParentContactStatus
+  isDeleted?: string // "true" | "false"
 }
 
 export interface CreateMedicalEventRequest {
   studentId: string
-  parentId: string
   schoolNurseId: string
   eventName: string
   description?: string
+  initialCondition?: string
+  firstAid?: string
   actionTaken?: string
-  medicinesUsed: string[]
-  medicalSuppliesUsed: string[]
+  actions?: ActionLog[]
+  medicinesUsed?: MedicineUsage[]
+  medicalSuppliesUsed?: MedicalSupplyUsage[]
   severityLevel?: SeverityLevel
   status?: MedicalEventStatus
+  parentContactStatus?: ParentContactStatus
+  parentContactedAt?: string
   leaveMethod?: LeaveMethod
   leaveTime?: string
   pickedUpBy?: string
@@ -138,27 +174,18 @@ export interface CreateMedicalEventRequest {
 export type UpdateMedicalEventRequest = Partial<CreateMedicalEventRequest>
 
 export const medicalEventApi = {
-  // Tìm kiếm sự kiện y tế có phân trang
   search: (params: SearchMedicalEventParams) => {
     return axiosInstance.get('/medical-events/search', { params })
   },
-
-  // Lấy chi tiết sự kiện y tế theo ID
   getById: (id: string) => {
     return axiosInstance.get(`/medical-events/${id}`)
   },
-
-  // Tạo sự kiện y tế mới
   create: (data: CreateMedicalEventRequest) => {
     return axiosInstance.post('/medical-events/create', data)
   },
-
-  // Cập nhật sự kiện y tế
   update: (id: string, data: UpdateMedicalEventRequest) => {
     return axiosInstance.put(`/medical-events/${id}`, data)
   },
-
-  // Xóa sự kiện y tế
   delete: (id: string) => {
     return axiosInstance.delete(`/medical-events/${id}`)
   }

@@ -28,7 +28,8 @@ import {
   PlusOutlined,
   ReloadOutlined,
   InfoCircleOutlined,
-  WarningOutlined
+  WarningOutlined,
+  CloseOutlined
 } from '@ant-design/icons'
 import { debounce } from 'lodash'
 import {
@@ -36,7 +37,8 @@ import {
   medicalEventApi,
   MedicalEventStatus,
   SeverityLevel,
-  LeaveMethod
+  LeaveMethod,
+  ParentContactStatus
 } from '../../../api/medicalEvent.api'
 import type { MedicalSupply } from '../../../api/medicalSupplies.api'
 import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
@@ -46,6 +48,7 @@ import type { StudentProfile } from '../../../api/student.api'
 import { getStudentsAPI } from '../../../api/student.api'
 import { useAuth } from '../../../contexts/auth.context'
 import { handleUploadFile } from '../../../utils/upload'
+import dayjs from 'dayjs'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -66,6 +69,9 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [selectedMedicines, setSelectedMedicines] = useState<{ id: string; quantity: number }[]>([])
   const [selectedSupplies, setSelectedSupplies] = useState<{ id: string; quantity: number }[]>([])
+  const [actions, setActions] = useState<{ time: string; description: string; performedBy?: string }[]>([])
+  const [parentContactStatus, setParentContactStatus] = useState<ParentContactStatus | undefined>()
+  const [parentContactedAt, setParentContactedAt] = useState<string | undefined>()
 
   useEffect(() => {
     fetchMedicinesAndSupplies()
@@ -134,6 +140,11 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
 
       const medicalEventData: CreateMedicalEventRequest = {
         ...values,
+        initialCondition: values.initialCondition,
+        firstAid: values.firstAid,
+        actions,
+        parentContactStatus,
+        parentContactedAt,
         medicinesUsed,
         medicalSuppliesUsed,
         schoolNurseId: user.id,
@@ -152,6 +163,9 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       setImageUrls([])
       setSelectedMedicines([])
       setSelectedSupplies([])
+      setActions([])
+      setParentContactStatus(undefined)
+      setParentContactedAt(undefined)
       onSuccess()
     } catch (error: unknown) {
       console.log('error', error)
@@ -173,12 +187,21 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
     { value: 'dịch bệnh', label: 'Dịch bệnh', color: 'volcano' }
   ]
 
+  const parentContactStatusOptions = [
+    { value: ParentContactStatus.NOT_CONTACTED, label: 'Chưa liên hệ' },
+    { value: ParentContactStatus.CONTACTING, label: 'Đang liên hệ' },
+    { value: ParentContactStatus.CONTACTED, label: 'Đã liên hệ' }
+  ]
+
   const resetForm = () => {
     form.resetFields()
     setSelectedStudent(null)
     setImageUrls([])
     setSelectedMedicines([])
     setSelectedSupplies([])
+    setActions([])
+    setParentContactStatus(undefined)
+    setParentContactedAt(undefined)
   }
 
   return (
@@ -659,6 +682,87 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
 
           <Form.Item name='notes' label='Ghi chú thêm'>
             <TextArea rows={3} placeholder='Nhập ghi chú thêm nếu cần...' />
+          </Form.Item>
+        </Card>
+
+        {/* New Fields for Create Medical Event */}
+        <Card
+          title={
+            <Space>
+              <InfoCircleOutlined style={{ color: '#1890ff' }} />
+              <Text strong>Thông tin chi tiết sự kiện</Text>
+            </Space>
+          }
+          size='small'
+          style={{ marginBottom: '16px' }}
+        >
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item label="Tình trạng ban đầu" name="initialCondition">
+                <Input placeholder="Nhập tình trạng ban đầu của học sinh" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Sơ cứu ban đầu" name="firstAid">
+                <Input placeholder="Nhập biện pháp sơ cứu ban đầu (nếu có)" />
+              </Form.Item>
+            </Col>
+          </Row>
+          {/* Danh sách thao tác xử lý */}
+          <Form.Item label="Các thao tác xử lý">
+            {/* Đơn giản: cho phép thêm nhiều thao tác với thời gian, mô tả, performedBy (tùy chọn) */}
+            {/* Có thể dùng Table hoặc List, ở đây dùng List đơn giản */}
+            <Button type="dashed" onClick={() => setActions([...actions, { time: new Date().toISOString(), description: '' }])} icon={<PlusOutlined />}>Thêm thao tác</Button>
+            {actions.map((action, idx) => (
+              <Space key={idx} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                <DatePicker
+                  showTime
+                  value={action.time ? dayjs(action.time) : undefined}
+                  onChange={date => {
+                    const newActions = [...actions]
+                    newActions[idx].time = date ? date.toISOString() : ''
+                    setActions(newActions)
+                  }}
+                />
+                <Input
+                  placeholder="Mô tả thao tác"
+                  value={action.description}
+                  onChange={e => {
+                    const newActions = [...actions]
+                    newActions[idx].description = e.target.value
+                    setActions(newActions)
+                  }}
+                />
+                <Input
+                  placeholder="Người thực hiện (tùy chọn)"
+                  value={action.performedBy}
+                  onChange={e => {
+                    const newActions = [...actions]
+                    newActions[idx].performedBy = e.target.value
+                    setActions(newActions)
+                  }}
+                />
+                <Button danger icon={<CloseOutlined />} onClick={() => setActions(actions.filter((_, i) => i !== idx))} />
+              </Space>
+            ))}
+          </Form.Item>
+          <Form.Item label="Trạng thái liên hệ phụ huynh">
+            <Select
+              options={parentContactStatusOptions}
+              value={parentContactStatus}
+              onChange={setParentContactStatus}
+              placeholder="Chọn trạng thái liên hệ phụ huynh"
+              allowClear
+            />
+          </Form.Item>
+          <Form.Item label="Thời gian liên hệ phụ huynh">
+            <DatePicker
+              showTime
+              value={parentContactedAt ? dayjs(parentContactedAt) : undefined}
+              onChange={date => setParentContactedAt(date ? date.toISOString() : undefined)}
+              placeholder="Chọn thời gian liên hệ phụ huynh"
+              style={{ width: '100%' }}
+            />
           </Form.Item>
         </Card>
 
