@@ -6,10 +6,12 @@ import {
   ExportOutlined,
   EyeOutlined,
   FilterOutlined,
+  LockOutlined,
   MoreOutlined,
   ReloadOutlined,
   SearchOutlined,
   TeamOutlined,
+  UnlockOutlined,
   UserAddOutlined,
   UserOutlined
 } from '@ant-design/icons'
@@ -37,7 +39,7 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { deleteUserAPI, getUserByIdAPI, searchUsersAPI } from '../../../api/user.api'
+import { deleteUserAPI, getUserByIdAPI, searchUsersAPI, updateUserPermissionAPI } from '../../../api/user.api'
 import Detail from './Detail'
 import RegisterNurse from './registerNurse'
 import Update from './Update'
@@ -58,7 +60,7 @@ export interface User {
   lastLogin?: string
   isDeleted?: boolean
   avatar?: string
-  department?: string
+  fullPermission: boolean
 }
 
 interface TableParams {
@@ -152,7 +154,40 @@ const UserList: React.FC = () => {
       case 'delete':
         handleDeleteUser(record)
         break
+      case 'restrict':
+        handleUpdatePermission(record, false)
+        break
+      case 'unrestrict':
+        handleUpdatePermission(record, true)
+        break
     }
+  }
+
+  const handleUpdatePermission = async (user: User, fullPermission: boolean) => {
+    const action = fullPermission ? 'mở quyền' : 'hạn chế quyền'
+    const actionText = fullPermission ? 'Mở quyền' : 'Hạn chế quyền'
+
+    Modal.confirm({
+      title: `Xác nhận ${actionText}`,
+      content: `Bạn có chắc chắn muốn ${action} cho người dùng "${user.fullName}"?`,
+      okText: actionText,
+      okType: fullPermission ? 'primary' : 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await updateUserPermissionAPI(user._id, fullPermission)
+          message.success(`${actionText} thành công!`)
+          fetchUsers()
+        } catch (error: unknown) {
+          const err = error as { message?: string }
+          if (err.message) {
+            message.error(err.message)
+          } else {
+            message.error(`${actionText} thất bại!`)
+          }
+        }
+      }
+    })
   }
 
   const columns: ColumnsType<User> = [
@@ -212,6 +247,20 @@ const UserList: React.FC = () => {
       ],
       onFilter: (value, record) => record.role === value
     },
+    // {
+    //   title: 'Quyền truy cập',
+    //   key: 'permission',
+    //   render: (_, record) => {
+    //     if (record.role === 'parent') {
+    //       return (
+    //         <Tag color={record.fullPermission ? 'green' : 'orange'}>
+    //           {record.fullPermission ? 'Đầy đủ' : 'Hạn chế'}
+    //         </Tag>
+    //       )
+    //     }
+    //     return <Tag color="blue">Đầy đủ</Tag>
+    //   }
+    // },
     {
       title: 'Thao tác',
       key: 'action',
@@ -230,6 +279,24 @@ const UserList: React.FC = () => {
             <Menu.Item key='edit' icon={<EditOutlined />} disabled={record.isDeleted}>
               Sửa
             </Menu.Item>
+            {record.role === 'parent' &&
+              (record.fullPermission ? (
+                <Menu.Item key='restrict' icon={<LockOutlined />} danger disabled={record.isDeleted}>
+                  Hạn chế quyền
+                </Menu.Item>
+              ) : (
+                <Menu.Item
+                  key='unrestrict'
+                  icon={<UnlockOutlined />}
+                  style={{
+                    backgroundColor: '#4ade80', // tương ứng bg-green-400
+                    color: 'white'
+                  }}
+                  disabled={record.isDeleted}
+                >
+                  Mở quyền
+                </Menu.Item>
+              ))}
             <Menu.Item key='delete' icon={<DeleteOutlined />} danger disabled={record.isDeleted}>
               Khóa
             </Menu.Item>

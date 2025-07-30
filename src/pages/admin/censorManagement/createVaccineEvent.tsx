@@ -94,7 +94,7 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
   const fetchVaccineTypes = async () => {
     try {
       const response = await searchVaccineTypesAPI(1, 100) // Get all vaccine types
-      const vaccineTypesData = response.data?.pageData || []
+      const vaccineTypesData = response.pageData || []
       setVaccineTypes(vaccineTypesData)
     } catch (error: unknown) {
       console.log('error', error)

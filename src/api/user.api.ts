@@ -122,3 +122,10 @@ export const createUserAPI = (data: {
 }) => {
   return axiosInstance.post('/users/create', data)
 }
+
+export const updateUserPermissionAPI = (
+  id: string,
+  fullPermission: boolean
+): Promise<AxiosResponse<UpdateUserResponse>> => {
+  return axiosInstance.patch(`/users/${id}/full-permission`, { fullPermission })
+}
