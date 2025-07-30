@@ -1,5 +1,12 @@
 import axiosInstance from '../service/axiosInstance'
 
+export interface VaccinationHistory {
+  vaccineTypeId: string
+  injectedAt: Date
+  provider?: string
+  note?: string
+}
+
 export interface HealthRecord {
   _id: string
   studentId: string
@@ -12,9 +19,9 @@ export interface HealthRecord {
   pastTreatments?: string[]
   vision?: string
   hearing?: string
-  height: string
-  weight: string
-  vaccinationHistory?: string[]
+  height: number
+  weight: number
+  vaccinationHistory?: VaccinationHistory[]
   schoolYear: string
   createdAt?: string
   updatedAt?: string
@@ -27,31 +34,29 @@ export interface CreateHealthRecordDTO {
   pastTreatments?: string[]
   vision?: string
   hearing?: string
-  vaccinationHistory?: string[]
+  vaccinationHistory?: VaccinationHistory[]
   schoolYear: string
-  height: string
-  weight: string
+  height: number
+  weight: number
 }
 
 export type UpdateHealthRecordDTO = Partial<CreateHealthRecordDTO>
 
 export interface SearchHealthRecordDTO {
-  pageNum: number
-  pageSize: number
+  pageNum?: number
+  pageSize?: number
   query?: string
   studentId?: string
   schoolYear?: string
+  isDeleted?: string
 }
 
 export const healthRecordApi = {
   // Tìm kiếm hồ sơ sức khỏe có phân trang
   search: (params: SearchHealthRecordDTO) => {
-    return axiosInstance.get(`/health-records/search/${params.pageNum}/${params.pageSize}`, {
-      params: {
-        query: params.query,
-        studentId: params.studentId,
-        schoolYear: params.schoolYear
-      }
+    const { pageNum = 1, pageSize = 10, ...rest } = params
+    return axiosInstance.get(`/health-records/search/${pageNum}/${pageSize}`, {
+      params: rest
     })
   },
 

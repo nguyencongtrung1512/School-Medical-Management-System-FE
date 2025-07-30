@@ -1,10 +1,11 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, Tabs, Tag, Typography, message } from 'antd'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import { healthRecordApi, type CreateHealthRecordDTO, type HealthRecord, type UpdateHealthRecordDTO } from '../../../api/healthRecord.api'
+import { healthRecordApi, type CreateHealthRecordDTO, type HealthRecord, type UpdateHealthRecordDTO, type VaccinationHistory } from '../../../api/healthRecord.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
+import { getVaccineTypeByIdAPI, type VaccineType } from '../../../api/vaccineType.api'
 
 interface StudentProfile {
   _id: string
@@ -31,8 +32,9 @@ interface StudentProfile {
 const { Title, Text } = Typography
 const { Option } = Select
 
-interface PopulatedHealthRecord extends HealthRecord {
+interface PopulatedHealthRecord extends Omit<HealthRecord, 'vaccinationHistory'> {
   student?: StudentProfile
+  vaccinationHistory?: (string | VaccinationHistory)[]
 }
 
 const HealthRecordCensorship: React.FC = () => {
@@ -50,10 +52,32 @@ const HealthRecordCensorship: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<PopulatedHealthRecord | null>(null)
   const [createForm] = Form.useForm()
   const [editForm] = Form.useForm()
+  const [vaccineTypeCache, setVaccineTypeCache] = useState<Record<string, VaccineType>>({})
 
   useEffect(() => {
     fetchHealthRecords()
   }, [currentPage, pageSize])
+
+  // Fetch vaccine type info when selectedRecord changes (modal open)
+  useEffect(() => {
+    if (!selectedRecord?.vaccinationHistory) return;
+    const ids = selectedRecord.vaccinationHistory
+      .filter(v => typeof v === 'object' && (v as any).vaccineTypeId)
+      .map(v => (v as any).vaccineTypeId);
+    const idsToFetch = ids.filter(id => !vaccineTypeCache[id]);
+    if (idsToFetch.length === 0) return;
+    Promise.all(
+      idsToFetch.map(async (id) => {
+        try {
+          const res = await getVaccineTypeByIdAPI(id);
+          const vaccineType = (res as any).data as VaccineType;
+          setVaccineTypeCache(prev => ({ ...prev, [id]: vaccineType }));
+        } catch {
+          // ignore
+        }
+      })
+    );
+  }, [selectedRecord]);
 
   const fetchHealthRecords = async () => {
     setLoading(true)
@@ -184,7 +208,7 @@ const HealthRecordCensorship: React.FC = () => {
             </div>
             <div>
               <Text strong>Mã học sinh:</Text>
-              <Text className='ml-2'>{selectedRecord?.student?.studentIdCode || selectedRecord?.studentIdCode}</Text>
+              <Text className='ml-2'>{selectedRecord?.student?.studentIdCode || selectedRecord?.studentCode}</Text>
             </div>
             <div>
               <Text strong>Giới tính:</Text>
@@ -200,11 +224,11 @@ const HealthRecordCensorship: React.FC = () => {
             </div>
             <div>
               <Text strong>Chiều cao:</Text>
-              <Text className='ml-2'>{selectedRecord?.height}</Text>
+              <Text className='ml-2'>{selectedRecord?.height} cm</Text>
             </div>
             <div>
               <Text strong>Cân nặng:</Text>
-              <Text className='ml-2'>{selectedRecord?.weight}</Text>
+              <Text className='ml-2'>{selectedRecord?.weight} kg</Text>
             </div>
             <div>
               <Text strong>Năm học:</Text>
@@ -280,12 +304,50 @@ const HealthRecordCensorship: React.FC = () => {
       children: (
         <div className='space-y-4'>
           {selectedRecord?.vaccinationHistory && selectedRecord.vaccinationHistory.length > 0 ? (
-            <div className='flex flex-wrap gap-2'>
-              {selectedRecord.vaccinationHistory.map((vaccine, index) => (
-                <Tag key={index} color='green'>
-                  {vaccine}
-                </Tag>
-              ))}
+            <div className='space-y-3'>
+              {selectedRecord.vaccinationHistory.map((vaccine, index) => {
+                if (typeof vaccine === 'string') {
+                  return (
+                    <Card key={index} size='small' className='border border-green-200'>
+                      <div className='text-sm'>
+                        <Text strong>Vaccine:</Text>
+                        <Text className='ml-2'>{vaccine}</Text>
+                      </div>
+                    </Card>
+                  )
+                } else {
+                  let vaccineName = '-';
+                  if (vaccine.vaccineTypeId && vaccineTypeCache[vaccine.vaccineTypeId]) {
+                    vaccineName = vaccineTypeCache[vaccine.vaccineTypeId].name;
+                  }
+                  return (
+                    <Card key={index} size='small' className='border border-green-200'>
+                      <div className='grid grid-cols-2 gap-2 text-sm'>
+                        <div>
+                          <Text strong>Loại vaccine:</Text>
+                          <Text className='ml-2'>{vaccineName}</Text>
+                        </div>
+                        <div>
+                          <Text strong>Ngày tiêm:</Text>
+                          <Text className='ml-2'>{formatDate(vaccine.injectedAt)}</Text>
+                        </div>
+                        {vaccine.provider && (
+                          <div>
+                            <Text strong>Nhà cung cấp:</Text>
+                            <Text className='ml-2'>{vaccine.provider}</Text>
+                          </div>
+                        )}
+                        {vaccine.note && (
+                          <div className='col-span-2'>
+                            <Text strong>Ghi chú:</Text>
+                            <Text className='ml-2'>{vaccine.note}</Text>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )
+                }
+              })}
             </div>
           ) : (
             <Text type='secondary'>Không có lịch sử tiêm chủng</Text>
@@ -308,7 +370,7 @@ const HealthRecordCensorship: React.FC = () => {
       dataIndex: 'student',
       key: 'studentCode',
       render: (_: unknown, record: PopulatedHealthRecord) =>
-        record.student?.studentIdCode || record.studentIdCode || '-'
+        record.student?.studentIdCode || record.studentCode || '-'
     },
     {
       title: 'Giới tính',
@@ -322,17 +384,19 @@ const HealthRecordCensorship: React.FC = () => {
       dataIndex: 'birthday',
       key: 'birthday',
       render: (_: unknown, record: PopulatedHealthRecord) =>
-        formatDate(record.student?.dob || record.dob || '')
+        formatDate(record.student?.dob || record.birthday || '')
     },
     {
       title: 'Chiều cao',
       dataIndex: 'height',
-      key: 'height'
+      key: 'height',
+      render: (height: number) => `${height} cm`
     },
     {
       title: 'Cân nặng',
       dataIndex: 'weight',
-      key: 'weight'
+      key: 'weight',
+      render: (weight: number) => `${weight} kg`
     },
     {
       title: 'Năm học',
