@@ -10,9 +10,11 @@ import {
   DeleteOutlined,
   PlusOutlined,
   SearchOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  DownloadOutlined
 } from '@ant-design/icons'
 import type { MenuProps, TableColumnsType } from 'antd'
+import * as XLSX from 'xlsx'
 import { searchVaccineTypesAPI, deleteVaccineTypeAPI, type VaccineType } from '../../../api/vaccineType.api'
 import Update from './Update'
 import Create from './Create'
@@ -50,6 +52,47 @@ const VaccineList: React.FC = () => {
       fetchData()
     } catch {
       message.error('Xóa thất bại')
+    }
+  }
+
+  const handleExportExcel = () => {
+    try {
+      // Chuẩn bị dữ liệu để xuất
+      const exportData = filteredData.map((item, index) => ({
+        'STT': index + 1,
+        'Mã loại vaccine': item.code,
+        'Tên loại vaccine': item.name,
+        'Mô tả': item.description || 'Chưa có mô tả'
+      }))
+
+      // Tạo worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData)
+
+      // Tạo workbook
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Danh sách loại vaccine')
+
+      // Tự động điều chỉnh độ rộng cột
+      const colWidths = [
+        { wch: 5 },  // STT
+        { wch: 20 }, // Mã loại vaccine
+        { wch: 30 }, // Tên loại vaccine
+        { wch: 50 }  // Mô tả
+      ]
+      ws['!cols'] = colWidths
+
+      // Tạo tên file với timestamp
+      const now = new Date()
+      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
+      const fileName = `danh-sach-loai-vaccine-${timestamp}.xlsx`
+
+      // Xuất file
+      XLSX.writeFile(wb, fileName)
+
+      message.success(`Xuất Excel thành công! ${exportData.length} bản ghi đã được xuất.`)
+    } catch (error) {
+      console.error('Lỗi khi xuất Excel:', error)
+      message.error('Có lỗi xảy ra khi xuất Excel')
     }
   }
 
@@ -158,6 +201,14 @@ const VaccineList: React.FC = () => {
           </Col>
           <Col xs={24} sm={12} md={16}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportExcel}
+                size='large'
+                disabled={filteredData.length === 0}
+              >
+                Xuất Excel
+              </Button>
               <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading} size='large'>
                 Làm mới
               </Button>
@@ -215,4 +266,4 @@ const VaccineList: React.FC = () => {
   )
 }
 
-export default VaccineList
+export default VaccineList  

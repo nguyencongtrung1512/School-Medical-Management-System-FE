@@ -38,7 +38,6 @@ import {
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import {
   deleteUserAPI,
   getUserByIdAPI,
@@ -280,32 +279,40 @@ const UserList: React.FC = () => {
               handleMenuClick(e.key, record)
             }}
           >
-            <Menu.Item key='view' icon={<EyeOutlined />}>
-              Xem chi tiết
-            </Menu.Item>
-            <Menu.Item key='edit' icon={<EditOutlined />} disabled={record.isDeleted}>
-              Sửa
-            </Menu.Item>
-            {record.role === 'parent' &&
-              (record.fullPermission ? (
-                <Menu.Item key='restrict' icon={<LockOutlined />} danger disabled={record.isDeleted}>
-                  Hạn chế quyền
+            {!record.isDeleted && (
+              <>
+                <Menu.Item key='view' icon={<EyeOutlined />}>
+                  Xem chi tiết
                 </Menu.Item>
-              ) : (
-                <Menu.Item
-                  key='unrestrict'
-                  icon={<UnlockOutlined />}
-                  style={{
-                    backgroundColor: '#4ade80', // tương ứng bg-green-400
-                    color: 'white'
-                  }}
-                  disabled={record.isDeleted}
-                >
-                  Mở quyền
+                <Menu.Item key='edit' icon={<EditOutlined />}>
+                  Sửa
                 </Menu.Item>
-              ))}
-            <Menu.Item key='delete' icon={<DeleteOutlined />} danger disabled={record.isDeleted}>
-              Khóa
+                {record.role === 'parent' &&
+                  (record.fullPermission ? (
+                    <Menu.Item key='restrict' icon={<LockOutlined />} danger>
+                      Hạn chế quyền
+                    </Menu.Item>
+                  ) : (
+                    <Menu.Item
+                      key='unrestrict'
+                      icon={<UnlockOutlined />}
+                      style={{
+                        backgroundColor: '#4ade80', // tương ứng bg-green-400
+                        color: 'white'
+                      }}
+                    >
+                      Mở quyền
+                    </Menu.Item>
+                  ))}
+              </>
+            )}
+            <Menu.Item
+              key='delete'
+              icon={record.isDeleted ? <UnlockOutlined /> : <DeleteOutlined />}
+              danger={!record.isDeleted}
+              style={record.isDeleted ? { backgroundColor: '#4ade80', color: 'white' } : {}}
+            >
+              {record.isDeleted ? 'Mở khóa' : 'Khóa'}
             </Menu.Item>
           </Menu>
         )
@@ -352,10 +359,10 @@ const UserList: React.FC = () => {
       onOk: async () => {
         try {
           await updateUserIsDeletedAPI(user._id, !user.isDeleted)
-          toast.success(user.isDeleted ? 'Đã mở khóa người dùng thành công!' : 'Đã khóa người dùng thành công!')
+          message.success(user.isDeleted ? 'Đã mở khóa người dùng thành công!' : 'Đã khóa người dùng thành công!')
           fetchUsers()
         } catch {
-          toast.error(user.isDeleted ? 'Mở khóa người dùng thất bại!' : 'Khóa người dùng thất bại!')
+          message.error(user.isDeleted ? 'Mở khóa người dùng thất bại!' : 'Khóa người dùng thất bại!')
         }
       }
     })

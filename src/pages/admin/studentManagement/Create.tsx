@@ -26,7 +26,8 @@ const CreateStudent: React.FC<CreateStudentProps> = ({ isModalVisible, onCancel,
 
     const allOptions = [
       { value: 'father', label: 'Bố' },
-      { value: 'mother', label: 'Mẹ' }
+      { value: 'mother', label: 'Mẹ' },
+      { value: 'guardian', label: 'Người giám hộ' }
     ]
 
     return allOptions.filter((option) => !selectedTypes.includes(option.value))
