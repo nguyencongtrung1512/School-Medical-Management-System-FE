@@ -26,12 +26,17 @@ import {
   MedicineBoxOutlined
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+
+dayjs.extend(isSameOrAfter)
 import {
   vaccineAppointmentApi,
   AppointmentStatus,
   type VaccineAppointment,
-  PostVaccinationStatus
+  PostVaccinationStatus,
+  type SearchVaccineAppointmentDTO
 } from '../../../api/vaccineAppointment.api'
+import { vaccineEventApi, type VaccineEvent } from '../../../api/vaccineEvent.api'
 import type { ColumnsType } from 'antd/es/table'
 
 const { Title } = Typography
@@ -49,7 +54,7 @@ const statusOptions = [
 // Extend VaccineAppointment to support populated student and event
 interface PopulatedVaccineAppointment extends VaccineAppointment {
   student?: { fullName: string }
-  event?: { title: string }
+  event?: { title: string; eventDate?: string }
 }
 
 const AppointmentVaccine: React.FC = () => {
@@ -62,35 +67,65 @@ const AppointmentVaccine: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | undefined>(undefined)
   const [selected, setSelected] = useState<PopulatedVaccineAppointment | null>(null)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
-  const [editMode, setEditMode] = useState(false)
-  const [form] = Form.useForm()
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [createForm] = Form.useForm()
   const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null)
   const [checkForm] = Form.useForm()
   const [postForm] = Form.useForm()
 
+  // Thêm state cho filter
+  const [events, setEvents] = useState<VaccineEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
+  const [schoolYearFilter, setSchoolYearFilter] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
   useEffect(() => {
     fetchAppointments()
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, selectedEventId, schoolYearFilter, statusFilter])
 
-  // Khi mở modal, nếu chưa có kết quả sau tiêm thì bật editMode mặc định
-  useEffect(() => {
-    if (isDetailModalVisible && selected && !selected.postVaccinationStatus) {
-      setTimeout(() => handleEditResult(), 0)
+
+
+  const fetchEvents = async () => {
+    setEventsLoading(true)
+    try {
+      const response = await vaccineEventApi.search({ pageSize: 100 })
+      const eventsData = (response as unknown as { pageData: VaccineEvent[] }).pageData || []
+      setEvents(eventsData)
+    } catch (error) {
+      console.error('Error fetching events:', error)
+      message.error('Không thể tải danh sách sự kiện')
+    } finally {
+      setEventsLoading(false)
     }
-    // eslint-disable-next-line
-  }, [isDetailModalVisible, selected])
+  }
 
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      const response = await vaccineAppointmentApi.search({ pageNum: currentPage, pageSize })
+      const searchParams: SearchVaccineAppointmentDTO = {
+        pageNum: currentPage,
+        pageSize,
+        status: statusFilter,
+        eventId: selectedEventId,
+        schoolYear: schoolYearFilter
+      }
+
+      // Loại bỏ các giá trị undefined
+      const cleanParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([, value]) => value !== undefined)
+      ) as SearchVaccineAppointmentDTO
+
+      const response = await vaccineAppointmentApi.search(cleanParams)
       const pageData = (response as unknown as { pageData: VaccineAppointment[] }).pageData || []
       const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
       setAppointments(pageData)
       setTotalItems(total)
-    } catch {
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
       message.error('Không thể tải danh sách lịch hẹn tiêm')
     } finally {
       setLoading(false)
@@ -100,6 +135,21 @@ const AppointmentVaccine: React.FC = () => {
   const handleTableChange = (page: number, pageSize?: number) => {
     setCurrentPage(page)
     if (pageSize) setPageSize(pageSize)
+  }
+
+  const handleSearch = () => {
+    setCurrentPage(1)
+    // Không cần fetch lại vì searchKeyword được xử lý ở client-side
+  }
+
+  const handleResetFilters = () => {
+    setSearchKeyword('')
+    setStatusFilter(undefined)
+    setSelectedEventId(undefined)
+    setSchoolYearFilter(undefined)
+    setCurrentPage(1)
+    // Trigger fetch lại khi reset filters
+    fetchAppointments()
   }
 
   const formatDateTime = (dateValue: string | Date) => {
@@ -112,30 +162,6 @@ const AppointmentVaccine: React.FC = () => {
     const found = statusOptions.find((s) => s.value === status)
     if (!found) return <Tag>{status}</Tag>
     return <Tag icon={found.icon}>{found.label}</Tag>
-  }
-
-  const handleEditResult = () => {
-    if (selected) {
-      form.setFieldsValue({
-        postVaccinationStatus: selected.postVaccinationStatus || PostVaccinationStatus.NotChecked,
-        postVaccinationNotes: selected.postVaccinationNotes || ''
-      })
-      setEditMode(true)
-    }
-  }
-
-  const handleSaveResult = async () => {
-    if (!selected) return
-    try {
-      const values = await form.validateFields()
-      await vaccineAppointmentApi.updatePostVaccination(selected._id, values)
-      message.success('Cập nhật kết quả sau tiêm thành công!')
-      setEditMode(false)
-      setIsDetailModalVisible(false)
-      fetchAppointments()
-    } catch {
-      message.error('Cập nhật thất bại!')
-    }
   }
 
   const handleOpenCreate = () => {
@@ -245,20 +271,36 @@ const AppointmentVaccine: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: PopulatedVaccineAppointment) => (
         <Space>
+          <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
+            Chi tiết
+          </Button>
           {(record.status === AppointmentStatus.Pending ||
             record.status === AppointmentStatus.Checked ||
-            record.status === AppointmentStatus.Ineligible) && (
-            <Button type='primary' onClick={() => handleOpenCheck(record)}>
-              Đánh dấu đã tiêm
-            </Button>
-          )}
+            record.status === AppointmentStatus.Ineligible) &&
+            record.event?.eventDate &&
+            dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
+              <Button type='primary' onClick={() => handleOpenCheck(record)}>
+                Đánh dấu đã tiêm
+              </Button>
+            )}
+
+          {(record.status === AppointmentStatus.Pending ||
+            record.status === AppointmentStatus.Checked ||
+            record.status === AppointmentStatus.Ineligible) &&
+            record.event?.eventDate &&
+            !dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
+              <Tag color='orange'>
+                Chưa tới ngày tiêm ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})
+              </Tag>
+            )}
+
           {record.status === AppointmentStatus.Vaccinated &&
             (!record.postVaccinationStatus || record.postVaccinationStatus === PostVaccinationStatus.NotChecked) && (
               <Button type='primary' onClick={() => handleOpenPost(record)}>
                 Xác nhận sau tiêm
               </Button>
             )}
-          {record.postVaccinationStatus && (
+          {record.postVaccinationStatus && record.postVaccinationStatus !== PostVaccinationStatus.NotChecked && (
             <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
               Xem kết quả
             </Button>
@@ -268,14 +310,17 @@ const AppointmentVaccine: React.FC = () => {
     }
   ]
 
+  // Client-side search cho searchKeyword vì API có thể không hỗ trợ query parameter
   const filteredAppointments: PopulatedVaccineAppointment[] = appointments.filter((item) => {
-    const matchesSearch = searchKeyword
-      ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
-      : true
-    const matchesStatus = statusFilter ? item.status === statusFilter : true
-    return matchesSearch && matchesStatus
+    if (!searchKeyword) return true
+    return (
+      (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+    )
   })
+
+  // Lấy danh sách năm học từ events
+  const schoolYears = [...new Set(events.map((event) => event.schoolYear))].sort().reverse()
 
   const postVaccinationStatusLabels: Record<string, string> = {
     not_checked: 'Chưa kiểm tra',
@@ -302,31 +347,39 @@ const AppointmentVaccine: React.FC = () => {
           <Row justify='space-between' align='middle' className='mb-4'>
             <Col>
               <Space>
-                <Button type='primary' onClick={handleOpenCreate}>
+                {/* <Button type='primary' onClick={handleOpenCreate}>
                   Tạo kết quả
-                </Button>
+                </Button> */}
                 <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
                   Làm mới
                 </Button>
               </Space>
             </Col>
           </Row>
+
+          {/* Bộ filter mới */}
           <Row gutter={[16, 16]} className='mb-4'>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Search
-                placeholder='Tìm kiếm theo học sinh, sự kiện...'
+                placeholder='Tìm kiếm học sinh, sự kiện...'
                 allowClear
                 enterButton={<SearchOutlined />}
-                onSearch={(value) => setSearchKeyword(value)}
+                value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
+                onSearch={handleSearch}
               />
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={4}>
               <Select
                 placeholder='Lọc theo trạng thái'
                 allowClear
                 style={{ width: '100%' }}
-                onChange={(value) => setStatusFilter(value)}
+                value={statusFilter}
+                onChange={(value) => {
+                  setStatusFilter(value)
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
               >
                 {statusOptions.map((s) => (
                   <Option key={s.value} value={s.value}>
@@ -338,7 +391,112 @@ const AppointmentVaccine: React.FC = () => {
                 ))}
               </Select>
             </Col>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn năm học'
+                allowClear
+                style={{ width: '100%' }}
+                value={schoolYearFilter}
+                onChange={(value) => {
+                  setSchoolYearFilter(value)
+                  setSelectedEventId(undefined) // Reset event khi đổi năm học
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
+                loading={eventsLoading}
+              >
+                {schoolYears.map((year) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn sự kiện'
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedEventId}
+                onChange={(value) => {
+                  setSelectedEventId(value)
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
+                loading={eventsLoading}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {events
+                  .filter((event) => !schoolYearFilter || event.schoolYear === schoolYearFilter)
+                  .map((event) => (
+                    <Option key={event._id} value={event._id}>
+                      {event.title} - {dayjs(event.eventDate).format('DD/MM/YYYY')}
+                    </Option>
+                  ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Button onClick={handleResetFilters} style={{ width: '100%' }}>
+                Xóa bộ lọc
+              </Button>
+            </Col>
           </Row>
+
+          {/* Thông tin filter hiện tại */}
+          {(searchKeyword || statusFilter || selectedEventId || schoolYearFilter) && (
+            <Row className='mb-4'>
+              <Col span={24}>
+                <Space wrap>
+                  <span style={{ fontWeight: 'bold' }}>Bộ lọc hiện tại:</span>
+                  {searchKeyword && (
+                    <Tag closable onClose={() => setSearchKeyword('')}>
+                      Tìm kiếm: {searchKeyword}
+                    </Tag>
+                  )}
+                  {statusFilter && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setStatusFilter(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Trạng thái: {statusOptions.find((s) => s.value === statusFilter)?.label}
+                    </Tag>
+                  )}
+                  {schoolYearFilter && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSchoolYearFilter(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Năm học: {schoolYearFilter}
+                    </Tag>
+                  )}
+                  {selectedEventId && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSelectedEventId(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Sự kiện: {events.find((e) => e._id === selectedEventId)?.title}
+                    </Tag>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+          )}
+
           <Table
             columns={columns}
             dataSource={filteredAppointments}
@@ -368,27 +526,27 @@ const AppointmentVaccine: React.FC = () => {
             footer={
               modalType === 'check'
                 ? [
+                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                    Hủy
+                  </Button>,
+                  <Button key='save' type='primary' onClick={handleCheck}>
+                    Lưu
+                  </Button>
+                ]
+                : modalType === 'post'
+                  ? [
                     <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
                       Hủy
                     </Button>,
-                    <Button key='save' type='primary' onClick={handleCheck}>
+                    <Button key='save' type='primary' onClick={handlePost}>
                       Lưu
                     </Button>
                   ]
-                : modalType === 'post'
-                  ? [
-                      <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                        Hủy
-                      </Button>,
-                      <Button key='save' type='primary' onClick={handlePost}>
-                        Lưu
-                      </Button>
-                    ]
                   : [
-                      <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                        Đóng
-                      </Button>
-                    ]
+                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                      Đóng
+                    </Button>
+                  ]
             }
             width={600}
           >
@@ -416,9 +574,43 @@ const AppointmentVaccine: React.FC = () => {
                 <Form.Item
                   name='vaccinatedAt'
                   label='Thời gian tiêm'
-                  rules={[{ required: true, message: 'Chọn thời gian tiêm' }]}
+                  extra={selected?.event?.eventDate ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}` : undefined}
+                  rules={[
+                    { required: true, message: 'Chọn thời gian tiêm' },
+                    () => ({
+                      validator(_, value) {
+                        if (!value) {
+                          return Promise.resolve()
+                        }
+
+                        if (!selected?.event?.eventDate) {
+                          return Promise.resolve()
+                        }
+
+                        const eventDate = dayjs(selected.event.eventDate)
+                        const selectedDate = dayjs(value)
+
+                        // Check if the selected date is on the same day as the event date
+                        if (!selectedDate.isSame(eventDate, 'day')) {
+                          return Promise.reject(new Error('Thời gian tiêm phải trong ngày diễn ra sự kiện'))
+                        }
+
+                        return Promise.resolve()
+                      }
+                    })
+                  ]}
                 >
-                  <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
+                  <DatePicker
+                    showTime
+                    format='DD/MM/YYYY HH:mm'
+                    className='w-full'
+                    disabledDate={(current) => {
+                      if (!selected?.event?.eventDate) return false
+                      const eventDate = dayjs(selected.event.eventDate)
+                      return !current.isSame(eventDate, 'day')
+                    }}
+                    placeholder='Chọn thời gian tiêm trong ngày sự kiện'
+                  />
                 </Form.Item>
               </Form>
             )}
@@ -448,6 +640,9 @@ const AppointmentVaccine: React.FC = () => {
                   {selected.student?.fullName || selected.studentId}
                 </Descriptions.Item>
                 <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Ngày sự kiện'>
+                  {selected.event?.eventDate ? dayjs(selected.event.eventDate).format('DD/MM/YYYY') : '-'}
+                </Descriptions.Item>
                 <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
                 <Descriptions.Item label='Ngày tiêm'>
                   {selected.vaccinatedAt ? formatDateTime(selected.vaccinatedAt) : '-'}
