@@ -9,17 +9,26 @@ export interface MedicineDetail {
   usageInstructions?: string
   quantity: number
   timesPerDay: number
-  timeSlots: string[]
+  timeShifts: string[] // Changed from timeSlots to timeShifts to match BE
   note?: string
   reason?: string
   createdAt?: string
   updatedAt?: string
+  slotStatus?: Array<{
+    shift: string
+    status: string
+    note?: string
+    image?: string
+    _id?: string
+  }>
 }
 
 export interface CreateMedicineSubmissionRequest {
   parentId: string
   studentId: string
   schoolNurseId: string
+  image: string // Added required field from BE
+  shiftSendMedicine: string // Added required field from BE (morning, noon, evening)
   medicines: MedicineDetail[]
 }
 
@@ -30,6 +39,8 @@ export interface MedicineSubmissionData {
   schoolNurseId: string
   medicines: MedicineDetail[]
   status: 'pending' | 'approved' | 'rejected' | 'completed'
+  shiftSendMedicine: string // Added field from BE
+  image: string // Added field from BE
   isDeleted: boolean
   createdAt: string
   updatedAt: string
@@ -79,18 +90,19 @@ export interface SearchMedicineSubmissionParams {
   studentId?: string
   schoolNurseId?: string
   status?: string
+  isDeleted?: string // Added from BE
+  shiftSendMedicine?: string // Added from BE
 }
 
 export interface UpdateMedicineSubmissionStatusRequest {
-  status: 'approved' | 'rejected' | 'completed'
+  status: 'approved' | 'rejected' | 'completed' // Updated to match BE enum
   cancellationReason?: string
-  nurseNotes?: string
 }
 
 export interface UpdateMedicineSlotStatusRequest {
   medicineDetailId: string
-  time: string // ISO date string
-  status: 'taken' | 'missed' | 'compensated'
+  shift: string // Changed from time to shift to match BE
+  status: 'pending' | 'taken' | 'missed' // Updated to match BE enum
   note?: string
   image?: string
 }

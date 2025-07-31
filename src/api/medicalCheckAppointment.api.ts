@@ -41,7 +41,7 @@ export interface MedicalCheckAppointment {
   createdAt?: string
   updatedAt?: string
   student?: { _id: string; fullName?: string; avatar?: string }
-  event?: { _id: string; title?: string }
+  event?: { _id: string; title?: string; eventDate?: string }
 }
 
 export interface CreateMedicalCheckAppointmentDTO {
@@ -109,8 +109,5 @@ export const medicalCheckAppointmentApi = {
   },
   nurseCheck: (id: string, data: CheckMedicalCheckAppointmentDTO) => {
     return axiosInstance.patch(`/medical-check-appoinments/${id}/check`, data)
-  },
-  updatePostMedicalCheck: (id: string, data: UpdatePostMedicalCheckDTO) => {
-    return axiosInstance.patch(`/medical-check-appoinments/${id}/post-medical-check`, data)
   }
 }
