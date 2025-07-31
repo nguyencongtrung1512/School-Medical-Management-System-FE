@@ -481,12 +481,12 @@ const MedicinesList: React.FC = () => {
 
   const filteredMedicines = searchText
     ? medicines.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.dosage?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.manufacturer?.toLowerCase().includes(searchText.toLowerCase())
-    )
+        (item) =>
+          item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.dosage?.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.manufacturer?.toLowerCase().includes(searchText.toLowerCase())
+      )
     : medicines
 
   const sortedMedicines = (() => {
@@ -563,7 +563,12 @@ const MedicinesList: React.FC = () => {
                     Xuất Excel
                   </Button>
                 </Dropdown>
-                <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size='large'>
+                <Button
+                  type='primary'
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsCreateModalVisible(true)}
+                  size='large'
+                >
                   Thêm thuốc mới
                 </Button>
               </Space>

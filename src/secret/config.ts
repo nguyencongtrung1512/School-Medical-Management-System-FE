@@ -4,5 +4,4 @@ const config = {
   RECAPTCHA_KEY: import.meta.env.VITE_RECAPTCHA
 }
 
-
 export default config

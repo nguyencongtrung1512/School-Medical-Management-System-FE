@@ -165,7 +165,9 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
             {isEdit ? 'Cập Nhật Kế Hoạch Tiêm Chủng' : 'Tạo Kế Hoạch Tiêm Chủng'}
           </Title>
           <Text type='secondary' className='block text-center'>
-            {isEdit ? 'Cập nhật thông tin kế hoạch tiêm chủng' : 'Điền thông tin chi tiết để tạo kế hoạch tiêm chủng mới'}
+            {isEdit
+              ? 'Cập nhật thông tin kế hoạch tiêm chủng'
+              : 'Điền thông tin chi tiết để tạo kế hoạch tiêm chủng mới'}
           </Text>
         </div>
 
@@ -371,7 +373,6 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
             <Col xs={24} lg={12}>
               <Form.Item
                 name='schoolYear'
-                
                 label={
                   <Space>
                     <BookOutlined />

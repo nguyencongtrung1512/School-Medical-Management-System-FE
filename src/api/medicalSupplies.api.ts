@@ -8,7 +8,7 @@ export interface MedicalSupply {
   unit: string
   expiryDate: string
   manufacturer: string //Thêm trường hãng sản xuất
-  manufactureDate: string // Ngày sản xuất  
+  manufactureDate: string // Ngày sản xuất
   supplier: string
 }
 

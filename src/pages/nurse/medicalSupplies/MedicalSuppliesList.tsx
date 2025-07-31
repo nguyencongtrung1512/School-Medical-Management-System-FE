@@ -387,11 +387,11 @@ const MedicalSuppliesList: React.FC = () => {
 
   const filteredSupplies = searchText
     ? medicalSupplies.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.manufacturer.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchText.toLowerCase())
-    )
+        (item) =>
+          item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.manufacturer.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchText.toLowerCase())
+      )
     : medicalSupplies
 
   const sortedSupplies = (() => {

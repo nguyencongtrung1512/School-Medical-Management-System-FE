@@ -21,16 +21,24 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
       sideEffects: medicine.sideEffects,
       manufacturer: medicine.manufacturer,
       manufactureDate: dayjs(medicine.manufactureDate),
-      expiryDate: dayjs(medicine.expiryDate),
+      expiryDate: dayjs(medicine.expiryDate)
     })
   }, [medicine, form])
 
-  const onFinish = async (values: { name?: string; description?: string; dosage?: string; sideEffects?: string; manufacturer?: string; manufactureDate?: dayjs.Dayjs; expiryDate?: dayjs.Dayjs }) => {
+  const onFinish = async (values: {
+    name?: string
+    description?: string
+    dosage?: string
+    sideEffects?: string
+    manufacturer?: string
+    manufactureDate?: dayjs.Dayjs
+    expiryDate?: dayjs.Dayjs
+  }) => {
     try {
       const payload = {
         ...values,
         manufactureDate: values.manufactureDate?.toDate(),
-        expiryDate: values.expiryDate?.toDate(),
+        expiryDate: values.expiryDate?.toDate()
       }
       await updateMedicine(medicine._id, payload)
       message.success('Cập nhật thuốc thành công')
@@ -74,7 +82,11 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
         <Input placeholder='Nhập dạng thuốc' />
       </Form.Item>
 
-      <Form.Item name='manufacturer' label='Hãng sản xuất' rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}>
+      <Form.Item
+        name='manufacturer'
+        label='Hãng sản xuất'
+        rules={[{ required: true, message: 'Vui lòng nhập hãng sản xuất!' }]}
+      >
         <Input placeholder='Nhập hãng sản xuất' />
       </Form.Item>
 
@@ -98,7 +110,7 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => {
+          disabledDate={(current) => {
             // Disable today and future dates
             return current && current >= dayjs().startOf('day')
           }}
@@ -120,8 +132,10 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
               const now = dayjs().startOf('day')
               const minDate = now.add(6, 'month')
               const maxDate = now.add(6, 'year')
-              if (value.isBefore(minDate, 'day')) return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
-              if (value.isAfter(maxDate, 'day')) return Promise.reject('Ngày hết hạn không được quá 6 năm kể từ hôm nay!')
+              if (value.isBefore(minDate, 'day'))
+                return Promise.reject('Ngày hết hạn phải ít nhất 6 tháng kể từ hôm nay!')
+              if (value.isAfter(maxDate, 'day'))
+                return Promise.reject('Ngày hết hạn không được quá 6 năm kể từ hôm nay!')
               return Promise.resolve()
             }
           }
@@ -130,7 +144,7 @@ const UpdateMedicineForm: React.FC<UpdateMedicineFormProps> = ({ medicine, onSuc
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => {
+          disabledDate={(current) => {
             // Disable past dates and dates less than 6 months from today
             const now = dayjs().startOf('day')
             const minDate = now.add(6, 'month')

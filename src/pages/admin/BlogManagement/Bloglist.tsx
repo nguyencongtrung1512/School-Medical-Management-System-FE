@@ -67,7 +67,7 @@ function BlogList() {
             pageSize: 10,
             categoryId: categoryId
           })
-          
+
           if (response.pageData) {
             setBlogs(response.pageData)
           }

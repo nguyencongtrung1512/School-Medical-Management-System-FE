@@ -76,7 +76,7 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => {
+          disabledDate={(current) => {
             const now = new Date()
             const minDate = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate())
             return current && (current < dayjs(minDate).startOf('day') || current < dayjs().startOf('day'))
@@ -108,7 +108,7 @@ const CreateMedicalSupplyForm: React.FC<CreateMedicalSupplyFormProps> = ({ onSuc
         <DatePicker
           className='w-full'
           format='DD/MM/YYYY'
-          disabledDate={current => current && current > dayjs().endOf('day')}
+          disabledDate={(current) => current && current > dayjs().endOf('day')}
         />
       </Form.Item>
 

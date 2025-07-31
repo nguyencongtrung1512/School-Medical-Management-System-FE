@@ -194,8 +194,10 @@ const CensorList: React.FC = () => {
             <div className='font-medium text-gray-900'>{record.title}</div>
             <Text type='secondary' className='text-sm'>
               {(() => {
-                const vaccineType = vaccineTypes.find(vt => vt._id === record.vaccineTypeId)
-                return vaccineType ? `${vaccineType.name} (${vaccineType.code})` : `Vaccine Type ID: ${record.vaccineTypeId}`
+                const vaccineType = vaccineTypes.find((vt) => vt._id === record.vaccineTypeId)
+                return vaccineType
+                  ? `${vaccineType.name} (${vaccineType.code})`
+                  : `Vaccine Type ID: ${record.vaccineTypeId}`
               })()}
             </Text>
           </div>
@@ -335,22 +337,12 @@ const CensorList: React.FC = () => {
               </>
             )}
             {record.status === VaccineEventStatus.Completed && (
-              <Menu.Item
-                key='completed'
-                icon={<CheckCircleOutlined />}
-                disabled
-                style={{ color: '#52c41a' }}
-              >
+              <Menu.Item key='completed' icon={<CheckCircleOutlined />} disabled style={{ color: '#52c41a' }}>
                 Đã hoàn thành
               </Menu.Item>
             )}
             {record.status === VaccineEventStatus.Cancelled && (
-              <Menu.Item
-                key='cancelled'
-                icon={<StopOutlined />}
-                disabled
-                style={{ color: '#ff4d4f' }}
-              >
+              <Menu.Item key='cancelled' icon={<StopOutlined />} disabled style={{ color: '#ff4d4f' }}>
                 Đã hủy
               </Menu.Item>
             )}
@@ -397,8 +389,8 @@ const CensorList: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+        event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -548,10 +540,10 @@ const CensorList: React.FC = () => {
                 ? 'hover:bg-blue-50 transition-colors cursor-pointer'
                 : 'hover:bg-gray-50 transition-colors cursor-pointer'
             }
-          // Bỏ onRow event handler để tránh conflict với button clicks
-          // onRow={(record) => ({
-          //   onClick: () => handleViewDetails(record)
-          // })}
+            // Bỏ onRow event handler để tránh conflict với button clicks
+            // onRow={(record) => ({
+            //   onClick: () => handleViewDetails(record)
+            // })}
           />
         </Card>
 
@@ -570,11 +562,12 @@ const CensorList: React.FC = () => {
           }}
           width={900}
           footer={
-            selectedPlan?.status === VaccineEventStatus.Ongoing ?
+            selectedPlan?.status === VaccineEventStatus.Ongoing ? (
               <>
                 <Button key='cancel' onClick={() => setIsModalVisible(false)}>
                   Đóng
-                </Button>,
+                </Button>
+                ,
                 <Button
                   key='reject'
                   danger
@@ -593,7 +586,8 @@ const CensorList: React.FC = () => {
                   }}
                 >
                   Hủy sự kiện
-                </Button>,
+                </Button>
+                ,
                 <Button
                   key='approve'
                   type='primary'
@@ -609,12 +603,13 @@ const CensorList: React.FC = () => {
                   Duyệt sự kiện
                 </Button>
               </>
-              :
+            ) : (
               <>
                 <Button key='close' onClick={() => setIsModalVisible(false)}>
                   Đóng
                 </Button>
               </>
+            )
           }
         >
           {selectedPlan && (
@@ -632,8 +627,10 @@ const CensorList: React.FC = () => {
                       </Title>
                       <Text type='secondary' className='text-lg'>
                         {(() => {
-                          const vaccineType = vaccineTypes.find(vt => vt._id === selectedPlan.vaccineTypeId)
-                          return vaccineType ? `${vaccineType.name} (${vaccineType.code})` : `Vaccine Type ID: ${selectedPlan.vaccineTypeId}`
+                          const vaccineType = vaccineTypes.find((vt) => vt._id === selectedPlan.vaccineTypeId)
+                          return vaccineType
+                            ? `${vaccineType.name} (${vaccineType.code})`
+                            : `Vaccine Type ID: ${selectedPlan.vaccineTypeId}`
                         })()}
                       </Text>
                       <div className='mt-2'>{getStatusConfig(selectedPlan.status).icon}</div>

@@ -57,7 +57,7 @@ const postMedicalCheckStatusLabels: Record<string, string> = {
 
 interface PopulatedMedicalCheckAppointment extends MedicalCheckAppointment {
   student?: { _id: string; fullName?: string; avatar?: string }
-  event?: { _id: string; title?: string }
+  event?: { _id: string; eventName?: string }
 }
 
 const AppointmentMedicalCheck: React.FC = () => {
@@ -174,13 +174,13 @@ const AppointmentMedicalCheck: React.FC = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.student?.fullName || record.studentId
+      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.student?.fullName
     },
     {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.event?.title || record.eventId
+      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => record.event?.eventName
     },
     {
       title: 'Trạng thái',
@@ -234,206 +234,208 @@ const AppointmentMedicalCheck: React.FC = () => {
   return (
     <div className='p-6'>
       <Card>
-      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
-        <Row justify='space-between' align='middle'>
-          <Col>
-            <Title level={3} style={{ color: 'white', margin: 0 }}>
-              <FileDoneOutlined style={{ marginRight: 12 }} />
-              Quản lý lịch hẹn khám sức khỏe
-            </Title>
-          </Col>
-        </Row>
-      </Card>
-      <Card className='shadow-sm mt-6'>
-        <Row justify='space-between' align='middle' className='mb-4'>
-          <Col>
-            <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
-              Làm mới
-            </Button>
-          </Col>
-        </Row>
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Search
-              placeholder='Tìm kiếm học sinh, sự kiện...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              onSearch={(value) => setSearchKeyword(value)}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} md={12}>
-            <Select
-              placeholder='Lọc theo trạng thái'
-              allowClear
-              style={{ width: '100%' }}
-              onChange={(value) => setStatusFilter(value)}
-            >
-              {statusOptions.map((s) => (
-                <Option key={s.value} value={s.value}>
-                  <Space>
-                    {s.icon}
-                    {s.label}
-                  </Space>
-                </Option>
-              ))}
-            </Select>
-          </Col>
-        </Row>
-        <Table
-          columns={columns}
-          dataSource={filteredAppointments}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`,
-            onChange: handleTableChange
-          }}
-          scroll={{ x: 1000 }}
-        />
-        <Modal
-          title={
-            modalType === 'check'
-              ? 'Đánh dấu đã khám'
-              : modalType === 'post'
-                ? 'Xác nhận sau khám'
-                : 'Kết quả khám sức khỏe'
-          }
-          open={isDetailModalVisible}
-          onCancel={() => setIsDetailModalVisible(false)}
-          footer={
-            modalType === 'check'
-              ? [
-                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                    Hủy
-                  </Button>,
-                  <Button key='save' type='primary' onClick={handleCheck}>
-                    Lưu
-                  </Button>
-                ]
-              : modalType === 'post'
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <FileDoneOutlined style={{ marginRight: 12 }} />
+                Quản lý lịch hẹn khám sức khỏe
+              </Title>
+            </Col>
+          </Row>
+        </Card>
+        <Card className='shadow-sm mt-6'>
+          <Row justify='space-between' align='middle' className='mb-4'>
+            <Col>
+              <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
+                Làm mới
+              </Button>
+            </Col>
+          </Row>
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} md={12}>
+              <Search
+                placeholder='Tìm kiếm học sinh, sự kiện...'
+                allowClear
+                enterButton={<SearchOutlined />}
+                onSearch={(value) => setSearchKeyword(value)}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Select
+                placeholder='Lọc theo trạng thái'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => setStatusFilter(value)}
+              >
+                {statusOptions.map((s) => (
+                  <Option key={s.value} value={s.value}>
+                    <Space>
+                      {s.icon}
+                      {s.label}
+                    </Space>
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+          </Row>
+          <Table
+            columns={columns}
+            dataSource={filteredAppointments}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`,
+              onChange: handleTableChange
+            }}
+            scroll={{ x: 1000 }}
+          />
+          <Modal
+            title={
+              modalType === 'check'
+                ? 'Đánh dấu đã khám'
+                : modalType === 'post'
+                  ? 'Xác nhận sau khám'
+                  : 'Kết quả khám sức khỏe'
+            }
+            open={isDetailModalVisible}
+            onCancel={() => setIsDetailModalVisible(false)}
+            footer={
+              modalType === 'check'
                 ? [
                     <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
                       Hủy
                     </Button>,
-                    <Button key='save' type='primary' onClick={handlePost}>
+                    <Button key='save' type='primary' onClick={handleCheck}>
                       Lưu
                     </Button>
                   ]
-                : [
-                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                      Đóng
-                    </Button>
-                  ]
-          }
-          width={600}
-        >
-          {selected && modalType === 'check' && (
-            <Form form={checkForm} layout='vertical'>
-              <Form.Item name='height' label='Chiều cao (cm)'>
-                <Input type='number' placeholder='Nhập chiều cao' />
-              </Form.Item>
-              <Form.Item name='weight' label='Cân nặng (kg)'>
-                <Input type='number' placeholder='Nhập cân nặng' />
-              </Form.Item>
-              <Form.Item name='visionLeft' label='Thị lực mắt trái'>
-                <Input type='number' step='0.1' placeholder='Nhập thị lực mắt trái' />
-              </Form.Item>
-              <Form.Item name='visionRight' label='Thị lực mắt phải'>
-                <Input type='number' step='0.1' placeholder='Nhập thị lực mắt phải' />
-              </Form.Item>
-              <Form.Item name='bloodPressure' label='Huyết áp'>
-                <Input placeholder='Nhập huyết áp' />
-              </Form.Item>
-              <Form.Item name='heartRate' label='Nhịp tim'>
-                <Input type='number' placeholder='Nhập nhịp tim' />
-              </Form.Item>
-              <Form.Item
-                name='isHealthy'
-                label='Đủ điều kiện khám'
-                rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
-              >
-                <Select>
-                  <Option value={true}>Có</Option>
-                  <Option value={false}>Không</Option>
-                </Select>
-              </Form.Item>
-              <Form.Item name='reasonIfUnhealthy' label='Lý do nếu không đủ điều kiện'>
-                <Input placeholder='Nhập lý do' />
-              </Form.Item>
-              <Form.Item name='notes' label='Ghi chú'>
-                <Input.TextArea rows={2} maxLength={300} />
-              </Form.Item>
-              <Form.Item
-                name='checkedAt'
-                label='Thời gian khám'
-                rules={[{ required: true, message: 'Chọn thời gian khám' }]}
-              >
-                <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
-              </Form.Item>
-            </Form>
-          )}
-          {selected && modalType === 'post' && (
-            <Form form={postForm} layout='vertical'>
-              <Form.Item
-                name='postMedicalCheckStatus'
-                label='Tình trạng sau khám'
-                rules={[{ required: true, message: 'Chọn tình trạng' }]}
-              >
-                <Select>
-                  <Option value={PostMedicalCheckStatus.NotChecked}>
-                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NotChecked]}
-                  </Option>
-                  <Option value={PostMedicalCheckStatus.Healthy}>
-                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Healthy]}
-                  </Option>
-                  <Option value={PostMedicalCheckStatus.NeedFollowUp}>
-                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NeedFollowUp]}
-                  </Option>
-                  <Option value={PostMedicalCheckStatus.Sick}>
-                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Sick]}
-                  </Option>
-                  <Option value={PostMedicalCheckStatus.Other}>
-                    {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Other]}
-                  </Option>
-                </Select>
-              </Form.Item>
-              <Form.Item name='postMedicalCheckNotes' label='Ghi chú sau khám'>
-                <Input.TextArea rows={3} maxLength={500} />
-              </Form.Item>
-            </Form>
-          )}
-          {selected && modalType === 'view' && (
-            <Descriptions bordered column={1} size='small'>
-              <Descriptions.Item label='Học sinh'>{selected.student?.fullName || selected.studentId}</Descriptions.Item>
-              <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
-              <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
-              <Descriptions.Item label='Chiều cao'>{selected.height || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Cân nặng'>{selected.weight || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Thị lực trái'>{selected.visionLeft || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Thị lực phải'>{selected.visionRight || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Nhịp tim'>{selected.heartRate || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Đủ điều kiện khám'>{selected.isHealthy ? 'Có' : 'Không'}</Descriptions.Item>
-              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
-                {selected.reasonIfUnhealthy || '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Tình trạng sau khám'>
-                {postMedicalCheckStatusLabels[selected.postMedicalCheckStatus || 'not_checked']}
-              </Descriptions.Item>
-              <Descriptions.Item label='Ghi chú sau khám'>{selected.postMedicalCheckNotes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
-            </Descriptions>
-          )}
-        </Modal>
+                : modalType === 'post'
+                  ? [
+                      <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                        Hủy
+                      </Button>,
+                      <Button key='save' type='primary' onClick={handlePost}>
+                        Lưu
+                      </Button>
+                    ]
+                  : [
+                      <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                        Đóng
+                      </Button>
+                    ]
+            }
+            width={600}
+          >
+            {selected && modalType === 'check' && (
+              <Form form={checkForm} layout='vertical'>
+                <Form.Item name='height' label='Chiều cao (cm)'>
+                  <Input type='number' placeholder='Nhập chiều cao' />
+                </Form.Item>
+                <Form.Item name='weight' label='Cân nặng (kg)'>
+                  <Input type='number' placeholder='Nhập cân nặng' />
+                </Form.Item>
+                <Form.Item name='visionLeft' label='Thị lực mắt trái'>
+                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt trái' />
+                </Form.Item>
+                <Form.Item name='visionRight' label='Thị lực mắt phải'>
+                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt phải' />
+                </Form.Item>
+                <Form.Item name='bloodPressure' label='Huyết áp'>
+                  <Input placeholder='Nhập huyết áp' />
+                </Form.Item>
+                <Form.Item name='heartRate' label='Nhịp tim'>
+                  <Input type='number' placeholder='Nhập nhịp tim' />
+                </Form.Item>
+                <Form.Item
+                  name='isHealthy'
+                  label='Đủ điều kiện khám'
+                  rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
+                >
+                  <Select>
+                    <Option value={true}>Có</Option>
+                    <Option value={false}>Không</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item name='reasonIfUnhealthy' label='Lý do nếu không đủ điều kiện'>
+                  <Input placeholder='Nhập lý do' />
+                </Form.Item>
+                <Form.Item name='notes' label='Ghi chú'>
+                  <Input.TextArea rows={2} maxLength={300} />
+                </Form.Item>
+                <Form.Item
+                  name='checkedAt'
+                  label='Thời gian khám'
+                  rules={[{ required: true, message: 'Chọn thời gian khám' }]}
+                >
+                  <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
+                </Form.Item>
+              </Form>
+            )}
+            {selected && modalType === 'post' && (
+              <Form form={postForm} layout='vertical'>
+                <Form.Item
+                  name='postMedicalCheckStatus'
+                  label='Tình trạng sau khám'
+                  rules={[{ required: true, message: 'Chọn tình trạng' }]}
+                >
+                  <Select>
+                    <Option value={PostMedicalCheckStatus.NotChecked}>
+                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NotChecked]}
+                    </Option>
+                    <Option value={PostMedicalCheckStatus.Healthy}>
+                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Healthy]}
+                    </Option>
+                    <Option value={PostMedicalCheckStatus.NeedFollowUp}>
+                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NeedFollowUp]}
+                    </Option>
+                    <Option value={PostMedicalCheckStatus.Sick}>
+                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Sick]}
+                    </Option>
+                    <Option value={PostMedicalCheckStatus.Other}>
+                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Other]}
+                    </Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item name='postMedicalCheckNotes' label='Ghi chú sau khám'>
+                  <Input.TextArea rows={3} maxLength={500} />
+                </Form.Item>
+              </Form>
+            )}
+            {selected && modalType === 'view' && (
+              <Descriptions bordered column={1} size='small'>
+                <Descriptions.Item label='Học sinh'>
+                  {selected.student?.fullName || selected.studentId}
+                </Descriptions.Item>
+                <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
+                <Descriptions.Item label='Chiều cao'>{selected.height || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Cân nặng'>{selected.weight || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Thị lực trái'>{selected.visionLeft || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Thị lực phải'>{selected.visionRight || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Nhịp tim'>{selected.heartRate || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Đủ điều kiện khám'>{selected.isHealthy ? 'Có' : 'Không'}</Descriptions.Item>
+                <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
+                  {selected.reasonIfUnhealthy || '-'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Tình trạng sau khám'>
+                  {postMedicalCheckStatusLabels[selected.postMedicalCheckStatus || 'not_checked']}
+                </Descriptions.Item>
+                <Descriptions.Item label='Ghi chú sau khám'>{selected.postMedicalCheckNotes || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
+              </Descriptions>
+            )}
+          </Modal>
         </Card>
-        </Card>
+      </Card>
     </div>
   )
 }

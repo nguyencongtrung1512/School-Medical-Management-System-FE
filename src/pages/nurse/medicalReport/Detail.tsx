@@ -107,7 +107,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     try {
       const response = await getMedicineById(id)
       const medicine = response.data
-      setMedicineNames(prev => ({ ...prev, [id]: medicine.name }))
+      setMedicineNames((prev) => ({ ...prev, [id]: medicine.name }))
       return medicine.name
     } catch (error) {
       console.error('Error fetching medicine name:', error)
@@ -121,7 +121,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     try {
       const response = await getMedicalSupplyById(id)
       const supply = response.data
-      setSupplyNames(prev => ({ ...prev, [id]: supply.name }))
+      setSupplyNames((prev) => ({ ...prev, [id]: supply.name }))
       return supply.name
     } catch (error) {
       console.error('Error fetching supply name:', error)
@@ -162,13 +162,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
       // Fetch medicine and supply names
       if (data.medicinesUsed) {
-        data.medicinesUsed.forEach(item => {
+        data.medicinesUsed.forEach((item) => {
           fetchMedicineName(item.medicineId)
         })
       }
 
       if (data.medicalSuppliesUsed) {
-        data.medicalSuppliesUsed.forEach(item => {
+        data.medicalSuppliesUsed.forEach((item) => {
           fetchSupplyName(item.supplyId)
         })
       }
@@ -215,14 +215,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
   if (!medicalEvent) {
     return (
-      <Modal
-        title='Chi tiết sự kiện y tế'
-        open={visible}
-        onCancel={onClose}
-        footer={null}
-        width={1000}
-        centered
-      >
+      <Modal title='Chi tiết sự kiện y tế' open={visible} onCancel={onClose} footer={null} width={1000} centered>
         <div style={{ textAlign: 'center', padding: '40px' }}>
           <Text>Đang tải thông tin...</Text>
         </div>
@@ -285,7 +278,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
               <div style={{ marginTop: '12px' }}>
                 <Image
                   src={medicalEvent.student.avatar}
-                  alt="Avatar"
+                  alt='Avatar'
                   width={60}
                   height={60}
                   style={{ borderRadius: '50%' }}
@@ -413,7 +406,12 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
             <Descriptions bordered column={2} size='small'>
               <Descriptions.Item label='Trạng thái liên hệ'>
                 <Badge
-                  status={parentContactStatusColors[medicalEvent.parentContactStatus || 'not_contacted'] as 'default' | 'processing' | 'success'}
+                  status={
+                    parentContactStatusColors[medicalEvent.parentContactStatus || 'not_contacted'] as
+                      | 'default'
+                      | 'processing'
+                      | 'success'
+                  }
                   text={parentContactStatusVN[medicalEvent.parentContactStatus || 'not_contacted'] || 'Không xác định'}
                 />
               </Descriptions.Item>
@@ -421,8 +419,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Text>
                   {medicalEvent.parentContactedAt
                     ? dayjs(medicalEvent.parentContactedAt).format('DD/MM/YYYY HH:mm')
-                    : 'Chưa liên hệ'
-                  }
+                    : 'Chưa liên hệ'}
                 </Text>
               </Descriptions.Item>
             </Descriptions>
@@ -447,8 +444,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Text>
                   {medicalEvent.leaveTime
                     ? dayjs(medicalEvent.leaveTime).format('DD/MM/YYYY HH:mm')
-                    : 'Không có thông tin'
-                  }
+                    : 'Không có thông tin'}
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label='Người đón'>
@@ -474,20 +470,11 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
             >
               <Timeline>
                 {actions.map((action, index) => (
-                  <Timeline.Item
-                    key={index}
-                    dot={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                  >
+                  <Timeline.Item key={index} dot={<CheckCircleOutlined style={{ color: '#52c41a' }} />}>
                     <Space direction='vertical' size={4}>
-                      <Text strong>
-                        {dayjs(action.time).format('DD/MM/YYYY HH:mm')}
-                      </Text>
+                      <Text strong>{dayjs(action.time).format('DD/MM/YYYY HH:mm')}</Text>
                       <Text>{action.description}</Text>
-                      {action.performedBy && (
-                        <Text type='secondary'>
-                          Thực hiện bởi: {action.performedBy}
-                        </Text>
-                      )}
+                      {action.performedBy && <Text type='secondary'>Thực hiện bởi: {action.performedBy}</Text>}
                     </Space>
                   </Timeline.Item>
                 ))}
@@ -528,12 +515,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
             <Row justify='center'>
               <Col>
                 <Space size='large'>
-                  <Button
-                    type='primary'
-                    icon={<EditOutlined />}
-                    onClick={handleEdit}
-                    size='large'
-                  >
+                  <Button type='primary' icon={<EditOutlined />} onClick={handleEdit} size='large'>
                     Chỉnh sửa
                   </Button>
                   <Button onClick={onClose} size='large'>
@@ -609,11 +591,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
               <Row gutter={24}>
                 <Col span={12}>
                   <Form.Item label='Trạng thái liên hệ'>
-                    <Select
-                      value={parentContactStatus}
-                      onChange={setParentContactStatus}
-                      placeholder='Chọn trạng thái'
-                    >
+                    <Select value={parentContactStatus} onChange={setParentContactStatus} placeholder='Chọn trạng thái'>
                       {parentContactStatusOptions.map((option) => (
                         <Select.Option key={option.value} value={option.value}>
                           {option.label}
@@ -665,11 +643,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 </Col>
                 <Col span={8}>
                   <Form.Item name='leaveTime' label='Thời gian xảy ra'>
-                    <DatePicker
-                      showTime
-                      format='DD/MM/YYYY HH:mm'
-                      style={{ width: '100%' }}
-                    />
+                    <DatePicker showTime format='DD/MM/YYYY HH:mm' style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
@@ -688,19 +662,10 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
               <Row justify='center'>
                 <Col>
                   <Space size='large'>
-                    <Button
-                      type='primary'
-                      htmlType='submit'
-                      icon={<SaveOutlined />}
-                      loading={editLoading}
-                      size='large'
-                    >
+                    <Button type='primary' htmlType='submit' icon={<SaveOutlined />} loading={editLoading} size='large'>
                       Lưu thay đổi
                     </Button>
-                    <Button
-                      onClick={() => setIsEditing(false)}
-                      size='large'
-                    >
+                    <Button onClick={() => setIsEditing(false)} size='large'>
                       Hủy
                     </Button>
                   </Space>

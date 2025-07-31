@@ -225,7 +225,10 @@ const MedicalReport: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Badge status={statusColors[status] as 'success' | 'processing' | 'warning'} text={statusVN[status] || 'Không xác định'} />
+        <Badge
+          status={statusColors[status] as 'success' | 'processing' | 'warning'}
+          text={statusVN[status] || 'Không xác định'}
+        />
       ),
       filters: [
         { text: 'Đã xử lý', value: 'treated' },
@@ -354,13 +357,7 @@ const MedicalReport: React.FC = () => {
 
   // Áp dụng tất cả các bộ lọc
   const filteredEvents = filterBySearch(
-    filterByParentContact(
-      filterByStatus(
-        filterByEventName(
-          filterByTime(medicalEvents)
-        )
-      )
-    )
+    filterByParentContact(filterByStatus(filterByEventName(filterByTime(medicalEvents))))
   )
 
   // Lấy danh sách tên sự kiện duy nhất

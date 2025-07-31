@@ -17,8 +17,9 @@ interface NurseCardProps {
 const NurseCard = ({ nurse, isSelected, onSelect }: NurseCardProps) => {
   return (
     <Card
-      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''
-        }`}
+      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+        isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''
+      }`}
       onClick={() => onSelect(nurse.accountID)}
     >
       <CardContent className='p-4'>

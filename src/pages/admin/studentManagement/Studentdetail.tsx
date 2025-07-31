@@ -208,7 +208,8 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
                       {student.parentInfos.map((parent: any) => (
                         <li key={parent._id}>
                           <b>{parent.fullName}</b>
-                          {parent.type === 'father' ? ' Bố' : parent.type === 'mother' ? ' Mẹ' : parent.type}<br />
+                          {parent.type === 'father' ? ' Bố' : parent.type === 'mother' ? ' Mẹ' : parent.type}
+                          <br />
                           {parent.email}
                           <br />
                           {parent.phone}

@@ -4,7 +4,6 @@ export default function Footer() {
   return (
     <footer className='bg-gradient-to-r from-sky-500 via-blue-400 to-sky-400 text-white rounded-t-3xl shadow-lg mt-12'>
       <div className='w-full max-w-screen-xl mx-auto p-8 md:py-12'>
-
         <div className='sm:flex sm:justify-between'>
           <div className='mb-8 md:mb-0'>
             <Link to='/' className='flex items-center mb-6 space-x-3 rtl:space-x-reverse'>

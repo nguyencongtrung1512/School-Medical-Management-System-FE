@@ -248,10 +248,10 @@ const AppointmentVaccine: React.FC = () => {
           {(record.status === AppointmentStatus.Pending ||
             record.status === AppointmentStatus.Checked ||
             record.status === AppointmentStatus.Ineligible) && (
-              <Button type='primary' onClick={() => handleOpenCheck(record)}>
-                Đánh dấu đã tiêm
-              </Button>
-            )}
+            <Button type='primary' onClick={() => handleOpenCheck(record)}>
+              Đánh dấu đã tiêm
+            </Button>
+          )}
           {record.status === AppointmentStatus.Vaccinated &&
             (!record.postVaccinationStatus || record.postVaccinationStatus === PostVaccinationStatus.NotChecked) && (
               <Button type='primary' onClick={() => handleOpenPost(record)}>
@@ -271,7 +271,7 @@ const AppointmentVaccine: React.FC = () => {
   const filteredAppointments: PopulatedVaccineAppointment[] = appointments.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -368,27 +368,27 @@ const AppointmentVaccine: React.FC = () => {
             footer={
               modalType === 'check'
                 ? [
-                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                    Hủy
-                  </Button>,
-                  <Button key='save' type='primary' onClick={handleCheck}>
-                    Lưu
-                  </Button>
-                ]
-                : modalType === 'post'
-                  ? [
                     <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
                       Hủy
                     </Button>,
-                    <Button key='save' type='primary' onClick={handlePost}>
+                    <Button key='save' type='primary' onClick={handleCheck}>
                       Lưu
                     </Button>
                   ]
+                : modalType === 'post'
+                  ? [
+                      <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                        Hủy
+                      </Button>,
+                      <Button key='save' type='primary' onClick={handlePost}>
+                        Lưu
+                      </Button>
+                    ]
                   : [
-                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                      Đóng
-                    </Button>
-                  ]
+                      <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                        Đóng
+                      </Button>
+                    ]
             }
             width={600}
           >
@@ -444,7 +444,9 @@ const AppointmentVaccine: React.FC = () => {
             )}
             {selected && modalType === 'view' && (
               <Descriptions bordered column={1} size='small'>
-                <Descriptions.Item label='Học sinh'>{selected.student?.fullName || selected.studentId}</Descriptions.Item>
+                <Descriptions.Item label='Học sinh'>
+                  {selected.student?.fullName || selected.studentId}
+                </Descriptions.Item>
                 <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
                 <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
                 <Descriptions.Item label='Ngày tiêm'>

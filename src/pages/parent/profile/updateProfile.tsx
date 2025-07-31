@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Form, Input, Button, Upload, message, Spin } from 'antd'
-import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined, LoadingOutlined, LockOutlined } from '@ant-design/icons'
+import {
+  UploadOutlined,
+  UserOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  LoadingOutlined,
+  LockOutlined
+} from '@ant-design/icons'
 import { Profile, updateUserAPI, changePasswordAPI } from '../../../api/user.api'
 import { RcFile, UploadChangeParam, UploadFile } from 'antd/lib/upload/interface'
 import axios from 'axios'
 import { handleUploadFile } from '../../../utils/upload'
-
 
 interface UpdateProfileModalProps {
   visible: boolean

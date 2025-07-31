@@ -52,13 +52,16 @@ const mockHistoryData: VaccinationRecord[] = [
 ]
 
 const HistoryVaccination: React.FC = () => {
-  const groupedByYear = mockHistoryData.reduce((acc, record) => {
-    if (!acc[record.year]) {
-      acc[record.year] = []
-    }
-    acc[record.year].push(record)
-    return acc
-  }, {} as Record<string, VaccinationRecord[]>)
+  const groupedByYear = mockHistoryData.reduce(
+    (acc, record) => {
+      if (!acc[record.year]) {
+        acc[record.year] = []
+      }
+      acc[record.year].push(record)
+      return acc
+    },
+    {} as Record<string, VaccinationRecord[]>
+  )
 
   return (
     <div className='space-y-6'>
@@ -74,7 +77,10 @@ const HistoryVaccination: React.FC = () => {
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
                     <Text strong>{record.vaccineName}</Text>
-                    <Tag color={record.status === 'completed' ? 'green' : 'blue'} icon={record.status === 'completed' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}>
+                    <Tag
+                      color={record.status === 'completed' ? 'green' : 'blue'}
+                      icon={record.status === 'completed' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+                    >
                       {record.status === 'completed' ? 'Đã tiêm' : 'Đã lên lịch'}
                     </Tag>
                   </div>

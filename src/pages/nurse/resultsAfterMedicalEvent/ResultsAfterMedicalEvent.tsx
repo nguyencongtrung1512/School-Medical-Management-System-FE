@@ -136,10 +136,10 @@ const ResultsAfterMedicalEvent: React.FC = () => {
           <Badge
             status={
               getStatusConfig(record.status || EventStatus.Ongoing).color as
-              | 'success'
-              | 'error'
-              | 'processing'
-              | 'default'
+                | 'success'
+                | 'error'
+                | 'processing'
+                | 'default'
             }
           />
           <div>
@@ -253,8 +253,8 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   const filteredEvents = medicalEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+        (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -265,233 +265,233 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   return (
     <div className='p-6'>
       <Card>
-      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
-        <Row justify='space-between' align='middle'>
-          <Col>
-            <Title level={3} style={{ color: 'white', margin: 0 }}>
-              <HeartOutlined style={{ marginRight: 12 }} />
-              Quản lý sự kiện khám sức khỏe
-            </Title>
-            <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
-              Cập nhật trạng thái các sự kiện khám sức khỏe trong trường
-            </Text>
-          </Col>
-        </Row>
-      </Card>
-      <Card className='shadow-sm mt-6'>
-        <div className='flex justify-end items-center mb-6'>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={fetchMedicalEvents} loading={loading}>
-              Làm mới
-            </Button>
-          </Space>
-        </div>
-
-        {/* Statistics */}
-        <Row gutter={[16, 16]} className='mb-6'>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
-              <Statistic
-                title='Tổng số sự kiện'
-                value={stats.total}
-                prefix={<MedicineBoxOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
-              <Statistic
-                title='Đang diễn ra'
-                value={stats.ongoing}
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
-              <Statistic
-                title='Hoàn thành'
-                value={stats.completed}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
-              <Statistic
-                title='Đã hủy'
-                value={stats.cancelled}
-                prefix={<StopOutlined />}
-                valueStyle={{ color: '#ff4d4f' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Filters */}
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Search
-              placeholder='Tìm kiếm theo tên sự kiện, mô tả, địa điểm...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              onSearch={(value) => setSearchKeyword(value)}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} md={12}>
-            <Select
-              placeholder='Lọc theo trạng thái'
-              allowClear
-              style={{ width: '100%' }}
-              onChange={(value) => setStatusFilter(value)}
-            >
-              <Option value={EventStatus.Ongoing}>
-                <Space>
-                  <ClockCircleOutlined />
-                  Đang diễn ra
-                </Space>
-              </Option>
-              <Option value={EventStatus.Completed}>
-                <Space>
-                  <CheckCircleOutlined />
-                  Hoàn thành
-                </Space>
-              </Option>
-              <Option value={EventStatus.Cancelled}>
-                <Space>
-                  <StopOutlined />
-                  Đã hủy
-                </Space>
-              </Option>
-            </Select>
-          </Col>
-        </Row>
-
-        {/* Table */}
-        <Table
-          columns={columns}
-          dataSource={filteredEvents}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
-            onChange: handleTableChange
-          }}
-          scroll={{ x: 800 }}
-        />
-
-        {/* Detail Modal */}
-        <Modal
-          title={
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <HeartOutlined style={{ marginRight: 12 }} />
+                Quản lý sự kiện khám sức khỏe
+              </Title>
+              <Text style={{ color: 'rgba(255,255,255,0.8)' }}>
+                Cập nhật trạng thái các sự kiện khám sức khỏe trong trường
+              </Text>
+            </Col>
+          </Row>
+        </Card>
+        <Card className='shadow-sm mt-6'>
+          <div className='flex justify-end items-center mb-6'>
             <Space>
-              <MedicineBoxOutlined className='text-blue-500' />
-              Chi tiết sự kiện khám sức khỏe
+              <Button icon={<ReloadOutlined />} onClick={fetchMedicalEvents} loading={loading}>
+                Làm mới
+              </Button>
             </Space>
-          }
-          open={isDetailModalVisible}
-          onCancel={() => setIsDetailModalVisible(false)}
-          footer={[
-            <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-              Đóng
-            </Button>
-          ]}
-          width={700}
-        >
-          {selectedEvent && (
-            <div className='mt-4'>
-              <Descriptions bordered column={1} size='small'>
-                <Descriptions.Item label='Tên sự kiện' span={1}>
-                  <Text strong>{selectedEvent.eventName}</Text>
-                </Descriptions.Item>
+          </div>
 
-                <Descriptions.Item label='Mô tả'>
-                  <Paragraph className='mb-0'>{selectedEvent.description || 'Không có mô tả'}</Paragraph>
-                </Descriptions.Item>
+          {/* Statistics */}
+          <Row gutter={[16, 16]} className='mb-6'>
+            <Col xs={24} sm={12} md={6}>
+              <Card size='small' className='text-center'>
+                <Statistic
+                  title='Tổng số sự kiện'
+                  value={stats.total}
+                  prefix={<MedicineBoxOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card size='small' className='text-center'>
+                <Statistic
+                  title='Đang diễn ra'
+                  value={stats.ongoing}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card size='small' className='text-center'>
+                <Statistic
+                  title='Hoàn thành'
+                  value={stats.completed}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card size='small' className='text-center'>
+                <Statistic
+                  title='Đã hủy'
+                  value={stats.cancelled}
+                  prefix={<StopOutlined />}
+                  valueStyle={{ color: '#ff4d4f' }}
+                />
+              </Card>
+            </Col>
+          </Row>
 
-                <Descriptions.Item label='Địa điểm'>
+          {/* Filters */}
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} md={12}>
+              <Search
+                placeholder='Tìm kiếm theo tên sự kiện, mô tả, địa điểm...'
+                allowClear
+                enterButton={<SearchOutlined />}
+                onSearch={(value) => setSearchKeyword(value)}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Select
+                placeholder='Lọc theo trạng thái'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => setStatusFilter(value)}
+              >
+                <Option value={EventStatus.Ongoing}>
                   <Space>
-                    <EnvironmentOutlined className='text-green-500' />
-                    {selectedEvent.location}
+                    <ClockCircleOutlined />
+                    Đang diễn ra
                   </Space>
-                </Descriptions.Item>
-
-                <Descriptions.Item label='Ngày diễn ra sự kiện'>
+                </Option>
+                <Option value={EventStatus.Completed}>
                   <Space>
-                    <CalendarOutlined className='text-blue-500' />
-                    {selectedEvent.eventDate ? formatDateTime(selectedEvent.eventDate) : '-'}
+                    <CheckCircleOutlined />
+                    Hoàn thành
                   </Space>
-                </Descriptions.Item>
-
-                <Descriptions.Item label='Thời gian đăng ký'>
-                  <Space direction='vertical' size={0}>
-                    <Space size='small'>
-                      <ClockCircleOutlined className='text-orange-500' />
-                      <Text>
-                        Bắt đầu:{' '}
-                        {selectedEvent.startRegistrationDate
-                          ? formatDateTime(selectedEvent.startRegistrationDate)
-                          : '-'}
-                      </Text>
-                    </Space>
-                    <Space size='small'>
-                      <ClockCircleOutlined className='text-red-500' />
-                      <Text>
-                        Kết thúc:{' '}
-                        {selectedEvent.endRegistrationDate ? formatDateTime(selectedEvent.endRegistrationDate) : '-'}
-                      </Text>
-                    </Space>
-                  </Space>
-                </Descriptions.Item>
-
-                <Descriptions.Item label='Năm học'>
+                </Option>
+                <Option value={EventStatus.Cancelled}>
                   <Space>
-                    <BookOutlined className='text-purple-500' />
-                    {selectedEvent.schoolYear}
+                    <StopOutlined />
+                    Đã hủy
                   </Space>
-                </Descriptions.Item>
+                </Option>
+              </Select>
+            </Col>
+          </Row>
 
-                <Descriptions.Item label='Trạng thái'>
-                  <Tag
-                    color={getStatusConfig(selectedEvent.status || EventStatus.Ongoing).color}
-                    icon={getStatusConfig(selectedEvent.status || EventStatus.Ongoing).icon}
-                  >
-                    {getStatusConfig(selectedEvent.status || EventStatus.Ongoing).text}
-                  </Tag>
-                </Descriptions.Item>
+          {/* Table */}
+          <Table
+            columns={columns}
+            dataSource={filteredEvents}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
+              onChange: handleTableChange
+            }}
+            scroll={{ x: 800 }}
+          />
 
-                {selectedEvent.createdAt && (
-                  <Descriptions.Item label='Ngày tạo'>
-                    <Text>{formatDateTime(selectedEvent.createdAt)}</Text>
+          {/* Detail Modal */}
+          <Modal
+            title={
+              <Space>
+                <MedicineBoxOutlined className='text-blue-500' />
+                Chi tiết sự kiện khám sức khỏe
+              </Space>
+            }
+            open={isDetailModalVisible}
+            onCancel={() => setIsDetailModalVisible(false)}
+            footer={[
+              <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                Đóng
+              </Button>
+            ]}
+            width={700}
+          >
+            {selectedEvent && (
+              <div className='mt-4'>
+                <Descriptions bordered column={1} size='small'>
+                  <Descriptions.Item label='Tên sự kiện' span={1}>
+                    <Text strong>{selectedEvent.eventName}</Text>
                   </Descriptions.Item>
-                )}
 
-                {selectedEvent.updatedAt && (
-                  <Descriptions.Item label='Cập nhật lần cuối'>
-                    <Text>{formatDateTime(selectedEvent.updatedAt)}</Text>
+                  <Descriptions.Item label='Mô tả'>
+                    <Paragraph className='mb-0'>{selectedEvent.description || 'Không có mô tả'}</Paragraph>
                   </Descriptions.Item>
-                )}
-              </Descriptions>
 
-              <div className='mt-6 text-center'>
-                <Text type='secondary'>
-                  <ClockCircleOutlined className='mr-2' />
-                  Xem chi tiết lúc: {dayjs().format('DD/MM/YYYY HH:mm')}
-                </Text>
+                  <Descriptions.Item label='Địa điểm'>
+                    <Space>
+                      <EnvironmentOutlined className='text-green-500' />
+                      {selectedEvent.location}
+                    </Space>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label='Ngày diễn ra sự kiện'>
+                    <Space>
+                      <CalendarOutlined className='text-blue-500' />
+                      {selectedEvent.eventDate ? formatDateTime(selectedEvent.eventDate) : '-'}
+                    </Space>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label='Thời gian đăng ký'>
+                    <Space direction='vertical' size={0}>
+                      <Space size='small'>
+                        <ClockCircleOutlined className='text-orange-500' />
+                        <Text>
+                          Bắt đầu:{' '}
+                          {selectedEvent.startRegistrationDate
+                            ? formatDateTime(selectedEvent.startRegistrationDate)
+                            : '-'}
+                        </Text>
+                      </Space>
+                      <Space size='small'>
+                        <ClockCircleOutlined className='text-red-500' />
+                        <Text>
+                          Kết thúc:{' '}
+                          {selectedEvent.endRegistrationDate ? formatDateTime(selectedEvent.endRegistrationDate) : '-'}
+                        </Text>
+                      </Space>
+                    </Space>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label='Năm học'>
+                    <Space>
+                      <BookOutlined className='text-purple-500' />
+                      {selectedEvent.schoolYear}
+                    </Space>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label='Trạng thái'>
+                    <Tag
+                      color={getStatusConfig(selectedEvent.status || EventStatus.Ongoing).color}
+                      icon={getStatusConfig(selectedEvent.status || EventStatus.Ongoing).icon}
+                    >
+                      {getStatusConfig(selectedEvent.status || EventStatus.Ongoing).text}
+                    </Tag>
+                  </Descriptions.Item>
+
+                  {selectedEvent.createdAt && (
+                    <Descriptions.Item label='Ngày tạo'>
+                      <Text>{formatDateTime(selectedEvent.createdAt)}</Text>
+                    </Descriptions.Item>
+                  )}
+
+                  {selectedEvent.updatedAt && (
+                    <Descriptions.Item label='Cập nhật lần cuối'>
+                      <Text>{formatDateTime(selectedEvent.updatedAt)}</Text>
+                    </Descriptions.Item>
+                  )}
+                </Descriptions>
+
+                <div className='mt-6 text-center'>
+                  <Text type='secondary'>
+                    <ClockCircleOutlined className='mr-2' />
+                    Xem chi tiết lúc: {dayjs().format('DD/MM/YYYY HH:mm')}
+                  </Text>
+                </div>
               </div>
-            </div>
-          )}
-        </Modal>
+            )}
+          </Modal>
         </Card>
-        </Card>
+      </Card>
     </div>
   )
 }

@@ -132,7 +132,7 @@ const StudentList: React.FC = () => {
     try {
       const res = await getStudentByIdAPI(updatedStudentId)
       setStudentDetail(res.data)
-      await fetchClassData(); // Thêm dòng này để cập nhật lại danh sách
+      await fetchClassData() // Thêm dòng này để cập nhật lại danh sách
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -257,15 +257,17 @@ const StudentList: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={
-          status === 'active'
-            ? 'blue'
-            : status === 'graduated'
-              ? 'green'
-              : status === 'transferred'
-                ? 'orange'
-                : 'red'
-        }>
+        <Tag
+          color={
+            status === 'active'
+              ? 'blue'
+              : status === 'graduated'
+                ? 'green'
+                : status === 'transferred'
+                  ? 'orange'
+                  : 'red'
+          }
+        >
           {status === 'active'
             ? 'Đang học'
             : status === 'graduated'

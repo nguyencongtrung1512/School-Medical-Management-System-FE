@@ -4,7 +4,7 @@ export enum RegistrationStatus {
   Pending = 'pending',
   Approved = 'approved',
   Cancelled = 'cancelled',
-  Rejected = 'rejected',
+  Rejected = 'rejected'
 }
 
 export interface MedicalCheckRegistration {
@@ -58,7 +58,7 @@ export const medicalCheckRegistrationApi = {
     return axiosInstance.post('/medical-check-registration/create', data)
   },
   search: (params: SearchMedicalCheckRegistrationParams) => {
-    return axiosInstance.get('/medical-check-registration/search', { params });
+    return axiosInstance.get('/medical-check-registration/search', { params })
   },
   getById: (id: string) => {
     return axiosInstance.get(`/medical-check-registration/${id}`)

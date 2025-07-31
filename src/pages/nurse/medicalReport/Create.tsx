@@ -342,18 +342,12 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
 
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item
-              name='initialCondition'
-              label='Tình trạng ban đầu'
-            >
+            <Form.Item name='initialCondition' label='Tình trạng ban đầu'>
               <TextArea rows={3} placeholder='Mô tả tình trạng ban đầu của học sinh...' />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item
-              name='firstAid'
-              label='Biện pháp sơ cứu ban đầu'
-            >
+            <Form.Item name='firstAid' label='Biện pháp sơ cứu ban đầu'>
               <TextArea rows={3} placeholder='Mô tả biện pháp sơ cứu đã thực hiện...' />
             </Form.Item>
           </Col>
@@ -605,10 +599,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item
-              name='leaveTime'
-              label='Thời gian xảy ra sự kiện'
-            >
+            <Form.Item name='leaveTime' label='Thời gian xảy ra sự kiện'>
               <DatePicker
                 showTime
                 format='DD/MM/YYYY HH:mm'

@@ -333,7 +333,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                       <div className='flex justify-end pt-6 space-x-3'>
                         {!isEditing ? (
                           <Button
-                            type="button"
+                            type='button'
                             onClick={handleEditClick}
                             className='flex items-center gap-2'
                             style={{ backgroundColor: '#06b6d4' }}
@@ -348,15 +348,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                               className='flex items-center gap-2 bg-green-600 hover:bg-green-700'
                               disabled={isUpdating}
                             >
-                              {isUpdating ? (
-                                <Loader2 className='w-4 h-4 animate-spin' />
-                              ) : (
-                                <Save className='w-4 h-4' />
-                              )}
+                              {isUpdating ? <Loader2 className='w-4 h-4 animate-spin' /> : <Save className='w-4 h-4' />}
                               Lưu
                             </Button>
                             <Button
-                              type="button"
+                              type='button'
                               variant='outline'
                               onClick={handleCancelEdit}
                               className='flex items-center gap-2'
@@ -396,11 +392,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                             className='absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600'
                             onClick={() => setShowOldPassword((v) => !v)}
                           >
-                            {showOldPassword ? (
-                              <EyeOff className='w-4 h-4' />
-                            ) : (
-                              <Eye className='w-4 h-4' />
-                            )}
+                            {showOldPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                           </span>
                         </div>
                       </FormControl>
@@ -427,11 +419,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                             className='absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600'
                             onClick={() => setShowNewPassword((v) => !v)}
                           >
-                            {showNewPassword ? (
-                              <EyeOff className='w-4 h-4' />
-                            ) : (
-                              <Eye className='w-4 h-4' />
-                            )}
+                            {showNewPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                           </span>
                         </div>
                       </FormControl>
@@ -458,11 +446,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                             className='absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600'
                             onClick={() => setShowConfirmPassword((v) => !v)}
                           >
-                            {showConfirmPassword ? (
-                              <EyeOff className='w-4 h-4' />
-                            ) : (
-                              <Eye className='w-4 h-4' />
-                            )}
+                            {showConfirmPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                           </span>
                         </div>
                       </FormControl>
@@ -470,7 +454,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onUpdateSu
                     </FormItem>
                   )}
                 />
-                <Button type='submit' style={{ backgroundColor: '#06b6d4' }} className='w-full' disabled={changePasswordLoading}>
+                <Button
+                  type='submit'
+                  style={{ backgroundColor: '#06b6d4' }}
+                  className='w-full'
+                  disabled={changePasswordLoading}
+                >
                   {changePasswordLoading ? (
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                   ) : (

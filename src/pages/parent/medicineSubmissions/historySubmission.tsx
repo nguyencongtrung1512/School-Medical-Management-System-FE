@@ -252,11 +252,18 @@ function HistorySubmission() {
                   {selectedRequest.medicines && selectedRequest.medicines.length > 0 ? (
                     selectedRequest.medicines.map((med, idx) => (
                       <div key={idx} className='mb-2'>
-                        <div className='font-semibold'>Thuốc {idx + 1}: {med.name}</div>
+                        <div className='font-semibold'>
+                          Thuốc {idx + 1}: {med.name}
+                        </div>
                         <div>Liều lượng: {med.dosage}</div>
                         <div>Số lần uống/ngày: {med.timesPerDay}</div>
                         <div>Thời gian uống: {med.usageInstructions}</div>
-                        <div>Thời gian sử dụng: {med.startDate ? `${new Date(med.startDate).toLocaleDateString('vi-VN')} - ${new Date(med.endDate).toLocaleDateString('vi-VN')}` : ''}</div>
+                        <div>
+                          Thời gian sử dụng:{' '}
+                          {med.startDate
+                            ? `${new Date(med.startDate).toLocaleDateString('vi-VN')} - ${new Date(med.endDate).toLocaleDateString('vi-VN')}`
+                            : ''}
+                        </div>
                         <div>Lý do: {med.reason}</div>
                         {med.note && <div>Ghi chú: {med.note}</div>}
                       </div>

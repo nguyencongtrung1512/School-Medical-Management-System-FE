@@ -182,13 +182,7 @@ const Login: React.FC = () => {
               variants={formVariants}
               className='mt-4 w-full'
             >
-              <Form
-                name='login'
-                onFinish={onFinish}
-                layout='vertical'
-                className='space-y-4'
-                form={loginForm}
-              >
+              <Form name='login' onFinish={onFinish} layout='vertical' className='space-y-4' form={loginForm}>
                 <Form.Item
                   name='email'
                   rules={[

@@ -163,7 +163,6 @@ const Sidebar: React.FC = () => {
     }
   ]
 
-
   const handleMenuClick = (key: string) => {
     navigate(key)
   }

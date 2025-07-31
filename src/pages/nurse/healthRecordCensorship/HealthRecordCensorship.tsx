@@ -3,7 +3,13 @@ import type { TabsProps } from 'antd'
 import { Button, Card, Col, Form, Input, Modal, Row, Select, Space, Table, Tabs, Tag, Typography, message } from 'antd'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
-import { healthRecordApi, type CreateHealthRecordDTO, type HealthRecord, type UpdateHealthRecordDTO, type VaccinationHistory } from '../../../api/healthRecord.api'
+import {
+  healthRecordApi,
+  type CreateHealthRecordDTO,
+  type HealthRecord,
+  type UpdateHealthRecordDTO,
+  type VaccinationHistory
+} from '../../../api/healthRecord.api'
 import { getStudentByIdAPI } from '../../../api/student.api'
 import { getVaccineTypeByIdAPI, type VaccineType } from '../../../api/vaccineType.api'
 
@@ -63,24 +69,24 @@ const HealthRecordCensorship: React.FC = () => {
 
   // Fetch vaccine type info when selectedRecord changes (modal open)
   useEffect(() => {
-    if (!selectedRecord?.vaccinationHistory) return;
+    if (!selectedRecord?.vaccinationHistory) return
     const ids = selectedRecord.vaccinationHistory
-      .filter(v => typeof v === 'object' && (v as any).vaccineTypeId)
-      .map(v => (v as any).vaccineTypeId);
-    const idsToFetch = ids.filter(id => !vaccineTypeCache[id]);
-    if (idsToFetch.length === 0) return;
+      .filter((v) => typeof v === 'object' && (v as any).vaccineTypeId)
+      .map((v) => (v as any).vaccineTypeId)
+    const idsToFetch = ids.filter((id) => !vaccineTypeCache[id])
+    if (idsToFetch.length === 0) return
     Promise.all(
       idsToFetch.map(async (id) => {
         try {
-          const res = await getVaccineTypeByIdAPI(id);
-          const vaccineType = (res as any).data as VaccineType;
-          setVaccineTypeCache(prev => ({ ...prev, [id]: vaccineType }));
+          const res = await getVaccineTypeByIdAPI(id)
+          const vaccineType = (res as any).data as VaccineType
+          setVaccineTypeCache((prev) => ({ ...prev, [id]: vaccineType }))
         } catch {
           // ignore
         }
       })
-    );
-  }, [selectedRecord]);
+    )
+  }, [selectedRecord])
 
   const fetchHealthRecords = async () => {
     setLoading(true)
@@ -93,8 +99,8 @@ const HealthRecordCensorship: React.FC = () => {
         studentId: studentIdFilter,
         isDeleted: isDeletedFilter
       })
-      const responseData = (response as unknown as { pageData: HealthRecord[] })
-      const pageInfo = (response as unknown as { pageInfo?: { totalItems: number } })
+      const responseData = response as unknown as { pageData: HealthRecord[] }
+      const pageInfo = response as unknown as { pageInfo?: { totalItems: number } }
 
       // Lấy thông tin học sinh cho mỗi hồ sơ sức khỏe
       const populatedRecords: PopulatedHealthRecord[] = await Promise.all(
@@ -119,9 +125,7 @@ const HealthRecordCensorship: React.FC = () => {
       // Filter theo gender ở FE nếu có
       let records = populatedRecords
       if (genderFilter) {
-        records = records.filter(
-          r => r.student?.gender === genderFilter || r.gender === genderFilter
-        )
+        records = records.filter((r) => r.student?.gender === genderFilter || r.gender === genderFilter)
       }
       setHealthRecords(records)
       setTotalItems(pageInfo.pageInfo?.totalItems || 0)
@@ -328,9 +332,9 @@ const HealthRecordCensorship: React.FC = () => {
                     </Card>
                   )
                 } else {
-                  let vaccineName = '-';
+                  let vaccineName = '-'
                   if (vaccine.vaccineTypeId && vaccineTypeCache[vaccine.vaccineTypeId]) {
-                    vaccineName = vaccineTypeCache[vaccine.vaccineTypeId].name;
+                    vaccineName = vaccineTypeCache[vaccine.vaccineTypeId].name
                   }
                   return (
                     <Card key={index} size='small' className='border border-green-200'>
@@ -374,29 +378,25 @@ const HealthRecordCensorship: React.FC = () => {
       title: 'Họ tên học sinh',
       dataIndex: 'student',
       key: 'studentName',
-      render: (_: unknown, record: PopulatedHealthRecord) =>
-        record.student?.fullName || record.studentName || '-'
+      render: (_: unknown, record: PopulatedHealthRecord) => record.student?.fullName || record.studentName || '-'
     },
     {
       title: 'Mã học sinh',
       dataIndex: 'student',
       key: 'studentCode',
-      render: (_: unknown, record: PopulatedHealthRecord) =>
-        record.student?.studentIdCode || record.studentCode || '-'
+      render: (_: unknown, record: PopulatedHealthRecord) => record.student?.studentIdCode || record.studentCode || '-'
     },
     {
       title: 'Giới tính',
       dataIndex: 'gender',
       key: 'gender',
-      render: (_: unknown, record: PopulatedHealthRecord) =>
-        record.student?.gender === 'male' ? 'Nam' : 'Nữ'
+      render: (_: unknown, record: PopulatedHealthRecord) => (record.student?.gender === 'male' ? 'Nam' : 'Nữ')
     },
     {
       title: 'Ngày sinh',
       dataIndex: 'birthday',
       key: 'birthday',
-      render: (_: unknown, record: PopulatedHealthRecord) =>
-        formatDate(record.student?.dob || record.birthday || '')
+      render: (_: unknown, record: PopulatedHealthRecord) => formatDate(record.student?.dob || record.birthday || '')
     },
     {
       title: 'Chiều cao',
@@ -441,128 +441,129 @@ const HealthRecordCensorship: React.FC = () => {
 
   // Tạo danh sách năm học từ 2020-2021 đến hiện tại
   const getSchoolYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear()
+    const currentMonth = new Date().getMonth() + 1
     // Nếu tháng >= 8 thì đã sang năm học mới
-    const endYear = currentMonth >= 8 ? currentYear + 1 : currentYear;
-    const startYear = 2020;
-    const options = [];
+    const endYear = currentMonth >= 8 ? currentYear + 1 : currentYear
+    const startYear = 2020
+    const options = []
     for (let y = endYear; y >= startYear; y--) {
-      options.push(`${y - 1}-${y}`);
+      options.push(`${y - 1}-${y}`)
     }
-    return options;
-  };
-  const schoolYearOptions = getSchoolYearOptions();
+    return options
+  }
+  const schoolYearOptions = getSchoolYearOptions()
 
   return (
     <div className='p-6'>
       <Card>
-      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
-        <Row justify='space-between' align='middle'>
-          <Col>
-            <Title level={3} style={{ color: 'white', margin: 0 }}>
-              <FileTextOutlined style={{ marginRight: 12 }} />
-              Quản lý hồ sơ sức khỏe
-            </Title>
-          </Col>
-        </Row>
-      </Card>
-      <Card className='shadow-sm mt-6'>
-
-        <Form layout='vertical'>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={6} className='h-fit'>
-              <Form.Item label='Tên học sinh'>
-                <Input
-                  placeholder='Tìm kiếm theo tên học sinh...'
-                  allowClear
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  onPressEnter={handleSearch}
-                  suffix={<SearchOutlined />}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={4}>
-              <Form.Item label='ID học sinh'>
-                <Input
-                  placeholder='Nhập ID học sinh'
-                  allowClear
-                  value={studentIdFilter}
-                  onChange={e => setStudentIdFilter(e.target.value)}
-                  onPressEnter={handleSearch}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={4}>
-              <Form.Item label='Giới tính'>
-                <Select
-                  placeholder='Chọn giới tính'
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={genderFilter}
-                  onChange={setGenderFilter}
-                >
-                  <Option value='male'>Nam</Option>
-                  <Option value='female'>Nữ</Option>
-                  <Option value='other'>Khác</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={4}>
-              <Form.Item label='Trạng thái'>
-                <Select
-                  placeholder='Chọn trạng thái'
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={isDeletedFilter}
-                  onChange={setIsDeletedFilter}
-                >
-                  <Option value='false'>Hoạt động</Option>
-                  <Option value='true'>Đã xóa</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={4}>
-              <Form.Item label='Năm học'>
-                <Select
-                  placeholder='Chọn năm học'
-                  allowClear
-                  style={{ width: '100%' }}
-                  value={schoolYearFilter}
-                  onChange={setSchoolYearFilter}
-                >
-                  {schoolYearOptions.map((year) => (
-                    <Option key={year} value={year}>{year}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={2} className='my-auto'>
-              <Button type='primary' onClick={handleSearch} loading={loading} style={{ width: '100%' }}>
-                Tìm kiếm
-              </Button>
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <FileTextOutlined style={{ marginRight: 12 }} />
+                Quản lý hồ sơ sức khỏe
+              </Title>
             </Col>
           </Row>
-        </Form>
+        </Card>
+        <Card className='shadow-sm mt-6'>
+          <Form layout='vertical'>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={6} className='h-fit'>
+                <Form.Item label='Tên học sinh'>
+                  <Input
+                    placeholder='Tìm kiếm theo tên học sinh...'
+                    allowClear
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    onPressEnter={handleSearch}
+                    suffix={<SearchOutlined />}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={4}>
+                <Form.Item label='ID học sinh'>
+                  <Input
+                    placeholder='Nhập ID học sinh'
+                    allowClear
+                    value={studentIdFilter}
+                    onChange={(e) => setStudentIdFilter(e.target.value)}
+                    onPressEnter={handleSearch}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={4}>
+                <Form.Item label='Giới tính'>
+                  <Select
+                    placeholder='Chọn giới tính'
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={genderFilter}
+                    onChange={setGenderFilter}
+                  >
+                    <Option value='male'>Nam</Option>
+                    <Option value='female'>Nữ</Option>
+                    <Option value='other'>Khác</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={4}>
+                <Form.Item label='Trạng thái'>
+                  <Select
+                    placeholder='Chọn trạng thái'
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={isDeletedFilter}
+                    onChange={setIsDeletedFilter}
+                  >
+                    <Option value='false'>Hoạt động</Option>
+                    <Option value='true'>Đã xóa</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={4}>
+                <Form.Item label='Năm học'>
+                  <Select
+                    placeholder='Chọn năm học'
+                    allowClear
+                    style={{ width: '100%' }}
+                    value={schoolYearFilter}
+                    onChange={setSchoolYearFilter}
+                  >
+                    {schoolYearOptions.map((year) => (
+                      <Option key={year} value={year}>
+                        {year}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={2} className='my-auto'>
+                <Button type='primary' onClick={handleSearch} loading={loading} style={{ width: '100%' }}>
+                  Tìm kiếm
+                </Button>
+              </Col>
+            </Row>
+          </Form>
 
-        <Table
-          columns={columns}
-          dataSource={healthRecords}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} hồ sơ`,
-            onChange: handleTableChange,
-          }}
-        />
+          <Table
+            columns={columns}
+            dataSource={healthRecords}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} hồ sơ`,
+              onChange: handleTableChange
+            }}
+          />
         </Card>
-        </Card>
+      </Card>
 
       {/* Modal xem chi tiết */}
       <Modal
@@ -627,9 +628,7 @@ const HealthRecordCensorship: React.FC = () => {
               <Button type='primary' htmlType='submit'>
                 Tạo
               </Button>
-              <Button onClick={() => setIsCreateModalOpen(false)}>
-                Hủy
-              </Button>
+              <Button onClick={() => setIsCreateModalOpen(false)}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>
@@ -679,9 +678,7 @@ const HealthRecordCensorship: React.FC = () => {
               <Button type='primary' htmlType='submit'>
                 Cập nhật
               </Button>
-              <Button onClick={() => setIsEditModalOpen(false)}>
-                Hủy
-              </Button>
+              <Button onClick={() => setIsEditModalOpen(false)}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>

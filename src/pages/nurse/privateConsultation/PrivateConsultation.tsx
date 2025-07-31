@@ -335,7 +335,7 @@ function PrivateConsultation() {
         </Card>
         <Card className='mt-6'>
           {/* Header with stats */}
-          <div style={{ marginBottom: 24 }} >
+          <div style={{ marginBottom: 24 }}>
             <Row justify='space-between' align='middle'>
               <Col>
                 <Space size='large'>

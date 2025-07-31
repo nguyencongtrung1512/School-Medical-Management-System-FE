@@ -78,7 +78,7 @@ function AppointmentCheck() {
   const fetchNurses = async (search?: string) => {
     try {
       const res = await searchNurseUsersAPI(1, 10, search)
-      const responseData = (res as unknown as { pageData: Nurse[] })
+      const responseData = res as unknown as { pageData: Nurse[] }
       setNurses(Array.isArray(responseData.pageData) ? responseData.pageData : [])
     } catch {
       setNurses([])
@@ -143,10 +143,10 @@ function AppointmentCheck() {
       })
 
       // Cập nhật appointment trong state với data mới từ response
-      const responseData = (response as unknown as { success: boolean; data: ParentNurseAppointment })
+      const responseData = response as unknown as { success: boolean; data: ParentNurseAppointment }
       if (responseData.success && responseData.data) {
-        setAppointments(prev =>
-          prev.map(apt =>
+        setAppointments((prev) =>
+          prev.map((apt) =>
             apt._id === selectedAppointment._id
               ? { ...apt, ...responseData.data, status: responseData.data.status }
               : apt

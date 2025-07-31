@@ -464,7 +464,7 @@ const ReceiveMedicine: React.FC = () => {
           console.error('Error refreshing modal details:', error)
           // Nếu không fetch được chi tiết mới, ít nhất cũng refresh lại danh sách chính
           // Trigger useEffect để reload data
-          setCurrentPage(prev => prev)
+          setCurrentPage((prev) => prev)
         }
       }
     } catch (error: unknown) {
@@ -492,7 +492,6 @@ const ReceiveMedicine: React.FC = () => {
                   <MedicineBoxOutlined style={{ marginRight: 12 }} />
                   Nhận thuốc từ phụ huynh
                 </Title>
-
               </Col>
             </Row>
           </Card>
@@ -611,37 +610,36 @@ const ReceiveMedicine: React.FC = () => {
                     size='small'
                   />
                 </div>
-                {selectedRequest.status === 'pending' && (() => {
-                  // Kiểm tra có slot nào đã trễ không
-                  const now = new Date()
-                  const hasLateSlot = selectedRequest.medicines.some((med) =>
-                    (med.timeSlots || []).some(
-                      (time) => {
+                {selectedRequest.status === 'pending' &&
+                  (() => {
+                    // Kiểm tra có slot nào đã trễ không
+                    const now = new Date()
+                    const hasLateSlot = selectedRequest.medicines.some((med) =>
+                      (med.timeSlots || []).some((time) => {
                         const slotTime = new Date(time)
                         return slotTime < now
-                      }
+                      })
                     )
-                  )
 
-                  return (
-                    <div className='flex justify-end gap-2 mt-6'>
-                      {!hasLateSlot && (
+                    return (
+                      <div className='flex justify-end gap-2 mt-6'>
+                        {!hasLateSlot && (
+                          <Button
+                            type='primary'
+                            onClick={() => setConfirmModal({ open: true, type: 'approve', id: selectedRequest._id })}
+                          >
+                            Duyệt đơn
+                          </Button>
+                        )}
                         <Button
-                          type='primary'
-                          onClick={() => setConfirmModal({ open: true, type: 'approve', id: selectedRequest._id })}
+                          danger
+                          onClick={() => setConfirmModal({ open: true, type: 'reject', id: selectedRequest._id })}
                         >
-                          Duyệt đơn
+                          Từ chối
                         </Button>
-                      )}
-                      <Button
-                        danger
-                        onClick={() => setConfirmModal({ open: true, type: 'reject', id: selectedRequest._id })}
-                      >
-                        Từ chối
-                      </Button>
-                    </div>
-                  )
-                })()}
+                      </div>
+                    )
+                  })()}
               </div>
             )}
           </Modal>

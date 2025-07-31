@@ -47,8 +47,9 @@ function MedicalEventParent() {
               {children.map((child, index) => (
                 <div
                   key={index}
-                  className={`flex items-center p-4 rounded-lg cursor-pointer transition-all ${child.selected ? 'border-2 border-blue-500 bg-blue-50' : 'border border-gray-200 bg-white'
-                    }`}
+                  className={`flex items-center p-4 rounded-lg cursor-pointer transition-all ${
+                    child.selected ? 'border-2 border-blue-500 bg-blue-50' : 'border border-gray-200 bg-white'
+                  }`}
                 >
                   <div className='relative'>
                     <img src={child.avatar} alt={child.name} className='w-16 h-16 rounded-full object-cover' />

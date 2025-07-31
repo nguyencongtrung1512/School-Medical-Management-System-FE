@@ -91,10 +91,11 @@ const HealthRecord = () => {
               key={student.id}
               onClick={() => setSelectedStudent(student)}
               className={`px-6 py-3 rounded-full transition-all duration-300 flex items-center space-x-2
-                      ${selectedStudent.id === student.id
-                  ? 'bg-blue-500 text-white shadow-lg scale-105'
-                  : 'bg-white text-gray-600 hover:bg-blue-50'
-                }`}
+                      ${
+                        selectedStudent.id === student.id
+                          ? 'bg-blue-500 text-white shadow-lg scale-105'
+                          : 'bg-white text-gray-600 hover:bg-blue-50'
+                      }`}
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium

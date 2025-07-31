@@ -3,7 +3,6 @@ import { message } from 'antd'
 import cloudinaryConfig from '../service/cloudinary'
 import type { UploadRequestOption } from 'antd/es/upload/interface'
 
-
 export const handleUploadFile = async (file: File, type: 'video' | 'image') => {
   // Check file size for images
   if (type === 'image' && file.size > 5 * 1024 * 1024) {
