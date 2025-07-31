@@ -314,13 +314,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Text>{medicalEvent.description || 'Không có mô tả'}</Text>
               </Descriptions.Item>
               <Descriptions.Item label='Tình trạng ban đầu' span={2}>
-                <Text>{medicalEvent.initialCondition || 'Không có thông tin'}</Text>
+                <Text>{medicalEvent.initialCondition || 'Không có'}</Text>
               </Descriptions.Item>
               <Descriptions.Item label='Sơ cứu ban đầu' span={2}>
                 <Text>{medicalEvent.firstAid || 'Không có sơ cứu'}</Text>
               </Descriptions.Item>
               <Descriptions.Item label='Biện pháp xử lý' span={2}>
-                <Text>{medicalEvent.actionTaken || 'Không có thông tin'}</Text>
+                <Text>{medicalEvent.actionTaken || 'Không có'}</Text>
               </Descriptions.Item>
             </Descriptions>
           </Card>

@@ -40,7 +40,7 @@ import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
 import type { Medicine } from '../../../api/medicines.api'
 import { getMedicines } from '../../../api/medicines.api'
 import type { StudentProfile } from '../../../api/student.api'
-import { getStudentsAPI } from '../../../api/student.api'
+import { getStudentsAPI, getStudentByIdAPI } from '../../../api/student.api'
 import { useAuth } from '../../../contexts/auth.context'
 import { handleUploadFile } from '../../../utils/upload'
 
@@ -66,6 +66,8 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   const [actions, setActions] = useState<{ time: string; description: string; performedBy?: string }[]>([])
   const [parentContactStatus, setParentContactStatus] = useState<ParentContactStatus | undefined>()
   const [parentContactedAt, setParentContactedAt] = useState<string | undefined>()
+  const [leaveMethod, setLeaveMethod] = useState<LeaveMethod | undefined>()
+  const [parentInfo, setParentInfo] = useState<Array<{ fullName: string; email: string; phone: string; type: string }> | null>(null)
 
   useEffect(() => {
     fetchMedicinesAndSupplies()
@@ -122,6 +124,58 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
     fetchStudents(value || '')
   }, 300)
 
+  // Date restriction functions
+  const disabledDate = (current: dayjs.Dayjs) => {
+    if (!current) return false
+    
+    const now = dayjs()
+    const threeDaysAgo = now.subtract(3, 'day').startOf('day')
+    
+    // Disable dates before 3 days ago or after today
+    return current.isBefore(threeDaysAgo) || current.isAfter(now, 'day')
+  }
+
+  const disabledDateTime = (current: dayjs.Dayjs | null) => {
+    if (!current) return {}
+    
+    const now = dayjs()
+    const isToday = current.isSame(now, 'day')
+    
+    if (!isToday) {
+      // For past dates, allow all hours and minutes
+      return {}
+    }
+    
+    // For today, disable future hours and minutes
+    const currentHour = now.hour()
+    const currentMinute = now.minute()
+    
+    return {
+      disabledHours: () => {
+        const hours = []
+        for (let i = currentHour + 1; i < 24; i++) {
+          hours.push(i)
+        }
+        return hours
+      },
+      disabledMinutes: (selectedHour: number) => {
+        if (selectedHour < currentHour) {
+          return [] // All minutes allowed for past hours
+        } else if (selectedHour === currentHour) {
+          // For current hour, disable future minutes
+          const minutes = []
+          for (let i = currentMinute + 1; i < 60; i++) {
+            minutes.push(i)
+          }
+          return minutes
+        } else {
+          // For future hours (shouldn't happen due to disabledHours), disable all minutes
+          return Array.from({ length: 60 }, (_, i) => i)
+        }
+      }
+    }
+  }
+
   const onFinish = async (values: CreateMedicalEventRequest) => {
     try {
       if (!user) {
@@ -160,6 +214,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       setActions([])
       setParentContactStatus(undefined)
       setParentContactedAt(undefined)
+      setLeaveMethod(undefined)
       onSuccess()
     } catch (error: unknown) {
       console.log('error', error)
@@ -196,7 +251,12 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
     setActions([])
     setParentContactStatus(undefined)
     setParentContactedAt(undefined)
+    setLeaveMethod(undefined)
   }
+
+  // Helper functions to determine field states
+  const isContactTimeDisabled = parentContactStatus === ParentContactStatus.NOT_CONTACTED || !parentContactStatus
+  const isPickedUpByDisabled = leaveMethod === LeaveMethod.NONE || !leaveMethod
 
   return (
     <Form form={form} layout='vertical' onFinish={onFinish} className='max-h-[70vh] overflow-y-auto'>
@@ -227,12 +287,32 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                 size='large'
                 notFoundContent={studentLoading ? 'Đang tải...' : 'Không tìm thấy học sinh'}
                 onSearch={debouncedFetchStudents}
-                onChange={(val) => {
+                onChange={async (val) => {
                   const stu = students.find((s) => s._id === val)
                   setSelectedStudent(stu || null)
+                  setParentInfo(null)
+                  if (val) {
+                    try {
+                      const res = await getStudentByIdAPI(val)
+                      // parentInfos là mảng các phụ huynh
+                      const parentInfos = res.data?.parentInfos || []
+                      // Lọc ra các phụ huynh có đủ thông tin
+                      const validParents = parentInfos.filter(
+                        (p) => p.fullName && p.phone && p.email
+                      )
+                      if (validParents.length > 0) {
+                        setParentInfo(validParents)
+                      } else {
+                        setParentInfo(null)
+                      }
+                    } catch {
+                      setParentInfo(null)
+                    }
+                  }
                 }}
                 onClear={() => {
                   setSelectedStudent(null)
+                  setParentInfo(null)
                   fetchStudents('')
                 }}
                 onDropdownVisibleChange={(open) => {
@@ -279,6 +359,20 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                         : selectedStudent.class || ''}
                     </Text>
                   </div>
+                  {parentInfo && parentInfo.length > 0 && parentInfo.map((parent, idx) => (
+                    <div key={idx} style={{ marginTop: 8 }}>
+                      <Text strong>{parent.type === 'father' ? 'Phụ huynh (Bố): ' : parent.type === 'mother' ? 'Phụ huynh (Mẹ): ' : 'Phụ huynh: '}</Text>
+                      <Text>{parent.fullName}</Text>
+                      <div>
+                        <Text strong>Email: </Text>
+                        <Text>{parent.email}</Text>
+                      </div>
+                      <div>
+                        <Text strong>Điện thoại: </Text>
+                        <Text>{parent.phone}</Text>
+                      </div>
+                    </div>
+                  ))}
                 </Space>
               </Card>
             </Col>
@@ -544,7 +638,14 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
               <Select
                 placeholder='Chọn trạng thái liên hệ'
                 value={parentContactStatus}
-                onChange={setParentContactStatus}
+                onChange={(value) => {
+                  setParentContactStatus(value)
+                  // Clear contact time if status is "Chưa liên hệ"
+                  if (value === ParentContactStatus.NOT_CONTACTED) {
+                    setParentContactedAt(undefined)
+                    form.setFieldsValue({ parentContactedAt: null })
+                  }
+                }}
                 size='large'
               >
                 {parentContactStatusOptions.map((option) => (
@@ -571,6 +672,9 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                 }}
                 size='large'
                 style={{ width: '100%' }}
+                disabled={isContactTimeDisabled}
+                disabledDate={disabledDate}
+                disabledTime={disabledDateTime}
               />
             </Form.Item>
           </Col>
@@ -591,7 +695,17 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
         <Row gutter={24}>
           <Col span={8}>
             <Form.Item name='leaveMethod' label='Phương thức ra về'>
-              <Select placeholder='Chọn phương thức' size='large'>
+              <Select
+                placeholder='Chọn phương thức'
+                size='large'
+                onChange={(value) => {
+                  setLeaveMethod(value)
+                  // Clear picked up by field if method is "Không rời khỏi"
+                  if (value === LeaveMethod.NONE) {
+                    form.setFieldsValue({ pickedUpBy: '' })
+                  }
+                }}
+              >
                 <Select.Option value={LeaveMethod.NONE}>Không rời khỏi</Select.Option>
                 <Select.Option value={LeaveMethod.PARENT_PICKUP}>Phụ huynh đón</Select.Option>
                 <Select.Option value={LeaveMethod.HOSPITAL_TRANSFER}>Chuyển viện</Select.Option>
@@ -606,12 +720,18 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                 placeholder='Chọn thời gian'
                 size='large'
                 style={{ width: '100%' }}
+                disabledDate={disabledDate}
+                disabledTime={disabledDateTime}
               />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item name='pickedUpBy' label='Người đón'>
-              <Input placeholder='Nhập tên người đón (nếu có)' size='large' />
+              <Input
+                placeholder='Nhập tên người đón (nếu có)'
+                size='large'
+                disabled={isPickedUpByDisabled}
+              />
             </Form.Item>
           </Col>
         </Row>

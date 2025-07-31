@@ -1,5 +1,4 @@
 import {
-  CalendarOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   EyeOutlined,
@@ -67,8 +66,13 @@ function PrivateConsultation() {
     setLoading(true)
     try {
       const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
-      if (res) {
+      // Đảm bảo res là mảng
+      if (res && Array.isArray(res)) {
         setAppointments(res)
+      } else if (res && Array.isArray(res.data)) {
+        setAppointments(res.data)
+      } else {
+        setAppointments([])
       }
     } catch (error: unknown) {
       console.log('error', error)
@@ -90,7 +94,7 @@ function PrivateConsultation() {
   }, [user])
 
   // Filter appointments
-  const filteredAppointments = appointments?.filter((item) => {
+  const filteredAppointments = (appointments || []).filter((item) => {
     const dateMatch = !selectedDate || dayjs(item.appointmentTime).isSame(selectedDate, 'day')
     const statusMatch = !statusFilter || item.status === statusFilter
     return dateMatch && statusMatch
@@ -251,13 +255,21 @@ function PrivateConsultation() {
     try {
       await appointmentApi.updateStatus(selectedAppointment._id, {
         status: ParentNurseAppointmentStatus.Done,
-        note: doneNote || undefined // Chỉ gửi note nếu có giá trị
+        note: doneNote || undefined
       })
       message.success('Đánh dấu hoàn thành thành công!')
       setDoneModalOpen(false)
-      setSelectedAppointment(null) // Reset selected appointment
-      setDoneNote('') // Reset note
-      await fetchAppointments() // Reload data
+      setSelectedAppointment(null)
+      setDoneNote('')
+
+      // Cập nhật trực tiếp trong state thay vì reload
+      setAppointments(prev =>
+        prev.map(appt =>
+          appt._id === selectedAppointment._id
+            ? { ...appt, status: ParentNurseAppointmentStatus.Done, note: doneNote || undefined }
+            : appt
+        )
+      )
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -286,10 +298,23 @@ function PrivateConsultation() {
       })
       message.success('Hủy lịch hẹn thành công!')
       setCancelModalOpen(false)
-      setSelectedAppointment(null) // Reset selected appointment
-      setCancelReason('') // Reset reason
-      setCancelNote('') // Reset note
-      await fetchAppointments() // Reload data
+      setSelectedAppointment(null)
+      setCancelReason('')
+      setCancelNote('')
+
+      // Cập nhật trực tiếp trong state
+      setAppointments(prev =>
+        prev.map(appt =>
+          appt._id === selectedAppointment._id
+            ? {
+              ...appt,
+              status: ParentNurseAppointmentStatus.Cancelled,
+              cancellationReason: cancelReason.trim(),
+              note: cancelNote.trim()
+            }
+            : appt
+        )
+      )
     } catch (error: unknown) {
       const err = error as { message?: string }
       message.error(err.message || 'Hủy lịch thất bại!')
@@ -299,7 +324,7 @@ function PrivateConsultation() {
   }
 
   // Count appointments by status
-  const statusCounts = appointments.reduce(
+  const statusCounts = (appointments || []).reduce(
     (acc, appt) => {
       acc[appt.status] = (acc[appt.status] || 0) + 1
       return acc
