@@ -12,6 +12,7 @@ import {
   ExportOutlined,
   EyeOutlined,
   MedicineBoxOutlined,
+  MoreOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -19,11 +20,11 @@ import {
 } from '@ant-design/icons'
 import {
   Avatar,
-  Badge,
   Button,
   Card,
   Col,
   Descriptions,
+  Dropdown,
   Empty,
   Input,
   message,
@@ -33,8 +34,8 @@ import {
   Statistic,
   Table,
   Tag,
-  Tooltip,
-  Typography
+  Typography,
+  Menu
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -118,6 +119,7 @@ const MedicalCheckEvent: React.FC = () => {
     {
       title: 'Sự kiện khám sức khỏe',
       key: 'event',
+      width: 280,
       render: (_, record) => (
         <Space>
           <Avatar
@@ -125,8 +127,10 @@ const MedicalCheckEvent: React.FC = () => {
             style={{ backgroundColor: getStatusConfig(record.status).color === 'success' ? '#52c41a' : '#1890ff' }}
           />
           <div>
-            <div className='font-medium text-gray-900'>{record.eventName}</div>
-            <Text type='secondary' className='text-sm'>
+            <div className='font-medium text-gray-900' style={{ fontSize: '14px', lineHeight: '1.4' }}>
+              {record.eventName}
+            </div>
+            <Text type='secondary' style={{ fontSize: '12px' }}>
               {record.description || 'Không có mô tả'}
             </Text>
           </div>
@@ -135,38 +139,43 @@ const MedicalCheckEvent: React.FC = () => {
       sorter: (a, b) => a.eventName.localeCompare(b.eventName)
     },
     {
-      title: 'Thời gian & Địa điểm',
-      key: 'schedule',
+      title: 'Thời gian sự kiện',
+      key: 'eventDate',
+      width: 150,
       sorter: (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
       render: (_, record) => (
-        <Space direction='vertical' size={0}>
-          <Space size='small'>
-            <CalendarOutlined className='text-blue-500' />
-            <Text className='text-sm'>{record.eventDate ? formatDateTime(record.eventDate) : '-'}</Text>
-          </Space>
-          <Space size='small'>
-            <EnvironmentOutlined className='text-green-500' />
-            <Text type='secondary' className='text-sm'>
-              {record.location}
-            </Text>
-          </Space>
-        </Space>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>
+            {record.eventDate ? formatDateTime(record.eventDate) : '-'}
+          </div>
+          <Text type='secondary' style={{ fontSize: '11px' }}>
+            <EnvironmentOutlined style={{ marginRight: '4px' }} />
+            {record.location}
+          </Text>
+        </div>
       )
     },
     {
       title: 'Hạn đăng ký',
       key: 'deadline',
+      width: 180,
       render: (_, record) => {
-        const start = record.startRegistrationDate ? dayjs(record.startRegistrationDate).format('DD/MM/YYYY') : '-'
-        const end = record.endRegistrationDate ? dayjs(record.endRegistrationDate).format('DD/MM/YYYY') : '-'
         const isExpired = record.endRegistrationDate && dayjs(record.endRegistrationDate).isBefore(dayjs())
         return (
-          <Space>
-            <ClockCircleOutlined className={isExpired ? 'text-red-500' : 'text-orange-500'} />
-            <Text type={isExpired ? 'danger' : 'warning'} className='text-sm'>
-              {start + ' - ' + end}
-            </Text>
-          </Space>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500' }}>
+              {record.endRegistrationDate ? dayjs(record.endRegistrationDate).format('DD/MM/YYYY') : '-'}
+            </div>
+            {isExpired ? (
+              <Tag color='red' style={{ marginTop: '4px' }}>
+                Đã hết hạn
+              </Tag>
+            ) : (
+              <Tag color='green' style={{ marginTop: '4px' }}>
+                Còn hạn
+              </Tag>
+            )}
+          </div>
         )
       }
     },
@@ -174,17 +183,13 @@ const MedicalCheckEvent: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      width: 120,
       render: (status: EventStatus) => {
         const config = getStatusConfig(status)
         return (
-          <Badge
-            status={config.color as unknown as 'success' | 'error' | 'processing' | 'default'}
-            text={
-              <Tag color={config.color} icon={config.icon}>
-                {config.text}
-              </Tag>
-            }
-          />
+          <Tag color={config.color} icon={config.icon} style={{ margin: 0 }}>
+            {config.text}
+          </Tag>
         )
       },
       filters: [
@@ -198,45 +203,54 @@ const MedicalCheckEvent: React.FC = () => {
       title: 'Đơn vị cung cấp',
       dataIndex: 'provider',
       key: 'provider',
-      render: (provider: string) => provider || '-'
+      width: 120,
+      render: (provider: string) => (
+        <Text style={{ fontSize: '13px' }}>{provider || '-'}</Text>
+      )
     },
     {
       title: 'Thao tác',
       key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Space>
-          <Tooltip title='Xem chi tiết'>
-            <Button
-              type='text'
+      width: 80,
+      fixed: 'right',
+      render: (_, record) => {
+        const menu = (
+          <Menu>
+            <Menu.Item
+              key='view'
               icon={<EyeOutlined />}
               onClick={(e) => {
-                e.stopPropagation()
+                e.domEvent.stopPropagation()
                 setSelectedEvent(record)
                 setIsModalVisible(true)
               }}
-            />
-          </Tooltip>
-          {record.status === EventStatus.Ongoing && (
-            <>
-              <Tooltip title='Cập nhật'>
-                <Button
-                  type='text'
-                  icon={<EditOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditEvent(record)
-                    setIsEditModalVisible(true)
-                  }}
-                  className='text-blue-600 hover:text-blue-700'
-                />
-              </Tooltip>
-              <Tooltip title='Xóa'>
-                <Button
-                  type='text'
+            >
+              Xem chi tiết
+            </Menu.Item>
+
+            {record.status === EventStatus.Ongoing && (
+              <>
+                {/* Kiểm tra xem đã quá hạn đăng ký chưa */}
+                {record.endRegistrationDate && dayjs(record.endRegistrationDate).isAfter(dayjs()) && (
+                  <Menu.Item
+                    key='edit'
+                    icon={<EditOutlined />}
+                    onClick={(e) => {
+                      e.domEvent.stopPropagation()
+                      setEditEvent(record)
+                      setIsEditModalVisible(true)
+                    }}
+                  >
+                    Cập nhật
+                  </Menu.Item>
+                )}
+
+                <Menu.Item
+                  key='delete'
                   icon={<DeleteOutlined />}
+                  danger
                   onClick={async (e) => {
-                    e.stopPropagation()
+                    e.domEvent.stopPropagation()
                     Modal.confirm({
                       title: 'Xác nhận xóa sự kiện',
                       content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
@@ -260,13 +274,30 @@ const MedicalCheckEvent: React.FC = () => {
                       }
                     })
                   }}
-                  className='text-red-600 hover:text-red-700'
-                />
-              </Tooltip>
-            </>
-          )}
-        </Space>
-      )
+                >
+                  Xóa sự kiện
+                </Menu.Item>
+              </>
+            )}
+            {record.status === EventStatus.Completed && (
+              <Menu.Item key='completed' icon={<CheckCircleOutlined />} disabled style={{ color: '#52c41a' }}>
+                Đã hoàn thành
+              </Menu.Item>
+            )}
+            {record.status === EventStatus.Cancelled && (
+              <Menu.Item key='cancelled' icon={<StopOutlined />} disabled style={{ color: '#ff4d4f' }}>
+                Đã hủy
+              </Menu.Item>
+            )}
+          </Menu>
+        )
+
+        return (
+          <Dropdown overlay={menu} trigger={['click']}>
+            <Button type='text' icon={<MoreOutlined />} size='small' />
+          </Dropdown>
+        )
+      }
     }
   ]
 
@@ -280,8 +311,8 @@ const MedicalCheckEvent: React.FC = () => {
   const filteredEvents = events.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     return matchesSearch
   })
@@ -324,64 +355,64 @@ const MedicalCheckEvent: React.FC = () => {
   return (
     <div className=''>
       <Card className='shadow-sm'>
-        <div className='flex justify-between items-center'>
+        <div className='flex justify-between items-center mb-4'>
           <div>
-            <Title level={2} className='m-0 flex items-center gap-2'>
+            <Title level={3} className='m-0 flex items-center gap-2'>
               <MedicineBoxOutlined className='text-blue-600' />
               Quản lý sự kiện khám sức khỏe
             </Title>
-            <Text type='secondary'>Duyệt và quản lý các sự kiện khám sức khỏe trong trường</Text>
+            <Text type='secondary' style={{ fontSize: '13px' }}>Duyệt và quản lý các sự kiện khám sức khỏe trong trường</Text>
           </div>
           <Space>
-            <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
-            <Button icon={<ReloadOutlined />} onClick={fetchEvents} loading={loading}>
+            <Button size='small' icon={<ExportOutlined />}>Xuất báo cáo</Button>
+            <Button size='small' icon={<ReloadOutlined />} onClick={fetchEvents} loading={loading}>
               Làm mới
             </Button>
-            <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+            <Button size='small' type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
               Tạo sự kiện mới
             </Button>
           </Space>
         </div>
 
         {/* Statistics */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
+        <Row gutter={[12, 12]}>
+          <Col xs={12} sm={6}>
+            <Card size='small' className='text-center' style={{ border: '1px solid #f0f0f0' }}>
               <Statistic
-                title='Tổng số sự kiện'
+                title={<span style={{ fontSize: '12px' }}>Tổng số sự kiện</span>}
                 value={stats.total}
-                prefix={<MedicineBoxOutlined />}
-                valueStyle={{ color: '#1890ff' }}
+                prefix={<MedicineBoxOutlined style={{ fontSize: '14px' }} />}
+                valueStyle={{ color: '#1890ff', fontSize: '18px' }}
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
+          <Col xs={12} sm={6}>
+            <Card size='small' className='text-center' style={{ border: '1px solid #f0f0f0' }}>
               <Statistic
-                title='Chờ duyệt'
+                title={<span style={{ fontSize: '12px' }}>Chờ duyệt</span>}
                 value={stats.ongoing}
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#faad14' }}
+                prefix={<ClockCircleOutlined style={{ fontSize: '14px' }} />}
+                valueStyle={{ color: '#faad14', fontSize: '18px' }}
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
+          <Col xs={12} sm={6}>
+            <Card size='small' className='text-center' style={{ border: '1px solid #f0f0f0' }}>
               <Statistic
-                title='Đã duyệt'
+                title={<span style={{ fontSize: '12px' }}>Đã duyệt</span>}
                 value={stats.completed}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
+                prefix={<CheckCircleOutlined style={{ fontSize: '14px' }} />}
+                valueStyle={{ color: '#52c41a', fontSize: '18px' }}
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card size='small' className='text-center'>
+          <Col xs={12} sm={6}>
+            <Card size='small' className='text-center' style={{ border: '1px solid #f0f0f0' }}>
               <Statistic
-                title='Đã hủy'
+                title={<span style={{ fontSize: '12px' }}>Đã hủy</span>}
                 value={stats.cancelled}
-                prefix={<StopOutlined />}
-                valueStyle={{ color: '#ff4d4f' }}
+                prefix={<StopOutlined style={{ fontSize: '14px' }} />}
+                valueStyle={{ color: '#ff4d4f', fontSize: '18px' }}
               />
             </Card>
           </Col>
@@ -391,23 +422,21 @@ const MedicalCheckEvent: React.FC = () => {
       {/* Filters */}
       <Card className='shadow-sm'>
         <Row gutter={[16, 16]} align='middle'>
-          <Col xs={24} sm={12} md={10}>
+          <Col xs={24} sm={16} md={12}>
             <Search
               placeholder='Tìm kiếm tên sự kiện, mô tả, địa điểm...'
               allowClear
               enterButton={<SearchOutlined />}
-              size='large'
+              size='middle'
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
             />
           </Col>
-          <Col xs={24} sm={24} md={8}>
+          <Col xs={24} sm={8} md={12}>
             <div className='flex justify-end'>
-              <Space>
-                <Text type='secondary'>
-                  Hiển thị {filteredEvents.length} / {stats.total} sự kiện
-                </Text>
-              </Space>
+              <Text type='secondary' style={{ fontSize: '12px' }}>
+                Hiển thị {filteredEvents.length} / {stats.total} sự kiện
+              </Text>
             </div>
           </Col>
         </Row>
@@ -420,6 +449,7 @@ const MedicalCheckEvent: React.FC = () => {
           dataSource={filteredEvents}
           rowKey='_id'
           loading={loading}
+          size='small'
           pagination={{
             current: currentPage,
             pageSize: pageSize,
@@ -428,7 +458,7 @@ const MedicalCheckEvent: React.FC = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sự kiện`,
-            pageSizeOptions: ['5', '10', '20', '50']
+            pageSizeOptions: ['10', '20', '50', '100']
           }}
           locale={{
             emptyText: (
@@ -443,7 +473,7 @@ const MedicalCheckEvent: React.FC = () => {
               />
             )
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1000 }}
           rowClassName={(record) =>
             record.status === EventStatus.Ongoing
               ? 'hover:bg-blue-50 transition-colors cursor-pointer'
@@ -466,46 +496,46 @@ const MedicalCheckEvent: React.FC = () => {
         footer={
           selectedEvent?.status === EventStatus.Ongoing
             ? [
-                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>,
-                <Button
-                  key='reject'
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Xác nhận hủy sự kiện',
-                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
-                      okText: 'Xác nhận',
-                      cancelText: 'Hủy',
-                      onOk: () => {
-                        handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
-                        setIsModalVisible(false)
-                      }
-                    })
-                  }}
-                >
-                  Hủy sự kiện
-                </Button>,
-                <Button
-                  key='approve'
-                  type='primary'
-                  icon={<CheckOutlined />}
-                  onClick={() => {
-                    handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
-                    setIsModalVisible(false)
-                  }}
-                  disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
-                >
-                  Hoàn thành
-                </Button>
-              ]
+              <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>,
+              <Button
+                key='reject'
+                danger
+                icon={<CloseOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Xác nhận hủy sự kiện',
+                    content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
+                    okText: 'Xác nhận',
+                    cancelText: 'Hủy',
+                    onOk: () => {
+                      handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
+                      setIsModalVisible(false)
+                    }
+                  })
+                }}
+              >
+                Hủy sự kiện
+              </Button>,
+              <Button
+                key='approve'
+                type='primary'
+                icon={<CheckOutlined />}
+                onClick={() => {
+                  handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
+                  setIsModalVisible(false)
+                }}
+                disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
+              >
+                Hoàn thành
+              </Button>
+            ]
             : [
-                <Button key='close' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>
-              ]
+              <Button key='close' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>
+            ]
         }
       >
         {selectedEvent && (

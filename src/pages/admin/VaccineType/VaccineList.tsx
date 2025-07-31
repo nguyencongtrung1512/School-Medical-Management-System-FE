@@ -1,23 +1,23 @@
 'use client'
 
-import type React from 'react'
-import { useEffect, useState } from 'react'
-import { Table, Button, Popconfirm, message, Dropdown, Card, Typography, Tag, Input, Row, Col, Divider } from 'antd'
 import {
-  EllipsisOutlined,
-  EyeOutlined,
-  EditOutlined,
   DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EllipsisOutlined,
+  MedicineBoxOutlined,
   PlusOutlined,
-  SearchOutlined,
   ReloadOutlined,
-  DownloadOutlined
+  SearchOutlined
 } from '@ant-design/icons'
 import type { MenuProps, TableColumnsType } from 'antd'
+import { Button, Card, Col, Dropdown, Input, Popconfirm, Row, Space, Table, Tag, Typography, message } from 'antd'
+import type React from 'react'
+import { useEffect, useState } from 'react'
 import * as XLSX from 'xlsx'
-import { searchVaccineTypesAPI, deleteVaccineTypeAPI, type VaccineType } from '../../../api/vaccineType.api'
-import Update from './Update'
+import { deleteVaccineTypeAPI, searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
 import Create from './Create'
+import Update from './Update'
 
 const { Title } = Typography
 const { Search } = Input
@@ -139,7 +139,7 @@ const VaccineList: React.FC = () => {
       key: 'code',
       width: 150,
       render: (text: string) => (
-        <Tag color='blue' style={{ fontFamily: 'monospace' }}>
+        <Tag color='blue' style={{ fontFamily: 'monospace', fontSize: '12px' }}>
           {text}
         </Tag>
       )
@@ -148,26 +148,37 @@ const VaccineList: React.FC = () => {
       title: 'Tên loại vaccine',
       dataIndex: 'name',
       key: 'name',
+      width: 200,
       ellipsis: true,
-      render: (text: string) => <Typography.Text strong>{text}</Typography.Text>
+      render: (text: string) => (
+        <Typography.Text strong style={{ fontSize: '13px' }}>
+          {text}
+        </Typography.Text>
+      )
     },
     {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
+      width: 300,
       ellipsis: true,
-      render: (text: string) => <Typography.Text type='secondary'>{text || 'Chưa có mô tả'}</Typography.Text>
+      render: (text: string) => (
+        <Typography.Text type='secondary' style={{ fontSize: '12px' }}>
+          {text || 'Chưa có mô tả'}
+        </Typography.Text>
+      )
     },
     {
       title: 'Thao tác',
       key: 'actions',
       width: 80,
-      align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown menu={{ items: getActionItems(record) }} trigger={['click']} placement='bottomRight'>
           <Button
             type='text'
             icon={<EllipsisOutlined />}
+            size='small'
             style={{
               border: 'none',
               boxShadow: 'none'
@@ -179,69 +190,77 @@ const VaccineList: React.FC = () => {
   ]
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-      <Card>
-        <div style={{ marginBottom: '24px' }}>
-          <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-            Quản lý loại vaccine
-          </Title>
-          <Typography.Text type='secondary'>Quản lý danh sách các loại vaccine trong hệ thống</Typography.Text>
-        </div>
-
-        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-          <Col xs={24} sm={12} md={8}>
-            <Search
-              placeholder='Tìm kiếm theo tên, mã hoặc mô tả...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              size='large'
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={16}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportExcel}
-                size='large'
-                disabled={filteredData.length === 0}
-              >
+    <div className=''>
+      <Space direction='vertical' size='large' style={{ width: '100%' }}>
+        {/* Header */}
+        <Card className='shadow-sm'>
+          <div className='flex justify-between items-center mb-4'>
+            <div>
+              <Title level={3} className='m-0 flex items-center gap-2'>
+                <MedicineBoxOutlined className='text-blue-600' />
+                Quản lý loại vaccine
+              </Title>
+              <Typography.Text type='secondary' style={{ fontSize: '13px' }}>
+                Quản lý danh sách các loại vaccine trong hệ thống
+              </Typography.Text>
+            </div>
+            <Space>
+              <Button size='small' icon={<DownloadOutlined />} onClick={handleExportExcel} disabled={filteredData.length === 0}>
                 Xuất Excel
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading} size='large'>
+              <Button size='small' icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
                 Làm mới
               </Button>
-              <Button type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModal(true)} size='large'>
+              <Button size='small' type='primary' icon={<PlusOutlined />} onClick={() => setIsCreateModal(true)}>
                 Thêm loại vaccine
               </Button>
-            </div>
-          </Col>
-        </Row>
+            </Space>
+          </div>
+        </Card>
 
-        <Divider />
+        {/* Search */}
+        <Card className='shadow-sm'>
+          <Row gutter={[16, 16]} align='middle'>
+            <Col xs={24} sm={16} md={12}>
+              <Search
+                placeholder='Tìm kiếm theo tên, mã hoặc mô tả...'
+                allowClear
+                enterButton={<SearchOutlined />}
+                size='middle'
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} sm={8} md={12}>
+              <div className='flex justify-end'>
+                <Typography.Text type='secondary' style={{ fontSize: '12px' }}>
+                  Hiển thị {filteredData.length} loại vaccine
+                </Typography.Text>
+              </div>
+            </Col>
+          </Row>
+        </Card>
 
-        <Table
-          rowKey='_id'
-          loading={loading}
-          dataSource={filteredData}
-          columns={columns}
-          pagination={{
-            total: filteredData.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`
-          }}
-          scroll={{ x: 800 }}
-          size='middle'
-          bordered
-          style={{
-            background: '#fff',
-            borderRadius: '8px'
-          }}
-        />
-      </Card>
+        {/* Table */}
+        <Card className='shadow-sm'>
+          <Table
+            rowKey='_id'
+            loading={loading}
+            dataSource={filteredData}
+            columns={columns}
+            size='small'
+            pagination={{
+              total: filteredData.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+              pageSizeOptions: ['10', '20', '50', '100']
+            }}
+            scroll={{ x: 800 }}
+          />
+        </Card>
+      </Space>
 
       <Create
         open={isCreateModal}

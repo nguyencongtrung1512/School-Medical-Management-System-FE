@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { Table, Button, Modal, Tag, Input, Select, message, Space, Typography, Descriptions } from 'antd'
 import { ExportOutlined, EyeOutlined, ReloadOutlined, CheckCircleOutlined, CloseOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+
+const { Text } = Typography
 import {
   vaccineRegistrationApi,
   VaccineRegistration,
@@ -42,7 +45,10 @@ type VaccineRegistrationWithPopulated = VaccineRegistration & {
     email?: string
     phone?: string
   }
-  event?: { title?: string }
+  event?: {
+    title?: string
+    endRegistrationDate?: string | Date
+  }
 }
 
 const VaccineRegistrationList: React.FC = () => {
@@ -118,31 +124,54 @@ const VaccineRegistrationList: React.FC = () => {
   const columns: ColumnsType<VaccineRegistrationWithPopulated> = [
     {
       title: 'Học sinh',
-      dataIndex: ['studentId', 'student', 'fullName'],
       key: 'student',
-      render: (_: unknown, record) => record.student?.fullName || record.studentId
+      width: 150,
+      render: (_: unknown, record) => (
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>
+            {record.student?.fullName || record.studentId}
+          </div>
+          <Text type='secondary' style={{ fontSize: '11px' }}>
+            {record.student?.studentCode || 'N/A'}
+          </Text>
+        </div>
+      )
     },
     {
       title: 'Phụ huynh',
-      dataIndex: ['parentId', 'parent', 'fullName'],
       key: 'parent',
-      render: (_: unknown, record) => record.parent?.fullName || record.parentId
+      width: 150,
+      render: (_: unknown, record) => (
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>
+            {record.parent?.fullName || record.parentId}
+          </div>
+          <Text type='secondary' style={{ fontSize: '11px' }}>
+            {record.parent?.phone || 'N/A'}
+          </Text>
+        </div>
+      )
     },
     {
       title: 'Sự kiện',
-      dataIndex: ['eventId', 'event', 'title'],
       key: 'event',
-      render: (_: unknown, record) => record.event?.title || record.eventId
-    },
-    {
-      title: 'Năm học',
-      dataIndex: 'schoolYear',
-      key: 'schoolYear'
+      width: 200,
+      render: (_: unknown, record) => (
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>
+            {record.event?.title || record.eventId}
+          </div>
+          <Text type='secondary' style={{ fontSize: '11px' }}>
+            {record.schoolYear}
+          </Text>
+        </div>
+      )
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      width: 120,
       render: (status: string) => (
         <Tag color={statusColors[status as keyof typeof statusColors] || 'default'}>
           {statusLabels[status as keyof typeof statusLabels] || status}
@@ -157,17 +186,38 @@ const VaccineRegistrationList: React.FC = () => {
       onFilter: (value, record) => record.status === value
     },
     {
+      title: 'Hạn đăng ký',
+      key: 'deadline',
+      width: 120,
+      render: (_: unknown, record) => {
+        if (!record.event?.endRegistrationDate) return '-'
+        const isExpired = dayjs(record.event.endRegistrationDate).isBefore(dayjs())
+        return (
+          <Tag color={isExpired ? 'red' : 'green'}>
+            {isExpired ? 'Đã hết hạn' : 'Còn hạn'}
+          </Tag>
+        )
+      }
+    },
+    {
       title: 'Ghi chú',
       dataIndex: 'note',
       key: 'note',
-      ellipsis: true
+      width: 150,
+      ellipsis: true,
+      render: (note: string) => (
+        <Text style={{ fontSize: '12px' }}>{note || '-'}</Text>
+      )
     },
     {
       title: 'Thao tác',
       key: 'action',
+      width: 100,
+      fixed: 'right',
       render: (_: unknown, record) => (
-        <Space>
+        <Space size='small'>
           <Button
+            size='small'
             icon={<EyeOutlined />}
             onClick={() => {
               setSelected(record)
@@ -176,8 +226,13 @@ const VaccineRegistrationList: React.FC = () => {
           />
           {record.status === 'pending' && (
             <>
-              <Button icon={<CheckCircleOutlined />} onClick={() => handleUpdateStatus(record._id, 'approved')} />
-              <Button icon={<CloseOutlined />} danger onClick={() => handleUpdateStatus(record._id, 'rejected')} />
+              {/* Kiểm tra xem đã quá hạn đăng ký chưa */}
+              {record.event?.endRegistrationDate && dayjs(record.event.endRegistrationDate).isAfter(dayjs()) && (
+                <>
+                  <Button size='small' icon={<CheckCircleOutlined />} onClick={() => handleUpdateStatus(record._id, 'approved')} />
+                  <Button size='small' icon={<CloseOutlined />} danger onClick={() => handleUpdateStatus(record._id, 'rejected')} />
+                </>
+              )}
             </>
           )}
         </Space>
@@ -228,6 +283,7 @@ const VaccineRegistrationList: React.FC = () => {
           dataSource={data}
           rowKey='_id'
           loading={loading}
+          size='small'
           pagination={{
             current: pageNum,
             pageSize,
@@ -237,9 +293,10 @@ const VaccineRegistrationList: React.FC = () => {
               setPageNum(page)
               setPageSize(size || 10)
             },
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn đăng ký`
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn đăng ký`,
+            pageSizeOptions: ['10', '20', '50', '100']
           }}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 900 }}
         />
         <Modal
           open={detailModal}
@@ -249,6 +306,25 @@ const VaccineRegistrationList: React.FC = () => {
         >
           {selected && (
             <div style={{ textAlign: 'center' }}>
+              {/* Warning if registration is overdue */}
+              {selected.event?.endRegistrationDate && dayjs(selected.event.endRegistrationDate).isBefore(dayjs()) && (
+                <div style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '6px',
+                  padding: '12px',
+                  marginBottom: '16px',
+                  textAlign: 'left'
+                }}>
+                  <Space>
+                    <span style={{ color: '#ef4444' }}>⚠️</span>
+                    <span style={{ color: '#dc2626', fontWeight: 'bold' }}>
+                      Đơn đăng ký này đã quá hạn và không thể duyệt/từ chối
+                    </span>
+                  </Space>
+                </div>
+              )}
+
               {/* Avatar học sinh phía trên */}
               <img
                 src={

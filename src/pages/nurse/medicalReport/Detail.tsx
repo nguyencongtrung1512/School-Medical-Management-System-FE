@@ -408,9 +408,9 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Badge
                   status={
                     parentContactStatusColors[medicalEvent.parentContactStatus || 'not_contacted'] as
-                      | 'default'
-                      | 'processing'
-                      | 'success'
+                    | 'default'
+                    | 'processing'
+                    | 'success'
                   }
                   text={parentContactStatusVN[medicalEvent.parentContactStatus || 'not_contacted'] || 'Không xác định'}
                 />

@@ -1,7 +1,8 @@
 'use client'
 
+import { MedicineBoxOutlined } from '@ant-design/icons'
+import { Button, Form, Input, message, Modal, Space } from 'antd'
 import type React from 'react'
-import { Modal, Form, Input, Button, message } from 'antd'
 import { createVaccineTypeAPI, VaccineType } from '../../../api/vaccineType.api'
 
 interface CreateProps {
@@ -26,14 +27,19 @@ const Create: React.FC<CreateProps> = ({ open, onClose, destroyOnClose }) => {
 
   return (
     <Modal
-      title='Thêm loại vaccine mới'
+      title={
+        <div className='flex items-center gap-2'>
+          <MedicineBoxOutlined className='text-blue-600' />
+          Thêm loại vaccine mới
+        </div>
+      }
       open={open}
       onCancel={onClose}
       destroyOnClose={destroyOnClose}
       footer={null}
-      width={600}
+      width={500}
     >
-      <Form form={form} layout='vertical' onFinish={handleSubmit} autoComplete='off'>
+      <Form form={form} layout='vertical' onFinish={handleSubmit} autoComplete='off' size='middle'>
         <Form.Item
           label='Mã loại vaccine'
           name='code'
@@ -57,16 +63,18 @@ const Create: React.FC<CreateProps> = ({ open, onClose, destroyOnClose }) => {
         </Form.Item>
 
         <Form.Item label='Mô tả' name='description'>
-          <Input.TextArea rows={4} placeholder='Nhập mô tả về loại vaccine' />
+          <Input.TextArea rows={3} placeholder='Nhập mô tả về loại vaccine' />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-          <Button onClick={onClose} style={{ marginRight: 8 }}>
-            Hủy
-          </Button>
-          <Button type='primary' htmlType='submit'>
-            Thêm mới
-          </Button>
+          <Space>
+            <Button size='middle' onClick={onClose}>
+              Hủy
+            </Button>
+            <Button size='middle' type='primary' htmlType='submit'>
+              Thêm mới
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
     </Modal>
