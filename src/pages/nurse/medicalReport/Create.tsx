@@ -210,7 +210,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       }
 
       await medicalEventApi.create(medicalEventData)
-      // message.success('Tạo sự kiện y tế thành công!')
+      // message.success('Tạo sự cố y tế thành công!')
       form.resetFields()
       setSelectedStudent(null)
       setImageUrls([])
@@ -227,7 +227,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       if (err.message) {
         message.error(err.message)
       } else {
-        message.error('Có lỗi xảy ra khi tạo sự kiện y tế!')
+        message.error('Có lỗi xảy ra khi tạo sự cố y tế!')
       }
     }
   }
@@ -238,7 +238,8 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
     { value: 'đau bụng', label: 'Đau bụng', color: 'green' },
     { value: 'đau đầu', label: 'Đau đầu', color: 'blue' },
     { value: 'dị ứng', label: 'Dị ứng', color: 'purple' },
-    { value: 'dịch bệnh', label: 'Dịch bệnh', color: 'volcano' }
+    { value: 'dịch bệnh', label: 'Dịch bệnh', color: 'volcano' },
+    { value: 'khác', label: 'Khác', color: 'gray' }
   ]
 
   const parentContactStatusOptions = [
@@ -396,7 +397,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
         title={
           <Space>
             <FileTextOutlined style={{ color: '#1890ff' }} />
-            <Text strong>2. Thông tin sự kiện</Text>
+            <Text strong>2. Thông tin sự cố</Text>
           </Space>
         }
         size='small'
@@ -404,12 +405,8 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
       >
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item
-              name='eventName'
-              label='Tên sự kiện'
-              rules={[{ required: true, message: 'Vui lòng chọn tên sự kiện!' }]}
-            >
-              <Select placeholder='Chọn tên sự kiện' size='large'>
+            <Form.Item name='eventName' label='Sự cố' rules={[{ required: true, message: 'Vui lòng chọn sự cố!' }]}>
+              <Select placeholder='Chọn sự cố' size='large'>
                 {eventTypes.map((type) => (
                   <Select.Option key={type.value} value={type.value}>
                     <Tag color={type.color} style={{ margin: 0 }}>
@@ -442,7 +439,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
           label='Mô tả chi tiết'
           rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
         >
-          <TextArea rows={3} placeholder='Nhập mô tả chi tiết về sự kiện...' />
+          <TextArea rows={3} placeholder='Nhập mô tả chi tiết về sự cố...' />
         </Form.Item>
 
         <Row gutter={24}>
@@ -724,7 +721,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name='leaveTime' label='Thời gian xảy ra sự kiện'>
+            <Form.Item name='leaveTime' label='Thời gian xảy ra sự cố'>
               <DatePicker
                 showTime
                 format='DD/MM/YYYY HH:mm'
@@ -809,7 +806,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
           <Col>
             <Space size='large'>
               <Button type='primary' htmlType='submit' size='large' icon={<PlusOutlined />}>
-                Tạo sự kiện y tế
+                Tạo sự cố y tế
               </Button>
               <Button onClick={resetForm} size='large' icon={<ReloadOutlined />}>
                 Làm mới form

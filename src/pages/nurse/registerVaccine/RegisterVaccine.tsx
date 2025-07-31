@@ -32,10 +32,11 @@ import React, { useEffect, useState } from 'react'
 import {
   RegistrationStatus,
   vaccineRegistrationApi,
-  type VaccineRegistration
+  type VaccineRegistration,
+  type SearchVaccineRegistrationParams
 } from '../../../api/vaccineRegistration.api'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 const { Search } = Input
 const { Option } = Select
 
@@ -74,15 +75,42 @@ const RegisterVaccine: React.FC = () => {
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [rejectForm] = Form.useForm()
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
+  const [schoolYearFilter, setSchoolYearFilter] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     fetchRegistrations()
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, selectedEventId, schoolYearFilter, statusFilter])
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      // Fetch events for filter dropdown - no need to store separately
+      await vaccineRegistrationApi.search({ pageNum: 1, pageSize: 1000 })
+    } catch {
+      message.error('Không thể tải danh sách sự kiện')
+    }
+  }
 
   const fetchRegistrations = async () => {
     setLoading(true)
     try {
-      const response = await vaccineRegistrationApi.search({ pageNum: currentPage, pageSize })
+      const searchParams: SearchVaccineRegistrationParams = {
+        pageNum: currentPage,
+        pageSize,
+        status: statusFilter,
+        eventId: selectedEventId
+      }
+
+      // Loại bỏ các giá trị undefined
+      const cleanParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([, value]) => value !== undefined)
+      ) as SearchVaccineRegistrationParams
+
+      const response = await vaccineRegistrationApi.search(cleanParams)
       const pageData = (response as unknown as { pageData: PopulatedVaccineRegistration[] }).pageData || []
       const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
       setRegistrations(pageData)
@@ -98,6 +126,23 @@ const RegisterVaccine: React.FC = () => {
     setCurrentPage(page)
     if (pageSize) setPageSize(pageSize)
   }
+
+  const handleSearch = (value: string) => {
+    setSearchKeyword(value)
+    setCurrentPage(1)
+  }
+
+  const handleResetFilters = () => {
+    setSearchKeyword('')
+    setStatusFilter(undefined)
+    setSelectedEventId(undefined)
+    setSchoolYearFilter(undefined)
+    setCurrentPage(1)
+    fetchRegistrations()
+  }
+
+  // Lấy danh sách năm học từ registrations
+  const schoolYears = [...new Set(registrations.map(reg => reg.schoolYear))].sort().reverse()
 
   const formatDateTime = (dateValue: string | Date) => {
     if (!dateValue) return ''
@@ -266,21 +311,61 @@ const RegisterVaccine: React.FC = () => {
             </Col>
           </Row>
           <Row gutter={[16, 16]} className='mb-4'>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Search
                 placeholder='Tìm kiếm học sinh, sự kiện, phụ huynh...'
                 allowClear
                 enterButton={<SearchOutlined />}
-                onSearch={(value) => setSearchKeyword(value)}
+                onSearch={handleSearch}
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn năm học'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => {
+                  setSchoolYearFilter(value)
+                  setCurrentPage(1)
+                  fetchRegistrations()
+                }}
+              >
+                {schoolYears.map((year) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn sự kiện'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => {
+                  setSelectedEventId(value)
+                  setCurrentPage(1)
+                  fetchRegistrations()
+                }}
+              >
+                {registrations.map((reg) => (
+                  <Option key={reg.eventId} value={reg.eventId}>
+                    {reg.event?.title || reg.eventId}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
               <Select
                 placeholder='Lọc theo trạng thái'
                 allowClear
                 style={{ width: '100%' }}
-                onChange={(value) => setStatusFilter(value)}
+                onChange={(value) => {
+                  setStatusFilter(value)
+                  setCurrentPage(1)
+                  fetchRegistrations()
+                }}
               >
                 {statusOptions.map((s) => (
                   <Option key={s.value} value={s.value}>
@@ -292,7 +377,43 @@ const RegisterVaccine: React.FC = () => {
                 ))}
               </Select>
             </Col>
+            <Col xs={24} md={4}>
+              <Button onClick={handleResetFilters} style={{ width: '100%' }}>
+                Xóa bộ lọc
+              </Button>
+            </Col>
           </Row>
+
+          {/* Current Filters */}
+          {(searchKeyword || statusFilter || selectedEventId || schoolYearFilter) && (
+            <Row className='mb-4'>
+              <Col span={24}>
+                <Space wrap>
+                  <Text strong>Bộ lọc hiện tại:</Text>
+                  {searchKeyword && (
+                    <Tag closable onClose={() => setSearchKeyword('')}>
+                      Tìm kiếm: {searchKeyword}
+                    </Tag>
+                  )}
+                  {statusFilter && (
+                    <Tag closable onClose={() => setStatusFilter(undefined)}>
+                      Trạng thái: {statusOptions.find(s => s.value === statusFilter)?.label}
+                    </Tag>
+                  )}
+                  {selectedEventId && (
+                    <Tag closable onClose={() => setSelectedEventId(undefined)}>
+                      Sự kiện: {registrations.find(r => r.eventId === selectedEventId)?.event?.title || selectedEventId}
+                    </Tag>
+                  )}
+                  {schoolYearFilter && (
+                    <Tag closable onClose={() => setSchoolYearFilter(undefined)}>
+                      Năm học: {schoolYearFilter}
+                    </Tag>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+          )}
           <Table
             columns={columns}
             dataSource={filteredRegistrations}

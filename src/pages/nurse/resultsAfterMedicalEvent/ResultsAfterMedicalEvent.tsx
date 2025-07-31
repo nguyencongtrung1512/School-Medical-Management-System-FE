@@ -32,7 +32,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import { medicalCheckEventApi, type MedicalCheckEvent, EventStatus } from '../../../api/medicalCheckEvent.api'
+import { medicalCheckEventApi, type MedicalCheckEvent, EventStatus, type SearchMedicalCheckEventDTO } from '../../../api/medicalCheckEvent.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -48,17 +48,54 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(undefined)
   const [selectedEvent, setSelectedEvent] = useState<MedicalCheckEvent | null>(null)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
+  const [events, setEvents] = useState<MedicalCheckEvent[]>([])
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
+  const [schoolYearFilter, setSchoolYearFilter] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     fetchMedicalEvents()
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, selectedEventId, schoolYearFilter, statusFilter])
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      const response = await medicalCheckEventApi.search({ pageNum: 1, pageSize: 1000 })
+      const pageData = (response as unknown as { pageData: MedicalCheckEvent[] }).pageData || []
+      setEvents(pageData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách sự kiện')
+      }
+    }
+  }
 
   const fetchMedicalEvents = async () => {
     setLoading(true)
     try {
-      const response = await medicalCheckEventApi.search({ pageNum: currentPage, pageSize })
-      setMedicalEvents((response as any).pageData || [])
-      setTotalItems((response as any).pageInfo?.totalItems || 0)
+      const searchParams: SearchMedicalCheckEventDTO = {
+        pageNum: currentPage,
+        pageSize,
+        status: statusFilter,
+        schoolYear: schoolYearFilter
+      }
+
+      // Loại bỏ các giá trị undefined
+      const cleanParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([, value]) => value !== undefined)
+      ) as SearchMedicalCheckEventDTO
+
+      const response = await medicalCheckEventApi.search(cleanParams)
+      const pageData = (response as unknown as { pageData: MedicalCheckEvent[] }).pageData || []
+      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      setMedicalEvents(pageData)
+      setTotalItems(total)
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -78,6 +115,23 @@ const ResultsAfterMedicalEvent: React.FC = () => {
       setPageSize(pageSize)
     }
   }
+
+  const handleSearch = (value: string) => {
+    setSearchKeyword(value)
+    setCurrentPage(1)
+  }
+
+  const handleResetFilters = () => {
+    setSearchKeyword('')
+    setStatusFilter(undefined)
+    setSelectedEventId(undefined)
+    setSchoolYearFilter(undefined)
+    setCurrentPage(1)
+    fetchMedicalEvents()
+  }
+
+  // Lấy danh sách năm học từ events
+  const schoolYears = [...new Set(events.map(event => event.schoolYear))].sort().reverse()
 
   const getStatusConfig = (status: EventStatus) => {
     const configs = {
@@ -116,9 +170,9 @@ const ResultsAfterMedicalEvent: React.FC = () => {
     }
   }
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return ''
-    const date = dayjs(dateString)
+  const formatDateTime = (dateValue: string | Date) => {
+    if (!dateValue) return ''
+    const date = typeof dateValue === 'string' ? dayjs(dateValue) : dayjs(dateValue)
     return date.format('DD/MM/YYYY HH:mm')
   }
 
@@ -136,10 +190,10 @@ const ResultsAfterMedicalEvent: React.FC = () => {
           <Badge
             status={
               getStatusConfig(record.status || EventStatus.Ongoing).color as
-                | 'success'
-                | 'error'
-                | 'processing'
-                | 'default'
+              | 'success'
+              | 'error'
+              | 'processing'
+              | 'default'
             }
           />
           <div>
@@ -253,8 +307,8 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   const filteredEvents = medicalEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -333,21 +387,61 @@ const ResultsAfterMedicalEvent: React.FC = () => {
 
           {/* Filters */}
           <Row gutter={[16, 16]} className='mb-4'>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Search
                 placeholder='Tìm kiếm theo tên sự kiện, mô tả, địa điểm...'
                 allowClear
                 enterButton={<SearchOutlined />}
-                onSearch={(value) => setSearchKeyword(value)}
+                onSearch={handleSearch}
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn năm học'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => {
+                  setSchoolYearFilter(value)
+                  setCurrentPage(1)
+                  fetchMedicalEvents()
+                }}
+              >
+                {schoolYears.map((year) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            {/* <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn sự kiện'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => {
+                  setSelectedEventId(value)
+                  setCurrentPage(1)
+                  fetchMedicalEvents()
+                }}
+              >
+                {events.map((event) => (
+                  <Option key={event._id} value={event._id}>
+                    {event.eventName}
+                  </Option>
+                ))}
+              </Select>
+            </Col> */}
+            <Col xs={24} md={4}>
               <Select
                 placeholder='Lọc theo trạng thái'
                 allowClear
                 style={{ width: '100%' }}
-                onChange={(value) => setStatusFilter(value)}
+                onChange={(value) => {
+                  setStatusFilter(value)
+                  setCurrentPage(1)
+                  fetchMedicalEvents()
+                }}
               >
                 <Option value={EventStatus.Ongoing}>
                   <Space>
@@ -369,7 +463,43 @@ const ResultsAfterMedicalEvent: React.FC = () => {
                 </Option>
               </Select>
             </Col>
+            <Col xs={24} md={4}>
+              <Button onClick={handleResetFilters} style={{ width: '100%' }}>
+                Xóa bộ lọc
+              </Button>
+            </Col>
           </Row>
+
+          {/* Current Filters */}
+          {(searchKeyword || statusFilter || selectedEventId || schoolYearFilter) && (
+            <Row className='mb-4'>
+              <Col span={24}>
+                <Space wrap>
+                  <Text strong>Bộ lọc hiện tại:</Text>
+                  {searchKeyword && (
+                    <Tag closable onClose={() => setSearchKeyword('')}>
+                      Tìm kiếm: {searchKeyword}
+                    </Tag>
+                  )}
+                  {statusFilter && (
+                    <Tag closable onClose={() => setStatusFilter(undefined)}>
+                      Trạng thái: {getStatusConfig(statusFilter).text}
+                    </Tag>
+                  )}
+                  {selectedEventId && (
+                    <Tag closable onClose={() => setSelectedEventId(undefined)}>
+                      Sự kiện: {events.find(e => e._id === selectedEventId)?.eventName}
+                    </Tag>
+                  )}
+                  {schoolYearFilter && (
+                    <Tag closable onClose={() => setSchoolYearFilter(undefined)}>
+                      Năm học: {schoolYearFilter}
+                    </Tag>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+          )}
 
           {/* Table */}
           <Table

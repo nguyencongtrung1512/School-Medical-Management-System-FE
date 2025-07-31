@@ -87,8 +87,6 @@ const AppointmentVaccine: React.FC = () => {
     fetchAppointments()
   }, [currentPage, pageSize, selectedEventId, schoolYearFilter, statusFilter])
 
-
-
   const fetchEvents = async () => {
     setEventsLoading(true)
     try {
@@ -289,9 +287,7 @@ const AppointmentVaccine: React.FC = () => {
             record.status === AppointmentStatus.Ineligible) &&
             record.event?.eventDate &&
             !dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
-              <Tag color='orange'>
-                Chưa tới ngày tiêm ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})
-              </Tag>
+              <Tag color='orange'>Chưa tới ngày tiêm ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})</Tag>
             )}
 
           {record.status === AppointmentStatus.Vaccinated &&
@@ -526,27 +522,27 @@ const AppointmentVaccine: React.FC = () => {
             footer={
               modalType === 'check'
                 ? [
-                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                    Hủy
-                  </Button>,
-                  <Button key='save' type='primary' onClick={handleCheck}>
-                    Lưu
-                  </Button>
-                ]
-                : modalType === 'post'
-                  ? [
                     <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
                       Hủy
                     </Button>,
-                    <Button key='save' type='primary' onClick={handlePost}>
+                    <Button key='save' type='primary' onClick={handleCheck}>
                       Lưu
                     </Button>
                   ]
+                : modalType === 'post'
+                  ? [
+                      <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                        Hủy
+                      </Button>,
+                      <Button key='save' type='primary' onClick={handlePost}>
+                        Lưu
+                      </Button>
+                    ]
                   : [
-                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                      Đóng
-                    </Button>
-                  ]
+                      <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                        Đóng
+                      </Button>
+                    ]
             }
             width={600}
           >
@@ -574,7 +570,11 @@ const AppointmentVaccine: React.FC = () => {
                 <Form.Item
                   name='vaccinatedAt'
                   label='Thời gian tiêm'
-                  extra={selected?.event?.eventDate ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}` : undefined}
+                  extra={
+                    selected?.event?.eventDate
+                      ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}`
+                      : undefined
+                  }
                   rules={[
                     { required: true, message: 'Chọn thời gian tiêm' },
                     () => ({
