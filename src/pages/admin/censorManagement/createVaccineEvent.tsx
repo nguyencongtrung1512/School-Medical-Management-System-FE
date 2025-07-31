@@ -371,16 +371,17 @@ const CreateVaccineEvent: React.FC<CreateVaccineEventProps> = ({ onSuccess, even
             <Col xs={24} lg={12}>
               <Form.Item
                 name='schoolYear'
+                
                 label={
                   <Space>
                     <BookOutlined />
                     <span>Năm học</span>
                   </Space>
                 }
-                rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}
               >
                 <Input
                   value={schoolYear}
+                  disabled
                   onChange={(e) => setSchoolYear(e.target.value)}
                   placeholder='VD: 2023-2024'
                   className='rounded-lg'

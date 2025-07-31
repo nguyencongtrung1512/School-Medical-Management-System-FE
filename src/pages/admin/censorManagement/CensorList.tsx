@@ -1,5 +1,4 @@
 import type React from 'react'
-
 import {
   BookOutlined,
   CalendarOutlined,
@@ -13,6 +12,7 @@ import {
   ExclamationCircleOutlined,
   EyeOutlined,
   MedicineBoxOutlined,
+  MoreOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -25,8 +25,10 @@ import {
   Card,
   Col,
   Descriptions,
+  Dropdown,
   Empty,
   Input,
+  Menu,
   message,
   Modal,
   Row,
@@ -34,7 +36,6 @@ import {
   Statistic,
   Table,
   Tag,
-  Tooltip,
   Typography
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -42,6 +43,7 @@ import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { vaccineEventApi, VaccineEventStatus } from '../../../api/vaccineEvent.api'
 import { searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
+import { getGradeByIdAPI } from '../../../api/grade.api'
 import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
@@ -63,6 +65,13 @@ interface VaccineEvent {
   isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
+}
+
+interface Grade {
+  _id: string
+  name: string
+  positionOrder: string
+  description?: string
 }
 
 // Hàm format ngày giờ chuẩn dd/MM/yyyy HH:mm theo giờ Việt Nam (GMT+7)
@@ -87,6 +96,7 @@ const CensorList: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
   const [editEvent, setEditEvent] = useState<VaccineEvent | null>(null)
   const [vaccineTypes, setVaccineTypes] = useState<VaccineType[]>([])
+  const [grade, setGrade] = useState<Grade | null>(null)
 
   useEffect(() => {
     fetchVaccineEvents()
@@ -127,6 +137,16 @@ const CensorList: React.FC = () => {
       } else {
         message.error('Không thể tải danh sách loại vaccine')
       }
+    }
+  }
+
+  const fetchGradeById = async (gradeId: string) => {
+    try {
+      const response = await getGradeByIdAPI(gradeId)
+      setGrade(response.data)
+    } catch (error: unknown) {
+      console.log('error', error)
+      setGrade(null)
     }
   }
 
@@ -253,40 +273,45 @@ const CensorList: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Space>
-          <Tooltip title='Xem chi tiết'>
-            <Button
-              type='text'
+      width: 80,
+      render: (_, record) => {
+        const menu = (
+          <Menu>
+            <Menu.Item
+              key='view'
               icon={<EyeOutlined />}
               onClick={(e) => {
-                e.stopPropagation() // Ngăn event bubble lên row
+                e.domEvent.stopPropagation()
                 setSelectedPlan(record)
                 setIsModalVisible(true)
+                if (record.gradeId) {
+                  fetchGradeById(record.gradeId)
+                }
               }}
-            />
-          </Tooltip>
-          {record.status === VaccineEventStatus.Ongoing && (
-            <>
-              <Tooltip title='Cập nhật'>
-                <Button
-                  type='text'
+            >
+              Xem chi tiết
+            </Menu.Item>
+
+            {record.status === VaccineEventStatus.Ongoing && (
+              <>
+                <Menu.Item
+                  key='edit'
                   icon={<EditOutlined />}
                   onClick={(e) => {
-                    e.stopPropagation() // Ngăn event bubble lên row
+                    e.domEvent.stopPropagation()
                     setEditEvent(record)
                     setIsEditModalVisible(true)
                   }}
-                  className='text-blue-600 hover:text-blue-700'
-                />
-              </Tooltip>
-              <Tooltip title='Xóa sự kiện'>
-                <Button
-                  type='text'
+                >
+                  Cập nhật
+                </Menu.Item>
+
+                <Menu.Item
+                  key='delete'
                   icon={<DeleteOutlined />}
+                  danger
                   onClick={async (e) => {
-                    e.stopPropagation()
+                    e.domEvent.stopPropagation()
                     Modal.confirm({
                       title: 'Xác nhận xóa sự kiện',
                       content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
@@ -304,13 +329,40 @@ const CensorList: React.FC = () => {
                       }
                     })
                   }}
-                  className='text-red-600 hover:text-red-700'
-                />
-              </Tooltip>
-            </>
-          )}
-        </Space>
-      )
+                >
+                  Xóa sự kiện
+                </Menu.Item>
+              </>
+            )}
+            {record.status === VaccineEventStatus.Completed && (
+              <Menu.Item
+                key='completed'
+                icon={<CheckCircleOutlined />}
+                disabled
+                style={{ color: '#52c41a' }}
+              >
+                Đã hoàn thành
+              </Menu.Item>
+            )}
+            {record.status === VaccineEventStatus.Cancelled && (
+              <Menu.Item
+                key='cancelled'
+                icon={<StopOutlined />}
+                disabled
+                style={{ color: '#ff4d4f' }}
+              >
+                Đã hủy
+              </Menu.Item>
+            )}
+          </Menu>
+        )
+
+        return (
+          <Dropdown overlay={menu} trigger={['click']}>
+            <Button type='text' icon={<MoreOutlined />} />
+          </Dropdown>
+        )
+      }
     }
   ]
 
@@ -512,7 +564,10 @@ const CensorList: React.FC = () => {
             </Space>
           }
           open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
+          onCancel={() => {
+            setIsModalVisible(false)
+            setGrade(null) // Reset grade when closing modal
+          }}
           width={900}
           footer={
             selectedPlan?.status === VaccineEventStatus.Ongoing ?
@@ -640,6 +695,15 @@ const CensorList: React.FC = () => {
                     }
                   >
                     {selectedPlan.schoolYear}
+                  </Descriptions.Item>
+                  <Descriptions.Item
+                    label={
+                      <Space>
+                        <BookOutlined /> Lớp
+                      </Space>
+                    }
+                  >
+                    {grade ? grade.name : 'Đang tải...'}
                   </Descriptions.Item>
                 </Descriptions>
               </Card>
