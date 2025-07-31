@@ -601,7 +601,7 @@ const MedicalReport: React.FC = () => {
           <Title level={4}>
             <Space>
               <PlusOutlined />
-              Tạo sự kiện y tế mới
+              Tạo báo cáo sự cố y tế mới
             </Space>
           </Title>
         }
