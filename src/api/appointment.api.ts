@@ -33,6 +33,7 @@ export interface Student {
   dob: string
   classId: string
   studentCode: string
+  studentIdCode: string
   createdAt: string
   updatedAt: string
 }

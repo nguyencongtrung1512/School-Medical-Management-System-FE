@@ -213,7 +213,7 @@ function AppointmentCheck() {
       // Prepare data for Excel export
       const excelData = appointments.map((appointment, index) => ({
         STT: index + 1,
-        'Mã học sinh': appointment.student?.studentCode || '',
+        'Mã học sinh': appointment.student?.studentIdCode || '',
         'Tên học sinh': appointment.student?.fullName || appointment.studentId,
         'Phụ huynh': appointment.parent?.fullName || '',
         'Số điện thoại': appointment.parent?.phone || '',
@@ -370,8 +370,8 @@ function AppointmentCheck() {
     {
       title: 'Mã học sinh',
       dataIndex: ['student', 'studentCode'],
-      key: 'studentCode',
-      render: (_, record) => record.student?.studentCode || ''
+      key: 'studentIdCode',
+      render: (_, record) => record.student?.studentIdCode || ''
     },
     {
       title: 'Thời gian hẹn',
@@ -502,7 +502,7 @@ function AppointmentCheck() {
         {selectedAppointment && (
           <div>
             <Descriptions column={1} bordered size='small'>
-              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.student?.studentCode}</Descriptions.Item>
+              <Descriptions.Item label='Mã học sinh'>{selectedAppointment.student?.studentIdCode}</Descriptions.Item>
               <Descriptions.Item label='Tên học sinh'>{selectedAppointment.student?.fullName}</Descriptions.Item>
               <Descriptions.Item label='Phụ huynh'>{selectedAppointment.parent?.fullName}</Descriptions.Item>
               <Descriptions.Item label='Số điện thoại'>{selectedAppointment.parent?.phone}</Descriptions.Item>
