@@ -16,7 +16,9 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  StopOutlined
+  StopOutlined,
+  FilterOutlined,
+  ClearOutlined
 } from '@ant-design/icons'
 import {
   Avatar,
@@ -35,17 +37,39 @@ import {
   Table,
   Tag,
   Typography,
-  Menu
+  Menu,
+  Select,
+  DatePicker,
+  Form
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import React, { useEffect, useState } from 'react'
 import { EventStatus, medicalCheckEventApi, type MedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
+import { getGradesAPI } from '../../../api/grade.api'
 import CreateMedicalCheckEvent from './CreateMedicalCheckEvent'
 import UpdateMedicalCheckEvent from './UpdateMedicalCheckEvent'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
+const { Option } = Select
+
+interface Grade {
+  _id: string
+  name: string
+  positionOrder: string
+  description?: string
+}
+
+// Filter interface
+interface FilterParams {
+  query?: string
+  gradeId?: string
+  schoolYear?: string
+  status?: EventStatus
+  startDate?: string
+  endDate?: string
+}
 
 const MedicalCheckEvent: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<MedicalCheckEvent | null>(null)
@@ -60,14 +84,25 @@ const MedicalCheckEvent: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
   const [editEvent, setEditEvent] = useState<MedicalCheckEvent | null>(null)
 
+  // Filter states
+  const [filterParams, setFilterParams] = useState<FilterParams>({})
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [filterForm] = Form.useForm()
+
   useEffect(() => {
     fetchEvents()
-  }, [currentPage, pageSize])
+    fetchGrades()
+  }, [currentPage, pageSize, filterParams])
 
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const response = await medicalCheckEventApi.search({ pageSize, pageNum: currentPage })
+      const searchParams = {
+        pageSize,
+        pageNum: currentPage,
+        ...filterParams
+      }
+      const response = await medicalCheckEventApi.search(searchParams)
       const pageData = (response as unknown as { pageData: MedicalCheckEvent[] }).pageData || []
       const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
       setEvents(pageData)
@@ -85,11 +120,55 @@ const MedicalCheckEvent: React.FC = () => {
     }
   }
 
+  const fetchGrades = async () => {
+    try {
+      const response = await getGradesAPI(100, 1)
+      const gradesData = (response as { pageData?: Grade[] }).pageData || []
+      setGrades(gradesData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối lớp')
+      }
+    }
+  }
+
   const handleTableChange = (page: number, pageSize?: number) => {
     setCurrentPage(page)
     if (pageSize) {
       setPageSize(pageSize)
     }
+  }
+
+  // Filter functions
+  const handleFilterChange = (values: {
+    query?: string
+    gradeId?: string
+    schoolYear?: string
+    status?: EventStatus
+    startDate?: dayjs.Dayjs
+    endDate?: dayjs.Dayjs
+  }) => {
+    const newFilterParams: FilterParams = {}
+
+    if (values.query) newFilterParams.query = values.query
+    if (values.gradeId) newFilterParams.gradeId = values.gradeId
+    if (values.schoolYear) newFilterParams.schoolYear = values.schoolYear
+    if (values.status) newFilterParams.status = values.status
+    if (values.startDate) newFilterParams.startDate = values.startDate.format('YYYY-MM-DD')
+    if (values.endDate) newFilterParams.endDate = values.endDate.format('YYYY-MM-DD')
+
+    setFilterParams(newFilterParams)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
+
+  const handleClearFilters = () => {
+    filterForm.resetFields()
+    setFilterParams({})
+    setCurrentPage(1)
   }
 
   const getStatusConfig = (
@@ -204,9 +283,7 @@ const MedicalCheckEvent: React.FC = () => {
       dataIndex: 'provider',
       key: 'provider',
       width: 120,
-      render: (provider: string) => (
-        <Text style={{ fontSize: '13px' }}>{provider || '-'}</Text>
-      )
+      render: (provider: string) => <Text style={{ fontSize: '13px' }}>{provider || '-'}</Text>
     },
     {
       title: 'Thao tác',
@@ -302,20 +379,11 @@ const MedicalCheckEvent: React.FC = () => {
   ]
 
   const stats = {
-    total: events.length,
+    total: totalItems,
     ongoing: events.filter((p) => p.status === EventStatus.Ongoing).length,
     completed: events.filter((p) => p.status === EventStatus.Completed).length,
     cancelled: events.filter((p) => p.status === EventStatus.Cancelled).length
   }
-
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = searchKeyword
-      ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
-      : true
-    return matchesSearch
-  })
 
   // Callback khi tạo thành công
   const handleCreateSuccess = () => {
@@ -353,7 +421,7 @@ const MedicalCheckEvent: React.FC = () => {
   }
 
   return (
-    <div className=''>
+    <div className='space-y-4'>
       <Card className='shadow-sm'>
         <div className='flex justify-between items-center mb-4'>
           <div>
@@ -361,10 +429,14 @@ const MedicalCheckEvent: React.FC = () => {
               <MedicineBoxOutlined className='text-blue-600' />
               Quản lý sự kiện khám sức khỏe
             </Title>
-            <Text type='secondary' style={{ fontSize: '13px' }}>Duyệt và quản lý các sự kiện khám sức khỏe trong trường</Text>
+            <Text type='secondary' style={{ fontSize: '13px' }}>
+              Duyệt và quản lý các sự kiện khám sức khỏe trong trường
+            </Text>
           </div>
           <Space>
-            <Button size='small' icon={<ExportOutlined />}>Xuất báo cáo</Button>
+            <Button size='small' icon={<ExportOutlined />}>
+              Xuất báo cáo
+            </Button>
             <Button size='small' icon={<ReloadOutlined />} onClick={fetchEvents} loading={loading}>
               Làm mới
             </Button>
@@ -419,34 +491,128 @@ const MedicalCheckEvent: React.FC = () => {
         </Row>
       </Card>
 
-      {/* Filters */}
+      {/* Advanced Filters - Always Visible */}
       <Card className='shadow-sm'>
-        <Row gutter={[16, 16]} align='middle'>
-          <Col xs={24} sm={16} md={12}>
-            <Search
-              placeholder='Tìm kiếm tên sự kiện, mô tả, địa điểm...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              size='middle'
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} sm={8} md={12}>
-            <div className='flex justify-end'>
-              <Text type='secondary' style={{ fontSize: '12px' }}>
-                Hiển thị {filteredEvents.length} / {stats.total} sự kiện
-              </Text>
-            </div>
-          </Col>
-        </Row>
+        <div className='flex justify-between items-center mb-4'>
+          <div className='flex items-center gap-2'>
+            <FilterOutlined className='text-blue-600' />
+            <Text strong>Bộ lọc tìm kiếm</Text>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Text type='secondary' style={{ fontSize: '12px' }}>
+              Hiển thị {events.length} / {totalItems} sự kiện
+            </Text>
+            <Button
+              size='small'
+              icon={<ClearOutlined />}
+              onClick={handleClearFilters}
+              disabled={Object.keys(filterParams).length === 0}
+            >
+              Xóa bộ lọc
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Search */}
+        <div className='mb-4'>
+          <Search
+            placeholder='Tìm kiếm tên sự kiện, mô tả, địa điểm...'
+            allowClear
+            enterButton={<SearchOutlined />}
+            size='middle'
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onSearch={(value) => {
+              setFilterParams((prev) => ({ ...prev, query: value }))
+              setCurrentPage(1)
+            }}
+          />
+        </div>
+
+        {/* Filter Form - Always Visible */}
+        <Form form={filterForm} layout='vertical' onFinish={handleFilterChange}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item label='Trạng thái' name='status'>
+                <Select placeholder='Chọn trạng thái' allowClear size='middle'>
+                  <Option value={EventStatus.Ongoing}>Đang diễn ra</Option>
+                  <Option value={EventStatus.Completed}>Hoàn thành</Option>
+                  <Option value={EventStatus.Cancelled}>Đã hủy</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item label='Khối lớp' name='gradeId'>
+                <Select
+                  placeholder='Chọn khối lớp'
+                  allowClear
+                  size='middle'
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {grades.map((grade) => (
+                    <Option key={grade._id} value={grade._id}>
+                      {grade.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item label='Năm học' name='schoolYear'>
+                <Select placeholder='Chọn năm học' allowClear size='middle'>
+                  <Option value='2023-2024'>2023-2024</Option>
+                  <Option value='2024-2025'>2024-2025</Option>
+                  <Option value='2025-2026'>2025-2026</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            {/* <Col xs={24} sm={12} md={8}>
+              <Form.Item label='Từ ngày' name='startDate'>
+                <DatePicker
+                  placeholder='Chọn ngày bắt đầu'
+                  size='middle'
+                  style={{ width: '100%' }}
+                  format='DD/MM/YYYY'
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item label='Đến ngày' name='endDate'>
+                <DatePicker
+                  placeholder='Chọn ngày kết thúc'
+                  size='middle'
+                  style={{ width: '100%' }}
+                  format='DD/MM/YYYY'
+                />
+              </Form.Item>
+            </Col> */}
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item>
+                <Space className='mt-6'>
+                  <Button type='primary' htmlType='submit' size='middle'>
+                    Áp dụng bộ lọc
+                  </Button>
+                  <Button size='middle' onClick={handleClearFilters}>
+                    Xóa bộ lọc
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Card>
 
       {/* Main Table */}
       <Card className='shadow-sm'>
         <Table
           columns={columns}
-          dataSource={filteredEvents}
+          dataSource={events}
           rowKey='_id'
           loading={loading}
           size='small'
@@ -496,46 +662,46 @@ const MedicalCheckEvent: React.FC = () => {
         footer={
           selectedEvent?.status === EventStatus.Ongoing
             ? [
-              <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                Đóng
-              </Button>,
-              <Button
-                key='reject'
-                danger
-                icon={<CloseOutlined />}
-                onClick={() => {
-                  Modal.confirm({
-                    title: 'Xác nhận hủy sự kiện',
-                    content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
-                    okText: 'Xác nhận',
-                    cancelText: 'Hủy',
-                    onOk: () => {
-                      handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
-                      setIsModalVisible(false)
-                    }
-                  })
-                }}
-              >
-                Hủy sự kiện
-              </Button>,
-              <Button
-                key='approve'
-                type='primary'
-                icon={<CheckOutlined />}
-                onClick={() => {
-                  handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
-                  setIsModalVisible(false)
-                }}
-                disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
-              >
-                Hoàn thành
-              </Button>
-            ]
+                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>,
+                <Button
+                  key='reject'
+                  danger
+                  icon={<CloseOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Xác nhận hủy sự kiện',
+                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
+                      okText: 'Xác nhận',
+                      cancelText: 'Hủy',
+                      onOk: () => {
+                        handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
+                        setIsModalVisible(false)
+                      }
+                    })
+                  }}
+                >
+                  Hủy sự kiện
+                </Button>,
+                <Button
+                  key='approve'
+                  type='primary'
+                  icon={<CheckOutlined />}
+                  onClick={() => {
+                    handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
+                    setIsModalVisible(false)
+                  }}
+                  disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
+                >
+                  Hoàn thành
+                </Button>
+              ]
             : [
-              <Button key='close' onClick={() => setIsModalVisible(false)}>
-                Đóng
-              </Button>
-            ]
+                <Button key='close' onClick={() => setIsModalVisible(false)}>
+                  Đóng
+                </Button>
+              ]
         }
       >
         {selectedEvent && (

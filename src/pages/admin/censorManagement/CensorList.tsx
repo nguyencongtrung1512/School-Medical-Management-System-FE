@@ -16,7 +16,9 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  StopOutlined
+  StopOutlined,
+  FilterOutlined,
+  ClearOutlined
 } from '@ant-design/icons'
 import {
   Avatar,
@@ -35,18 +37,22 @@ import {
   Statistic,
   Table,
   Tag,
-  Typography
+  Typography,
+  Select,
+  DatePicker,
+  Form
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { vaccineEventApi, VaccineEventStatus } from '../../../api/vaccineEvent.api'
 import { searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
-import { getGradeByIdAPI } from '../../../api/grade.api'
+import { getGradeByIdAPI, getGradesAPI } from '../../../api/grade.api'
 import CreateVaccineEvent from './createVaccineEvent'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
+const { Option } = Select
 
 interface VaccineEvent {
   _id: string
@@ -73,6 +79,16 @@ interface Grade {
   description?: string
 }
 
+// Filter interface
+interface FilterParams {
+  query?: string
+  gradeId?: string
+  schoolYear?: string
+  status?: VaccineEventStatus
+  startDate?: string
+  endDate?: string
+}
+
 // Hàm format ngày giờ chuẩn dd/MM/yyyy HH:mm theo giờ Việt Nam (GMT+7)
 const formatDateTime = (dateValue: string | Date) => {
   if (!dateValue) return ''
@@ -90,22 +106,32 @@ const CensorList: React.FC = () => {
   const [pageSize, setPageSize] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
   const [searchKeyword, setSearchKeyword] = useState('')
-  const [statusFilter] = useState<VaccineEventStatus | undefined>(undefined)
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
   const [isEditModalVisible, setIsEditModalVisible] = useState(false)
   const [editEvent, setEditEvent] = useState<VaccineEvent | null>(null)
   const [vaccineTypes, setVaccineTypes] = useState<VaccineType[]>([])
   const [grade, setGrade] = useState<Grade | null>(null)
 
+  // Filter states
+  const [filterParams, setFilterParams] = useState<FilterParams>({})
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [filterForm] = Form.useForm()
+
   useEffect(() => {
     fetchVaccineEvents()
     fetchVaccineTypes()
-  }, [currentPage, pageSize])
+    fetchGrades()
+  }, [currentPage, pageSize, filterParams])
 
   const fetchVaccineEvents = async () => {
     setLoading(true)
     try {
-      const response = await vaccineEventApi.search({ pageNum: currentPage, pageSize })
+      const searchParams = {
+        pageNum: currentPage,
+        pageSize,
+        ...filterParams
+      }
+      const response = await vaccineEventApi.search(searchParams)
       const pageData = (response as any).pageData || []
       const total = (response as any).pageInfo?.totalItems || 0
       setVaccineEvents(pageData)
@@ -139,6 +165,22 @@ const CensorList: React.FC = () => {
     }
   }
 
+  const fetchGrades = async () => {
+    try {
+      const response = await getGradesAPI(100, 1)
+      const gradesData = (response as { pageData?: Grade[] }).pageData || []
+      setGrades(gradesData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách khối lớp')
+      }
+    }
+  }
+
   const fetchGradeById = async (gradeId: string) => {
     try {
       const response = await getGradeByIdAPI(gradeId)
@@ -154,6 +196,34 @@ const CensorList: React.FC = () => {
     if (pageSize) {
       setPageSize(pageSize)
     }
+  }
+
+  // Filter functions
+  const handleFilterChange = (values: {
+    query?: string
+    gradeId?: string
+    schoolYear?: string
+    status?: VaccineEventStatus
+    startDate?: dayjs.Dayjs
+    endDate?: dayjs.Dayjs
+  }) => {
+    const newFilterParams: FilterParams = {}
+
+    if (values.query) newFilterParams.query = values.query
+    if (values.gradeId) newFilterParams.gradeId = values.gradeId
+    if (values.schoolYear) newFilterParams.schoolYear = values.schoolYear
+    if (values.status) newFilterParams.status = values.status
+    if (values.startDate) newFilterParams.startDate = values.startDate.format('YYYY-MM-DD')
+    if (values.endDate) newFilterParams.endDate = values.endDate.format('YYYY-MM-DD')
+
+    setFilterParams(newFilterParams)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
+
+  const handleClearFilters = () => {
+    filterForm.resetFields()
+    setFilterParams({})
+    setCurrentPage(1)
   }
 
   const getStatusConfig = (status: VaccineEventStatus) => {
@@ -273,9 +343,7 @@ const CensorList: React.FC = () => {
       dataIndex: 'provider',
       key: 'provider',
       width: 120,
-      render: (provider: string) => (
-        <Text style={{ fontSize: '13px' }}>{provider || '-'}</Text>
-      )
+      render: (provider: string) => <Text style={{ fontSize: '13px' }}>{provider || '-'}</Text>
     },
     {
       title: 'Thao tác',
@@ -389,23 +457,11 @@ const CensorList: React.FC = () => {
   }
 
   const stats = {
-    total: vaccineEvents.length,
+    total: totalItems,
     ongoing: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Ongoing).length,
     completed: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Completed).length,
     cancelled: vaccineEvents.filter((p) => p.status === VaccineEventStatus.Cancelled).length
   }
-
-  const filteredEvents = vaccineEvents.filter((event) => {
-    const matchesSearch = searchKeyword
-      ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
-      : true
-
-    const matchesStatus = statusFilter ? event.status === statusFilter : true
-
-    return matchesSearch && matchesStatus
-  })
 
   // Callback khi tạo thành công
   const handleCreateSuccess = () => {
@@ -431,7 +487,9 @@ const CensorList: React.FC = () => {
                 <MedicineBoxOutlined className='text-blue-600' />
                 Quản lý sự kiện tiêm chủng
               </Title>
-              <Text type='secondary' style={{ fontSize: '13px' }}>Duyệt và quản lý các sự kiện tiêm vaccine trong trường</Text>
+              <Text type='secondary' style={{ fontSize: '13px' }}>
+                Duyệt và quản lý các sự kiện tiêm vaccine trong trường
+              </Text>
             </div>
             <Space>
               <Button size='small' icon={<ReloadOutlined />} onClick={fetchVaccineEvents} loading={loading}>
@@ -488,34 +546,128 @@ const CensorList: React.FC = () => {
           </Row>
         </Card>
 
-        {/* Filters */}
+        {/* Advanced Filters - Always Visible */}
         <Card className='shadow-sm'>
-          <Row gutter={[16, 16]} align='middle'>
-            <Col xs={24} sm={16} md={12}>
-              <Search
-                placeholder='Tìm kiếm tên sự kiện, vaccine, địa điểm...'
-                allowClear
-                enterButton={<SearchOutlined />}
-                size='middle'
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-              />
-            </Col>
-            <Col xs={24} sm={8} md={12}>
-              <div className='flex justify-end'>
-                <Text type='secondary' style={{ fontSize: '12px' }}>
-                  Hiển thị {filteredEvents.length} / {stats.total} sự kiện
-                </Text>
-              </div>
-            </Col>
-          </Row>
+          <div className='flex justify-between items-center mb-4'>
+            <div className='flex items-center gap-2'>
+              <FilterOutlined className='text-blue-600' />
+              <Text strong>Bộ lọc tìm kiếm</Text>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Text type='secondary' style={{ fontSize: '12px' }}>
+                Hiển thị {vaccineEvents.length} / {totalItems} sự kiện
+              </Text>
+              <Button
+                size='small'
+                icon={<ClearOutlined />}
+                onClick={handleClearFilters}
+                disabled={Object.keys(filterParams).length === 0}
+              >
+                Xóa bộ lọc
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick Search */}
+          <div className='mb-4'>
+            <Search
+              placeholder='Tìm kiếm tên sự kiện, vaccine, địa điểm...'
+              allowClear
+              enterButton={<SearchOutlined />}
+              size='middle'
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={(value) => {
+                setFilterParams((prev) => ({ ...prev, query: value }))
+                setCurrentPage(1)
+              }}
+            />
+          </div>
+
+          {/* Filter Form - Always Visible */}
+          <Form form={filterForm} layout='vertical' onFinish={handleFilterChange}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item label='Trạng thái' name='status'>
+                  <Select placeholder='Chọn trạng thái' allowClear size='middle'>
+                    <Option value={VaccineEventStatus.Ongoing}>Đang diễn ra</Option>
+                    <Option value={VaccineEventStatus.Completed}>Hoàn thành</Option>
+                    <Option value={VaccineEventStatus.Cancelled}>Đã hủy</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item label='Khối lớp' name='gradeId'>
+                  <Select
+                    placeholder='Chọn khối lớp'
+                    allowClear
+                    size='middle'
+                    showSearch
+                    filterOption={(input, option) =>
+                      (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {grades.map((grade) => (
+                      <Option key={grade._id} value={grade._id}>
+                        {grade.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item label='Năm học' name='schoolYear'>
+                  <Select placeholder='Chọn năm học' allowClear size='middle'>
+                    <Option value='2023-2024'>2023-2024</Option>
+                    <Option value='2024-2025'>2024-2025</Option>
+                    <Option value='2025-2026'>2025-2026</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]}>
+              {/* <Col xs={24} sm={12} md={8}>
+                <Form.Item label='Từ ngày' name='startDate'>
+                  <DatePicker
+                    placeholder='Chọn ngày bắt đầu'
+                    size='middle'
+                    style={{ width: '100%' }}
+                    format='DD/MM/YYYY'
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item label='Đến ngày' name='endDate'>
+                  <DatePicker
+                    placeholder='Chọn ngày kết thúc'
+                    size='middle'
+                    style={{ width: '100%' }}
+                    format='DD/MM/YYYY'
+                  />
+                </Form.Item>
+              </Col> */}
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item>
+                  <Space className='mt-6'>
+                    <Button type='primary' htmlType='submit' size='middle'>
+                      Áp dụng bộ lọc
+                    </Button>
+                    <Button size='middle' onClick={handleClearFilters}>
+                      Xóa bộ lọc
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
         </Card>
 
         {/* Main Table */}
         <Card className='shadow-sm'>
           <Table
             columns={columns}
-            dataSource={filteredEvents}
+            dataSource={vaccineEvents}
             rowKey='_id'
             loading={loading}
             size='small'
@@ -591,8 +743,7 @@ const CensorList: React.FC = () => {
                 >
                   Hủy sự kiện
                 </Button>
-                ,
-                {/* Chỉ hiển thị nút duyệt nếu chưa quá hạn đăng ký */}
+                ,{/* Chỉ hiển thị nút duyệt nếu chưa quá hạn đăng ký */}
                 {selectedPlan?.endRegistrationDate && dayjs(selectedPlan.endRegistrationDate).isAfter(dayjs()) && (
                   <Button
                     key='approve'

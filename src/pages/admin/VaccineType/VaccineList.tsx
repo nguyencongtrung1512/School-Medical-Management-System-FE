@@ -205,7 +205,12 @@ const VaccineList: React.FC = () => {
               </Typography.Text>
             </div>
             <Space>
-              <Button size='small' icon={<DownloadOutlined />} onClick={handleExportExcel} disabled={filteredData.length === 0}>
+              <Button
+                size='small'
+                icon={<DownloadOutlined />}
+                onClick={handleExportExcel}
+                disabled={filteredData.length === 0}
+              >
                 Xuất Excel
               </Button>
               <Button size='small' icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>

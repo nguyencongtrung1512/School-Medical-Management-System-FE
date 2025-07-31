@@ -32,7 +32,12 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import { vaccineEventApi, VaccineEventStatus, type VaccineEvent, type SearchVaccineEventDTO } from '../../../api/vaccineEvent.api'
+import {
+  vaccineEventApi,
+  VaccineEventStatus,
+  type VaccineEvent,
+  type SearchVaccineEventDTO
+} from '../../../api/vaccineEvent.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -131,7 +136,7 @@ const ResultsAfterVaccination: React.FC = () => {
   }
 
   // Lấy danh sách năm học từ events
-  const schoolYears = [...new Set(events.map(event => event.schoolYear))].sort().reverse()
+  const schoolYears = [...new Set(events.map((event) => event.schoolYear))].sort().reverse()
 
   const getStatusConfig = (status: VaccineEventStatus) => {
     const configs = {
@@ -305,8 +310,8 @@ const ResultsAfterVaccination: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+        event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -483,7 +488,7 @@ const ResultsAfterVaccination: React.FC = () => {
                   )}
                   {selectedEventId && (
                     <Tag closable onClose={() => setSelectedEventId(undefined)}>
-                      Sự kiện: {events.find(e => e._id === selectedEventId)?.title}
+                      Sự kiện: {events.find((e) => e._id === selectedEventId)?.title}
                     </Tag>
                   )}
                   {schoolYearFilter && (

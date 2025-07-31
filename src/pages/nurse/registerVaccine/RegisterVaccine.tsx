@@ -142,7 +142,7 @@ const RegisterVaccine: React.FC = () => {
   }
 
   // Lấy danh sách năm học từ registrations
-  const schoolYears = [...new Set(registrations.map(reg => reg.schoolYear))].sort().reverse()
+  const schoolYears = [...new Set(registrations.map((reg) => reg.schoolYear))].sort().reverse()
 
   const formatDateTime = (dateValue: string | Date) => {
     if (!dateValue) return ''
@@ -277,8 +277,8 @@ const RegisterVaccine: React.FC = () => {
   const filteredRegistrations: PopulatedVaccineRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -397,12 +397,13 @@ const RegisterVaccine: React.FC = () => {
                   )}
                   {statusFilter && (
                     <Tag closable onClose={() => setStatusFilter(undefined)}>
-                      Trạng thái: {statusOptions.find(s => s.value === statusFilter)?.label}
+                      Trạng thái: {statusOptions.find((s) => s.value === statusFilter)?.label}
                     </Tag>
                   )}
                   {selectedEventId && (
                     <Tag closable onClose={() => setSelectedEventId(undefined)}>
-                      Sự kiện: {registrations.find(r => r.eventId === selectedEventId)?.event?.title || selectedEventId}
+                      Sự kiện:{' '}
+                      {registrations.find((r) => r.eventId === selectedEventId)?.event?.title || selectedEventId}
                     </Tag>
                   )}
                   {schoolYearFilter && (

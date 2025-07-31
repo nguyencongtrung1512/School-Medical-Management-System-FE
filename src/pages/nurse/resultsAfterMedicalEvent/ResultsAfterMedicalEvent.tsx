@@ -32,7 +32,12 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import { medicalCheckEventApi, type MedicalCheckEvent, EventStatus, type SearchMedicalCheckEventDTO } from '../../../api/medicalCheckEvent.api'
+import {
+  medicalCheckEventApi,
+  type MedicalCheckEvent,
+  EventStatus,
+  type SearchMedicalCheckEventDTO
+} from '../../../api/medicalCheckEvent.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -131,7 +136,7 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   }
 
   // Lấy danh sách năm học từ events
-  const schoolYears = [...new Set(events.map(event => event.schoolYear))].sort().reverse()
+  const schoolYears = [...new Set(events.map((event) => event.schoolYear))].sort().reverse()
 
   const getStatusConfig = (status: EventStatus) => {
     const configs = {
@@ -190,10 +195,10 @@ const ResultsAfterMedicalEvent: React.FC = () => {
           <Badge
             status={
               getStatusConfig(record.status || EventStatus.Ongoing).color as
-              | 'success'
-              | 'error'
-              | 'processing'
-              | 'default'
+                | 'success'
+                | 'error'
+                | 'processing'
+                | 'default'
             }
           />
           <div>
@@ -307,8 +312,8 @@ const ResultsAfterMedicalEvent: React.FC = () => {
   const filteredEvents = medicalEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.eventName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
-      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+        (event.description && event.description.toLowerCase().includes(searchKeyword.toLowerCase())) ||
+        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
@@ -488,7 +493,7 @@ const ResultsAfterMedicalEvent: React.FC = () => {
                   )}
                   {selectedEventId && (
                     <Tag closable onClose={() => setSelectedEventId(undefined)}>
-                      Sự kiện: {events.find(e => e._id === selectedEventId)?.eventName}
+                      Sự kiện: {events.find((e) => e._id === selectedEventId)?.eventName}
                     </Tag>
                   )}
                   {schoolYearFilter && (

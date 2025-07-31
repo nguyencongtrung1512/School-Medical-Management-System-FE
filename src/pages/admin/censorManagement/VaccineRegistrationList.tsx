@@ -128,9 +128,7 @@ const VaccineRegistrationList: React.FC = () => {
       width: 150,
       render: (_: unknown, record) => (
         <div>
-          <div style={{ fontSize: '13px', fontWeight: '500' }}>
-            {record.student?.fullName || record.studentId}
-          </div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>{record.student?.fullName || record.studentId}</div>
           <Text type='secondary' style={{ fontSize: '11px' }}>
             {record.student?.studentCode || 'N/A'}
           </Text>
@@ -143,9 +141,7 @@ const VaccineRegistrationList: React.FC = () => {
       width: 150,
       render: (_: unknown, record) => (
         <div>
-          <div style={{ fontSize: '13px', fontWeight: '500' }}>
-            {record.parent?.fullName || record.parentId}
-          </div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>{record.parent?.fullName || record.parentId}</div>
           <Text type='secondary' style={{ fontSize: '11px' }}>
             {record.parent?.phone || 'N/A'}
           </Text>
@@ -158,9 +154,7 @@ const VaccineRegistrationList: React.FC = () => {
       width: 200,
       render: (_: unknown, record) => (
         <div>
-          <div style={{ fontSize: '13px', fontWeight: '500' }}>
-            {record.event?.title || record.eventId}
-          </div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>{record.event?.title || record.eventId}</div>
           <Text type='secondary' style={{ fontSize: '11px' }}>
             {record.schoolYear}
           </Text>
@@ -192,11 +186,7 @@ const VaccineRegistrationList: React.FC = () => {
       render: (_: unknown, record) => {
         if (!record.event?.endRegistrationDate) return '-'
         const isExpired = dayjs(record.event.endRegistrationDate).isBefore(dayjs())
-        return (
-          <Tag color={isExpired ? 'red' : 'green'}>
-            {isExpired ? 'Đã hết hạn' : 'Còn hạn'}
-          </Tag>
-        )
+        return <Tag color={isExpired ? 'red' : 'green'}>{isExpired ? 'Đã hết hạn' : 'Còn hạn'}</Tag>
       }
     },
     {
@@ -205,9 +195,7 @@ const VaccineRegistrationList: React.FC = () => {
       key: 'note',
       width: 150,
       ellipsis: true,
-      render: (note: string) => (
-        <Text style={{ fontSize: '12px' }}>{note || '-'}</Text>
-      )
+      render: (note: string) => <Text style={{ fontSize: '12px' }}>{note || '-'}</Text>
     },
     {
       title: 'Thao tác',
@@ -229,8 +217,17 @@ const VaccineRegistrationList: React.FC = () => {
               {/* Kiểm tra xem đã quá hạn đăng ký chưa */}
               {record.event?.endRegistrationDate && dayjs(record.event.endRegistrationDate).isAfter(dayjs()) && (
                 <>
-                  <Button size='small' icon={<CheckCircleOutlined />} onClick={() => handleUpdateStatus(record._id, 'approved')} />
-                  <Button size='small' icon={<CloseOutlined />} danger onClick={() => handleUpdateStatus(record._id, 'rejected')} />
+                  <Button
+                    size='small'
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => handleUpdateStatus(record._id, 'approved')}
+                  />
+                  <Button
+                    size='small'
+                    icon={<CloseOutlined />}
+                    danger
+                    onClick={() => handleUpdateStatus(record._id, 'rejected')}
+                  />
                 </>
               )}
             </>
@@ -308,14 +305,16 @@ const VaccineRegistrationList: React.FC = () => {
             <div style={{ textAlign: 'center' }}>
               {/* Warning if registration is overdue */}
               {selected.event?.endRegistrationDate && dayjs(selected.event.endRegistrationDate).isBefore(dayjs()) && (
-                <div style={{
-                  backgroundColor: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '6px',
-                  padding: '12px',
-                  marginBottom: '16px',
-                  textAlign: 'left'
-                }}>
+                <div
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    marginBottom: '16px',
+                    textAlign: 'left'
+                  }}
+                >
                   <Space>
                     <span style={{ color: '#ef4444' }}>⚠️</span>
                     <span style={{ color: '#dc2626', fontWeight: 'bold' }}>

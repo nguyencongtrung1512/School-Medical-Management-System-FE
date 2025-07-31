@@ -232,8 +232,8 @@ const RegisterMedicalCheck: React.FC = () => {
   const filteredRegistrations: PopulatedMedicalCheckRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+        (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
