@@ -1,39 +1,41 @@
-import React, { useEffect, useState } from 'react'
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Typography,
-  Input,
-  Modal,
-  Descriptions,
-  Select,
-  message,
-  Row,
-  Col,
-  Form,
-  DatePicker
-} from 'antd'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
-  StopOutlined,
-  SearchOutlined,
   EyeOutlined,
+  FileDoneOutlined,
   ReloadOutlined,
-  EditOutlined,
-  FileDoneOutlined
+  SearchOutlined,
+  StopOutlined
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
 import {
-  medicalCheckAppointmentApi,
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Descriptions,
+  Form,
+  Input,
+  message,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography
+} from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+
+dayjs.extend(isSameOrAfter)
+import React, { useEffect, useState } from 'react'
+import {
   AppointmentStatus,
+  medicalCheckAppointmentApi,
   PostMedicalCheckStatus,
   type MedicalCheckAppointment
 } from '../../../api/medicalCheckAppointment.api'
-import type { ColumnsType } from 'antd/es/table'
 
 const { Title } = Typography
 const { Search } = Input
@@ -57,7 +59,7 @@ const postMedicalCheckStatusLabels: Record<string, string> = {
 
 interface PopulatedMedicalCheckAppointment extends MedicalCheckAppointment {
   student?: { _id: string; fullName?: string; avatar?: string }
-  event?: { _id: string; eventName?: string }
+  event?: { _id: string; eventName?: string; eventDate?: string }
 }
 
 const AppointmentMedicalCheck: React.FC = () => {
@@ -70,9 +72,8 @@ const AppointmentMedicalCheck: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | undefined>(undefined)
   const [selected, setSelected] = useState<PopulatedMedicalCheckAppointment | null>(null)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
-  const [modalType, setModalType] = useState<'check' | 'post' | 'view' | null>(null)
+  const [modalType, setModalType] = useState<'check' | 'view' | null>(null)
   const [checkForm] = Form.useForm()
-  const [postForm] = Form.useForm()
 
   useEffect(() => {
     fetchAppointments()
@@ -127,15 +128,7 @@ const AppointmentMedicalCheck: React.FC = () => {
     })
     setIsDetailModalVisible(true)
   }
-  const handleOpenPost = (record: PopulatedMedicalCheckAppointment) => {
-    setSelected(record)
-    setModalType('post')
-    postForm.setFieldsValue({
-      postMedicalCheckStatus: record.postMedicalCheckStatus,
-      postMedicalCheckNotes: record.postMedicalCheckNotes
-    })
-    setIsDetailModalVisible(true)
-  }
+
   const handleOpenView = (record: PopulatedMedicalCheckAppointment) => {
     setSelected(record)
     setModalType('view')
@@ -144,30 +137,33 @@ const AppointmentMedicalCheck: React.FC = () => {
   const handleCheck = async () => {
     if (!selected) return
     try {
+      console.log('🔍 Bắt đầu validate form...')
       const values = await checkForm.validateFields()
-      await medicalCheckAppointmentApi.nurseCheck(selected._id, {
+      console.log('✅ Validate thành công, values:', values)
+
+      const submitData = {
         ...values,
         checkedAt: values.checkedAt ? values.checkedAt.toDate() : undefined
-      })
+      }
+      console.log('📤 Dữ liệu gửi đi:', submitData)
+
+      await medicalCheckAppointmentApi.nurseCheck(selected._id, submitData)
       message.success('Đánh dấu đã khám thành công!')
       setIsDetailModalVisible(false)
       fetchAppointments()
-    } catch {
+    } catch (error: unknown) {
+      console.error('❌ Lỗi validation hoặc API:', error)
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        const validationError = error as { errorFields: Array<{ name: string[]; errors: string[] }> }
+        console.error('🔍 Chi tiết lỗi validation:', validationError.errorFields)
+        validationError.errorFields.forEach((field) => {
+          console.error(`Field: ${field.name.join('.')}, Error: ${field.errors.join(', ')}`)
+        })
+      }
       message.error('Đánh dấu đã khám thất bại!')
     }
   }
-  const handlePost = async () => {
-    if (!selected) return
-    try {
-      const values = await postForm.validateFields()
-      await medicalCheckAppointmentApi.updatePostMedicalCheck(selected._id, values)
-      message.success('Xác nhận sau khám thành công!')
-      setIsDetailModalVisible(false)
-      fetchAppointments()
-    } catch {
-      message.error('Xác nhận sau khám thất bại!')
-    }
-  }
+
 
   const columns: ColumnsType<PopulatedMedicalCheckAppointment> = [
     {
@@ -194,24 +190,32 @@ const AppointmentMedicalCheck: React.FC = () => {
       title: 'Ngày khám',
       dataIndex: 'checkedAt',
       key: 'checkedAt',
-      render: (date: string) => (date ? formatDateTime(date) : '-')
+      render: (_: unknown, record: PopulatedMedicalCheckAppointment) => formatDateTime(record.medicalCheckedAt || '')
     },
     {
       title: 'Thao tác',
       key: 'action',
       render: (_: unknown, record: PopulatedMedicalCheckAppointment) => (
         <Space>
-          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) && (
-            <Button type='primary' onClick={() => handleOpenCheck(record)}>
-              Đánh dấu đã khám
-            </Button>
-          )}
-          {record.status === AppointmentStatus.MedicalChecked &&
-            (!record.postMedicalCheckStatus || record.postMedicalCheckStatus === PostMedicalCheckStatus.NotChecked) && (
-              <Button type='primary' onClick={() => handleOpenPost(record)}>
-                Xác nhận sau khám
+          <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
+            Chi tiết
+          </Button>
+          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) &&
+            record.event?.eventDate &&
+            dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
+              <Button type='primary' onClick={() => handleOpenCheck(record)}>
+                Đánh dấu đã khám
               </Button>
             )}
+
+          {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) &&
+            record.event?.eventDate &&
+            !dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
+              <Tag color="orange">
+                Chưa tới ngày khám ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})
+              </Tag>
+            )}
+
           {record.postMedicalCheckStatus && record.postMedicalCheckStatus !== PostMedicalCheckStatus.NotChecked && (
             <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
               Xem kết quả
@@ -225,7 +229,7 @@ const AppointmentMedicalCheck: React.FC = () => {
   const filteredAppointments: PopulatedMedicalCheckAppointment[] = appointments.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus
@@ -300,58 +304,144 @@ const AppointmentMedicalCheck: React.FC = () => {
             title={
               modalType === 'check'
                 ? 'Đánh dấu đã khám'
-                : modalType === 'post'
-                  ? 'Xác nhận sau khám'
-                  : 'Kết quả khám sức khỏe'
+                : 'Kết quả khám sức khỏe'
             }
             open={isDetailModalVisible}
             onCancel={() => setIsDetailModalVisible(false)}
             footer={
               modalType === 'check'
                 ? [
-                    <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                      Hủy
-                    </Button>,
-                    <Button key='save' type='primary' onClick={handleCheck}>
-                      Lưu
-                    </Button>
-                  ]
-                : modalType === 'post'
-                  ? [
-                      <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                        Hủy
-                      </Button>,
-                      <Button key='save' type='primary' onClick={handlePost}>
-                        Lưu
-                      </Button>
-                    ]
-                  : [
-                      <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                        Đóng
-                      </Button>
-                    ]
+                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                    Hủy
+                  </Button>,
+                  <Button key='save' type='primary' onClick={handleCheck}>
+                    Lưu
+                  </Button>
+                ]
+                : [
+                  <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                    Đóng
+                  </Button>
+                ]
             }
             width={600}
           >
             {selected && modalType === 'check' && (
-              <Form form={checkForm} layout='vertical'>
-                <Form.Item name='height' label='Chiều cao (cm)'>
-                  <Input type='number' placeholder='Nhập chiều cao' />
+              <Form form={checkForm} layout='vertical' className='max-h-[65vh] overflow-y-auto'>
+                <Form.Item
+                  name='height'
+                  label='Chiều cao (cm)'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập chiều cao' },
+                    {
+                      validator: (_, value) => {
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('Chiều cao phải là số'))
+                        }
+                        if (numValue < 50 || numValue > 250) {
+                          return Promise.reject(new Error('Chiều cao phải từ 50-250cm'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input type='number' placeholder='Nhập chiều cao' min={50} max={250} />
                 </Form.Item>
-                <Form.Item name='weight' label='Cân nặng (kg)'>
-                  <Input type='number' placeholder='Nhập cân nặng' />
+                <Form.Item
+                  name='weight'
+                  label='Cân nặng (kg)'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập cân nặng' },
+                    {
+                      validator: (_, value) => {
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('Cân nặng phải là số'))
+                        }
+                        if (numValue < 20 || numValue > 100) {
+                          return Promise.reject(new Error('Cân nặng phải từ 20-100kg'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input type='number' placeholder='Nhập cân nặng' min={20} max={100} step={0.1} />
                 </Form.Item>
-                <Form.Item name='visionLeft' label='Thị lực mắt trái'>
-                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt trái' />
+                <Form.Item
+                  name='visionLeft'
+                  label='Thị lực mắt trái'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập thị lực mắt trái' },
+                    {
+                      validator: (_, value) => {
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('Thị lực phải là số'))
+                        }
+                        if (numValue < 0 || numValue > 10) {
+                          return Promise.reject(new Error('Thị lực phải từ 0-10/10'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt trái' min={0} max={10} />
                 </Form.Item>
-                <Form.Item name='visionRight' label='Thị lực mắt phải'>
-                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt phải' />
+                <Form.Item
+                  name='visionRight'
+                  label='Thị lực mắt phải'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập thị lực mắt phải' },
+                    {
+                      validator: (_, value) => {
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('Thị lực phải là số'))
+                        }
+                        if (numValue < 0 || numValue > 10) {
+                          return Promise.reject(new Error('Thị lực phải từ 0-10/10'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input type='number' step='0.1' placeholder='Nhập thị lực mắt phải' min={0} max={10} />
                 </Form.Item>
-                <Form.Item name='bloodPressure' label='Huyết áp'>
-                  <Input placeholder='Nhập huyết áp' />
+                <Form.Item
+                  name='bloodPressure'
+                  label='Huyết áp'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập huyết áp' },
+                    { pattern: /^\d+\/\d+$/, message: 'Huyết áp phải có định dạng số/số (VD: 120/80)' }
+                  ]}
+                >
+                  <Input placeholder='Nhập huyết áp (VD: 120/80)' />
                 </Form.Item>
-                <Form.Item name='heartRate' label='Nhịp tim'>
-                  <Input type='number' placeholder='Nhập nhịp tim' />
+                <Form.Item
+                  name='heartRate'
+                  label='Nhịp tim'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhịp tim' },
+                    {
+                      validator: (_, value) => {
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('Nhịp tim phải là số'))
+                        }
+                        if (numValue < 40 || numValue > 200) {
+                          return Promise.reject(new Error('Nhịp tim phải từ 40-200 bpm'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input type='number' placeholder='Nhập nhịp tim' min={40} max={200} />
                 </Form.Item>
                 <Form.Item
                   name='isHealthy'
@@ -363,7 +453,20 @@ const AppointmentMedicalCheck: React.FC = () => {
                     <Option value={false}>Không</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item name='reasonIfUnhealthy' label='Lý do nếu không đủ điều kiện'>
+                <Form.Item
+                  name='reasonIfUnhealthy'
+                  label='Lý do nếu không đủ điều kiện'
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (getFieldValue('isHealthy') === false && !value) {
+                          return Promise.reject(new Error('Vui lòng nhập lý do khi không đủ điều kiện'))
+                        }
+                        return Promise.resolve()
+                      }
+                    })
+                  ]}
+                >
                   <Input placeholder='Nhập lý do' />
                 </Form.Item>
                 <Form.Item name='notes' label='Ghi chú'>
@@ -372,48 +475,56 @@ const AppointmentMedicalCheck: React.FC = () => {
                 <Form.Item
                   name='checkedAt'
                   label='Thời gian khám'
-                  rules={[{ required: true, message: 'Chọn thời gian khám' }]}
+                  extra={selected?.event?.eventDate ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}` : undefined}
+                  rules={[
+                    { required: true, message: 'Chọn thời gian khám' },
+                    () => ({
+                      validator(_, value) {
+                        if (!value) {
+                          return Promise.resolve()
+                        }
+
+                        if (!selected?.event?.eventDate) {
+                          return Promise.resolve()
+                        }
+
+                        const eventDate = dayjs(selected.event.eventDate)
+                        const selectedDate = dayjs(value)
+
+                        // Check if the selected date is on the same day as the event date
+                        if (!selectedDate.isSame(eventDate, 'day')) {
+                          return Promise.reject(new Error('Thời gian khám phải trong ngày diễn ra sự kiện'))
+                        }
+
+                        return Promise.resolve()
+                      }
+                    })
+                  ]}
                 >
-                  <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
+                  <DatePicker
+                    showTime
+                    format='DD/MM/YYYY HH:mm'
+                    className='w-full'
+                    disabledDate={(current) => {
+                      if (!selected?.event?.eventDate) return false
+                      const eventDate = dayjs(selected.event.eventDate)
+                      return !current.isSame(eventDate, 'day')
+                    }}
+                    placeholder='Chọn thời gian khám trong ngày sự kiện'
+                  />
                 </Form.Item>
               </Form>
             )}
-            {selected && modalType === 'post' && (
-              <Form form={postForm} layout='vertical'>
-                <Form.Item
-                  name='postMedicalCheckStatus'
-                  label='Tình trạng sau khám'
-                  rules={[{ required: true, message: 'Chọn tình trạng' }]}
-                >
-                  <Select>
-                    <Option value={PostMedicalCheckStatus.NotChecked}>
-                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NotChecked]}
-                    </Option>
-                    <Option value={PostMedicalCheckStatus.Healthy}>
-                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Healthy]}
-                    </Option>
-                    <Option value={PostMedicalCheckStatus.NeedFollowUp}>
-                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.NeedFollowUp]}
-                    </Option>
-                    <Option value={PostMedicalCheckStatus.Sick}>
-                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Sick]}
-                    </Option>
-                    <Option value={PostMedicalCheckStatus.Other}>
-                      {postMedicalCheckStatusLabels[PostMedicalCheckStatus.Other]}
-                    </Option>
-                  </Select>
-                </Form.Item>
-                <Form.Item name='postMedicalCheckNotes' label='Ghi chú sau khám'>
-                  <Input.TextArea rows={3} maxLength={500} />
-                </Form.Item>
-              </Form>
-            )}
+
             {selected && modalType === 'view' && (
               <Descriptions bordered column={1} size='small'>
                 <Descriptions.Item label='Học sinh'>
                   {selected.student?.fullName || selected.studentId}
                 </Descriptions.Item>
-                <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Sự kiện'>{selected.event?.eventName || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Ngày sự kiện'>
+                  {selected.event?.eventDate ? dayjs(selected.event.eventDate).format('DD/MM/YYYY') : '-'}
+                </Descriptions.Item>
                 <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
                 <Descriptions.Item label='Chiều cao'>{selected.height || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Cân nặng'>{selected.weight || '-'}</Descriptions.Item>
