@@ -1,53 +1,45 @@
-import React from 'react'
-import { useState } from 'react'
 import {
+  CameraOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  InfoCircleOutlined,
+  MedicineBoxOutlined,
+  PhoneOutlined,
+  SaveOutlined,
+  UserOutlined
+} from '@ant-design/icons'
+import {
+  Badge,
   Button,
+  Card,
+  Col,
+  DatePicker,
   Descriptions,
   Form,
+  Image,
   Input,
   message,
   Modal,
+  Row,
   Select,
-  DatePicker,
-  Upload,
-  Card,
   Space,
   Tag,
-  Typography,
-  Row,
-  Col,
-  Image,
-  InputNumber,
-  Alert,
-  Tooltip,
-  Badge
+  Timeline,
+  Typography
 } from 'antd'
+import dayjs from 'dayjs'
+import React, { useState } from 'react'
 import {
-  EditOutlined,
-  SaveOutlined,
-  CloseOutlined,
-  UserOutlined,
-  MedicineBoxOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
-  CameraOutlined,
-  InfoCircleOutlined,
-  WarningOutlined,
-  PlusOutlined
-} from '@ant-design/icons'
-import {
+  LeaveMethod,
   type MedicalEvent,
   medicalEventApi,
-  ParentContactStatus // thêm enum mới
+  MedicalEventStatus,
+  ParentContactStatus
 } from '../../../api/medicalEvent.api'
-import type { MedicalSupply } from '../../../api/medicalSupplies.api'
-import { getAllMedicalSupplies } from '../../../api/medicalSupplies.api'
-import type { Medicine } from '../../../api/medicines.api'
-import { getMedicines } from '../../../api/medicines.api'
-import { getMedicineById } from '../../../api/medicines.api'
 import { getMedicalSupplyById } from '../../../api/medicalSupplies.api'
-import dayjs from 'dayjs'
-import { handleUploadFile } from '../../../utils/upload'
+import { getMedicineById } from '../../../api/medicines.api'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -60,7 +52,6 @@ interface DetailProps {
 }
 
 const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
-  const [form] = Form.useForm()
   const [medicalEvent, setMedicalEvent] = useState<MedicalEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
@@ -69,137 +60,40 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
   const [editLoading, setEditLoading] = useState(false)
   const [editForm] = Form.useForm()
 
-  // States for medicines and supplies
-  const [medicines, setMedicines] = useState<Medicine[]>([])
-  const [medicalSupplies, setMedicalSupplies] = useState<MedicalSupply[]>([])
-  const [selectedMedicines, setSelectedMedicines] = useState<{ id: string; quantity: number }[]>([])
-  const [selectedSupplies, setSelectedSupplies] = useState<{ id: string; quantity: number }[]>([])
-  const [loading, setLoading] = useState(false)
-
   // States for new fields
   const [actions, setActions] = useState<{ time: string; description: string; performedBy?: string }[]>([])
   const [parentContactStatus, setParentContactStatus] = useState<ParentContactStatus | undefined>()
   const [parentContactedAt, setParentContactedAt] = useState<string | undefined>()
 
-  // Fetch medicines and supplies when modal opens
-  React.useEffect(() => {
-    if (visible) {
-      setLoading(true)
-      Promise.all([getMedicines(1, 100), getAllMedicalSupplies(1, 100)])
-        .then(([medicinesRes, suppliesRes]) => {
-          setMedicines(medicinesRes.pageData)
-          setMedicalSupplies(suppliesRes.pageData)
-        })
-        .finally(() => setLoading(false))
-    }
-  }, [visible])
-
-  // Fetch medicine name by id with caching
-  const fetchMedicineName = async (id: string) => {
-    if (medicineNames[id]) return medicineNames[id]
-    try {
-      const res = await getMedicineById(id)
-      const name = (res as any).data?.name || (res as any).name
-      setMedicineNames((prev) => ({ ...prev, [id]: name }))
-      return name
-    } catch {
-      setMedicineNames((prev) => ({ ...prev, [id]: 'Không rõ' }))
-      return 'Không rõ'
-    }
+  // Constants for display
+  const statusColors = {
+    [MedicalEventStatus.TREATED]: 'success',
+    [MedicalEventStatus.MONITORING]: 'processing',
+    [MedicalEventStatus.TRANSFERRED]: 'warning'
   }
 
-  // Fetch supply name by id with caching
-  const fetchSupplyName = async (id: string) => {
-    if (supplyNames[id]) return supplyNames[id]
-    try {
-      // Không cần chuyển đổi id sang number nữa
-      const res = await getMedicalSupplyById(id)
-      const name = (res as any).data?.name || (res as any).name
-      setSupplyNames((prev) => ({ ...prev, [id]: name }))
-      return name
-    } catch (error) {
-      console.log("Error:", error)
-      setSupplyNames((prev) => ({ ...prev, [id]: 'Không rõ' }))
-      return 'Không rõ'
-    }
+  const statusVN = {
+    [MedicalEventStatus.TREATED]: 'Đã xử lý',
+    [MedicalEventStatus.MONITORING]: 'Đang theo dõi',
+    [MedicalEventStatus.TRANSFERRED]: 'Đã chuyển viện'
   }
 
-  // Fetch names when medical event is loaded
-  React.useEffect(() => {
-    if (medicalEvent && visible) {
-      if (medicalEvent.medicinesUsed) {
-        medicalEvent.medicinesUsed.forEach((item: any) => {
-          const id = item.medicineId
-          if (id && !medicineNames[id]) fetchMedicineName(id)
-        })
-      }
-      if (medicalEvent.medicalSuppliesUsed) {
-        medicalEvent.medicalSuppliesUsed.forEach((item: any) => {
-          const id = item.supplyId
-          if (id && !supplyNames[id]) fetchSupplyName(id)
-        })
-      }
-    }
-  }, [medicalEvent, visible])
-
-  const fetchMedicalEvent = async () => {
-    try {
-      const response = await medicalEventApi.getById(id)
-      setMedicalEvent(response.data)
-      form.setFieldsValue({
-        eventName: response.data.eventName,
-        description: response.data.description,
-        actionTaken: response.data.actionTaken,
-        medicinesId: response.data.medicinesId,
-        medicalSuppliesId: response.data.medicalSuppliesId,
-        severityLevel: response.data.severityLevel,
-        notes: response.data.notes,
-        initialCondition: response.data.initialCondition,
-        firstAid: response.data.firstAid
-      })
-      setActions(response.data.actions || [])
-      setParentContactStatus(response.data.parentContactStatus)
-      setParentContactedAt(response.data.parentContactedAt)
-    } catch (error: unknown) {
-      console.log('error', error)
-      const err = error as { message?: string }
-      if (err.message) {
-        message.error(err.message)
-      } else {
-        message.error('Có lỗi xảy ra khi tải thông tin sự kiện!')
-      }
-    }
+  const leaveMethodVN = {
+    [LeaveMethod.NONE]: 'Không rời khỏi',
+    [LeaveMethod.PARENT_PICKUP]: 'Phụ huynh đón',
+    [LeaveMethod.HOSPITAL_TRANSFER]: 'Chuyển viện'
   }
 
-  React.useEffect(() => {
-    if (visible && id) {
-      fetchMedicalEvent()
-    }
-  }, [visible, id, isEditing])
-
-  // Translation mappings
-  const severityLevelVN: Record<string, string> = {
-    Mild: 'Nhẹ',
-    Moderate: 'Trung bình',
-    Severe: 'Nặng'
+  const parentContactStatusVN = {
+    [ParentContactStatus.NOT_CONTACTED]: 'Chưa liên hệ',
+    [ParentContactStatus.CONTACTING]: 'Đang liên hệ',
+    [ParentContactStatus.CONTACTED]: 'Đã liên hệ'
   }
 
-  const statusVN: Record<string, string> = {
-    treated: 'Đã xử lý',
-    monitoring: 'Theo dõi',
-    transferred: 'Chuyển viện'
-  }
-
-  const severityColors: Record<string, string> = {
-    Mild: 'green',
-    Moderate: 'orange',
-    Severe: 'red'
-  }
-
-  const statusColors: Record<string, string> = {
-    treated: 'success',
-    monitoring: 'processing',
-    transferred: 'warning'
+  const parentContactStatusColors = {
+    [ParentContactStatus.NOT_CONTACTED]: 'default',
+    [ParentContactStatus.CONTACTING]: 'processing',
+    [ParentContactStatus.CONTACTED]: 'success'
   }
 
   const parentContactStatusOptions = [
@@ -208,71 +102,133 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
     { value: ParentContactStatus.CONTACTED, label: 'Đã liên hệ' }
   ]
 
-  // Handle edit mode
+  // Fetch medicine name by id with caching
+  const fetchMedicineName = async (id: string) => {
+    if (medicineNames[id]) return medicineNames[id]
+    try {
+      const response = await getMedicineById(id)
+      const medicine = response.data
+      setMedicineNames(prev => ({ ...prev, [id]: medicine.name }))
+      return medicine.name
+    } catch (error) {
+      console.error('Error fetching medicine name:', error)
+      return 'Không xác định'
+    }
+  }
+
+  // Fetch supply name by id with caching
+  const fetchSupplyName = async (id: string) => {
+    if (supplyNames[id]) return supplyNames[id]
+    try {
+      const response = await getMedicalSupplyById(id)
+      const supply = response.data
+      setSupplyNames(prev => ({ ...prev, [id]: supply.name }))
+      return supply.name
+    } catch (error) {
+      console.error('Error fetching supply name:', error)
+      return 'Không xác định'
+    }
+  }
+
+  // Fetch medical event data
+  const fetchMedicalEvent = async () => {
+    if (!id) return
+    try {
+      const response = await medicalEventApi.getById(id)
+      const data = response.data
+      setMedicalEvent(data)
+
+      // Set form values for editing
+      editForm.setFieldsValue({
+        eventName: data.eventName,
+        description: data.description,
+        actionTaken: data.actionTaken,
+        initialCondition: data.initialCondition,
+        firstAid: data.firstAid,
+        status: data.status,
+        leaveMethod: data.leaveMethod,
+        leaveTime: data.leaveTime ? dayjs(data.leaveTime) : undefined,
+        pickedUpBy: data.pickedUpBy,
+        notes: data.notes,
+        parentContactStatus: data.parentContactStatus,
+        parentContactedAt: data.parentContactedAt ? dayjs(data.parentContactedAt) : undefined,
+        images: data.images || []
+      })
+
+      // Set additional states
+      setImageUrls(data.images || [])
+      setActions(data.actions || [])
+      setParentContactStatus(data.parentContactStatus)
+      setParentContactedAt(data.parentContactedAt)
+
+      // Fetch medicine and supply names
+      if (data.medicinesUsed) {
+        data.medicinesUsed.forEach(item => {
+          fetchMedicineName(item.medicineId)
+        })
+      }
+
+      if (data.medicalSuppliesUsed) {
+        data.medicalSuppliesUsed.forEach(item => {
+          fetchSupplyName(item.supplyId)
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching medical event:', error)
+      message.error('Không thể tải thông tin sự kiện y tế')
+    }
+  }
+
+  React.useEffect(() => {
+    if (visible && id) {
+      fetchMedicalEvent()
+    }
+  }, [visible, id])
+
   const handleEdit = () => {
-    if (!medicalEvent) return
-
-    setSelectedMedicines(
-      Array.isArray(medicalEvent.medicinesUsed)
-        ? medicalEvent.medicinesUsed.map((item: any) => ({ id: item.medicineId, quantity: item.quantity }))
-        : []
-    )
-    setSelectedSupplies(
-      Array.isArray(medicalEvent.medicalSuppliesUsed)
-        ? medicalEvent.medicalSuppliesUsed.map((item: any) => ({ id: item.supplyId, quantity: item.quantity }))
-        : []
-    )
-
-    editForm.setFieldsValue({
-      eventName: medicalEvent.eventName,
-      description: medicalEvent.description,
-      actionTaken: medicalEvent.actionTaken,
-      severityLevel: medicalEvent.severityLevel,
-      status: medicalEvent.status,
-      leaveMethod: medicalEvent.leaveMethod,
-      leaveTime: medicalEvent.leaveTime ? dayjs(medicalEvent.leaveTime) : null,
-      pickedUpBy: medicalEvent.pickedUpBy,
-      notes: medicalEvent.notes,
-      initialCondition: medicalEvent.initialCondition,
-      firstAid: medicalEvent.firstAid
-    })
-    setActions(medicalEvent.actions || [])
-    setParentContactStatus(medicalEvent.parentContactStatus)
-    setParentContactedAt(medicalEvent.parentContactedAt)
-    setImageUrls(medicalEvent.images || [])
     setIsEditing(true)
   }
 
-  // Handle edit submit
   const handleEditSubmit = async (values: any) => {
-    if (!medicalEvent) return
     setEditLoading(true)
     try {
-      const medicinesUsed = selectedMedicines.map((item) => ({ medicineId: item.id, quantity: item.quantity }))
-      const medicalSuppliesUsed = selectedSupplies.map((item) => ({ supplyId: item.id, quantity: item.quantity }))
       const updateData = {
         ...values,
-        initialCondition: values.initialCondition,
-        firstAid: values.firstAid,
-        actions,
-        parentContactStatus,
-        parentContactedAt,
-        medicinesUsed,
-        medicalSuppliesUsed,
-        images: imageUrls,
-        leaveTime: values.leaveTime ? values.leaveTime.toISOString() : undefined
+        leaveTime: values.leaveTime?.toISOString(),
+        parentContactedAt: values.parentContactedAt?.toISOString(),
+        actions: actions,
+        parentContactStatus: parentContactStatus,
+        images: imageUrls
       }
 
-      await medicalEventApi.update(medicalEvent._id, updateData)
-      message.success('Cập nhật sự kiện thành công!')
+      await medicalEventApi.update(id, updateData)
+      message.success('Cập nhật sự kiện y tế thành công')
       setIsEditing(false)
       fetchMedicalEvent()
       onSuccess()
-    } catch {
-      message.error('Cập nhật thất bại!')
+    } catch (error) {
+      console.error('Error updating medical event:', error)
+      message.error('Không thể cập nhật sự kiện y tế')
     } finally {
       setEditLoading(false)
     }
+  }
+
+  if (!medicalEvent) {
+    return (
+      <Modal
+        title='Chi tiết sự kiện y tế'
+        open={visible}
+        onCancel={onClose}
+        footer={null}
+        width={1000}
+        centered
+      >
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <Text>Đang tải thông tin...</Text>
+        </div>
+      </Modal>
+    )
   }
 
   return (
@@ -280,672 +236,479 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       title={
         <Space>
           <FileTextOutlined style={{ color: '#1890ff' }} />
-          <Text strong style={{ fontSize: '18px' }}>
-            Chi tiết sự kiện y tế
-          </Text>
+          <Text strong>Chi tiết sự kiện y tế</Text>
         </Space>
       }
       open={visible}
       onCancel={onClose}
-      width={1000}
       footer={null}
-      destroyOnClose
+      width={1200}
+      centered
+      style={{ top: 20 }}
     >
-      {medicalEvent && (
-        <div>
-          {!isEditing ? (
-            <div>
-              {/* Student Information Card */}
-              <Card
-                title={
-                  <Space>
-                    <UserOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thông tin học sinh</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={8}>
-                    <Space direction='vertical' size={0}>
-                      <Text type='secondary'>Họ và tên</Text>
-                      <Text strong style={{ fontSize: '16px' }}>
-                        {medicalEvent.student?.fullName || 'N/A'}
-                      </Text>
-                    </Space>
-                  </Col>
-                  <Col span={8}>
-                    <Space direction='vertical' size={0}>
-                      <Text type='secondary'>Mã học sinh</Text>
-                      <Text strong>{medicalEvent.student?.studentIdCode || 'N/A'}</Text>
-                    </Space>
-                  </Col>
-                  {/* <Col span={8}>
-                    <Space direction='vertical' size={0}>
-                      <Text type='secondary'>Lớp</Text>
-                      <Text strong>{medicalEvent.student?.class?.name || 'N/A'}</Text>
-                    </Space>
-                  </Col> */}
-                </Row>
-              </Card>
-
-              {/* Event Information Card */}
-              <Card
-                title={
-                  <Space>
-                    <FileTextOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thông tin sự kiện</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Descriptions bordered column={2} size='small'>
-                  <Descriptions.Item label='Tên sự kiện' span={2}>
-                    <Tag color='blue' style={{ fontSize: '14px' }}>
-                      {medicalEvent.eventName}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Mô tả' span={2}>
-                    <Text>{medicalEvent.description}</Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Biện pháp xử lý' span={2}>
-                    <Text>{medicalEvent.actionTaken}</Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Mức độ nghiêm trọng'>
-                    <Tag color={severityColors[medicalEvent.severityLevel]} style={{ fontWeight: 'bold' }}>
-                      {severityLevelVN[medicalEvent.severityLevel] || 'Không xác định'}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Trạng thái'>
-                    <Badge
-                      status={statusColors[medicalEvent.status] as any}
-                      text={statusVN[medicalEvent.status] || 'Không xác định'}
-                    />
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-
-              {/* Medicine and Supplies Card */}
-              <Card
-                title={
-                  <Space>
-                    <MedicineBoxOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thuốc và vật tư y tế sử dụng</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                      Thuốc sử dụng:
-                    </Text>
-                    {Array.isArray(medicalEvent.medicinesUsed) && medicalEvent.medicinesUsed.length > 0 ? (
-                      <Space direction='vertical' style={{ width: '100%' }}>
-                        {(medicalEvent.medicinesUsed as any[]).map((item: { medicineId: string; quantity: number }) =>
-                          typeof item === 'object' && item.medicineId ? (
-                            <Card key={item.medicineId} size='small' style={{ backgroundColor: '#f6ffed' }}>
-                              <Space justify='space-between' style={{ width: '100%' }}>
-                                <Text strong>{medicineNames[item.medicineId] || 'Đang tải...'}</Text>
-                                <Tag color='green'>{item.quantity} viên</Tag>
-                              </Space>
-                            </Card>
-                          ) : null
-                        )}
-                      </Space>
-                    ) : (
-                      <Text type='secondary'>Không sử dụng thuốc</Text>
-                    )}
-                  </Col>
-                  <Col span={12}>
-                    <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                      Vật tư y tế sử dụng:
-                    </Text>
-                    {Array.isArray(medicalEvent.medicalSuppliesUsed) && medicalEvent.medicalSuppliesUsed.length > 0 ? (
-                      <Space direction='vertical' style={{ width: '100%' }}>
-                        {(medicalEvent.medicalSuppliesUsed as any[]).map(
-                          (item: { supplyId: string; quantity: number }) =>
-                            typeof item === 'object' && item.supplyId ? (
-                              <Card key={item.supplyId} size='small' style={{ backgroundColor: '#fff7e6' }}>
-                                <Space justify='space-between' style={{ width: '100%' }}>
-                                  <Text strong>{supplyNames[item.supplyId] || 'Đang tải...'}</Text>
-                                  <Tag color='orange'>{item.quantity} thiết bị</Tag>
-                                </Space>
-                              </Card>
-                            ) : null
-                        )}
-                      </Space>
-                    ) : (
-                      <Text type='secondary'>Không sử dụng vật tư</Text>
-                    )}
-                  </Col>
-                </Row>
-              </Card>
-
-              {/* Time and Additional Info Card */}
-              <Card
-                title={
-                  <Space>
-                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thông tin thời gian và bổ sung</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Descriptions bordered column={2} size='small'>
-                  <Descriptions.Item label='Cách rời khỏi'>
-                    <Text>{medicalEvent.leaveMethod || 'Không xác định'}</Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Thời gian xảy ra sự kiện'>
-                    <Text>
-                      {medicalEvent.leaveTime
-                        ? dayjs(medicalEvent.leaveTime).format('DD/MM/YYYY HH:mm')
-                        : 'Không xác định'}
-                    </Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Người đón'>
-                    <Text>{medicalEvent.pickedUpBy || 'Không xác định'}</Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label='Người tạo'>
-                    <Text>{medicalEvent.schoolNurse?.fullName || 'N/A'}</Text>
-                  </Descriptions.Item>
-                  {medicalEvent.notes && (
-                    <Descriptions.Item label='Ghi chú' span={2}>
-                      <Text>{medicalEvent.notes}</Text>
-                    </Descriptions.Item>
-                  )}
-                </Descriptions>
-              </Card>
-
-              {/* Images Card */}
-              {medicalEvent.images && medicalEvent.images.length > 0 && (
-                <Card
-                  title={
-                    <Space>
-                      <CameraOutlined style={{ color: '#1890ff' }} />
-                      <Text strong>Ảnh minh họa</Text>
-                    </Space>
-                  }
-                  size='small'
-                  style={{ marginBottom: '16px' }}
-                >
-                  <Image.PreviewGroup>
-                    <Space wrap>
-                      {medicalEvent.images.map((img, idx) => (
-                        <Image
-                          key={idx}
-                          src={img || '/placeholder.svg'}
-                          alt={`Ảnh ${idx + 1}`}
-                          width={120}
-                          height={120}
-                          style={{ objectFit: 'cover', borderRadius: '8px' }}
-                        />
-                      ))}
-                    </Space>
-                  </Image.PreviewGroup>
-                </Card>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ textAlign: 'right', marginTop: '16px' }}>
-                <Button type='primary' icon={<EditOutlined />} onClick={handleEdit} size='large'>
-                  Chỉnh sửa sự kiện
-                </Button>
+      {!isEditing ? (
+        /* View Mode */
+        <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+          {/* 1. Student Information Card */}
+          <Card
+            title={
+              <Space>
+                <UserOutlined style={{ color: '#1890ff' }} />
+                <Text strong>1. Thông tin học sinh</Text>
+              </Space>
+            }
+            size='small'
+            style={{ marginBottom: '16px' }}
+          >
+            <Row gutter={24}>
+              <Col span={8}>
+                <Space direction='vertical' size={0}>
+                  <Text type='secondary'>Họ và tên</Text>
+                  <Text strong style={{ fontSize: '16px' }}>
+                    {medicalEvent.student?.fullName || 'N/A'}
+                  </Text>
+                </Space>
+              </Col>
+              <Col span={8}>
+                <Space direction='vertical' size={0}>
+                  <Text type='secondary'>Mã học sinh</Text>
+                  <Text strong>{medicalEvent.student?.studentIdCode || 'N/A'}</Text>
+                </Space>
+              </Col>
+              <Col span={8}>
+                <Space direction='vertical' size={0}>
+                  <Text type='secondary'>Giới tính</Text>
+                  <Text strong>{medicalEvent.student?.gender === 'male' ? 'Nam' : 'Nữ'}</Text>
+                </Space>
+              </Col>
+            </Row>
+            {medicalEvent.student?.avatar && (
+              <div style={{ marginTop: '12px' }}>
+                <Image
+                  src={medicalEvent.student.avatar}
+                  alt="Avatar"
+                  width={60}
+                  height={60}
+                  style={{ borderRadius: '50%' }}
+                />
               </div>
-            </div>
-          ) : (
-            /* Edit Form */
-            <Form form={editForm} layout='vertical' onFinish={handleEditSubmit}>
-              <Card
-                title={
-                  <Space>
-                    <EditOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Chỉnh sửa sự kiện y tế</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Form.Item
-                      name='eventName'
-                      label='Tên sự kiện'
-                      rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện!' }]}
+            )}
+          </Card>
+
+          {/* 2. Event Information Card */}
+          <Card
+            title={
+              <Space>
+                <FileTextOutlined style={{ color: '#1890ff' }} />
+                <Text strong>2. Thông tin sự kiện</Text>
+              </Space>
+            }
+            size='small'
+            style={{ marginBottom: '16px' }}
+          >
+            <Descriptions bordered column={2} size='small'>
+              <Descriptions.Item label='Tên sự kiện' span={2}>
+                <Tag color='blue' style={{ fontSize: '14px' }}>
+                  {medicalEvent.eventName}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label='Trạng thái'>
+                <Badge
+                  status={statusColors[medicalEvent.status] as 'success' | 'processing' | 'warning'}
+                  text={statusVN[medicalEvent.status] || 'Không xác định'}
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label='Mô tả' span={2}>
+                <Text>{medicalEvent.description || 'Không có mô tả'}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label='Tình trạng ban đầu' span={2}>
+                <Text>{medicalEvent.initialCondition || 'Không có thông tin'}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label='Sơ cứu ban đầu' span={2}>
+                <Text>{medicalEvent.firstAid || 'Không có sơ cứu'}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label='Biện pháp xử lý' span={2}>
+                <Text>{medicalEvent.actionTaken || 'Không có thông tin'}</Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+
+          {/* 3. Medicines and Supplies Card */}
+          <Card
+            title={
+              <Space>
+                <MedicineBoxOutlined style={{ color: '#1890ff' }} />
+                <Text strong>3. Thuốc và vật tư y tế sử dụng</Text>
+              </Space>
+            }
+            size='small'
+            style={{ marginBottom: '16px' }}
+          >
+            <Row gutter={24}>
+              <Col span={12}>
+                <Text strong style={{ display: 'block', marginBottom: '12px' }}>
+                  Thuốc đã sử dụng:
+                </Text>
+                {medicalEvent.medicinesUsed && medicalEvent.medicinesUsed.length > 0 ? (
+                  medicalEvent.medicinesUsed.map((item, index) => (
+                    <Card
+                      key={index}
+                      size='small'
+                      style={{ marginBottom: '8px', backgroundColor: '#f6ffed' }}
+                      bodyStyle={{ padding: '8px 12px' }}
                     >
-                      <Input size='large' />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item name='severityLevel' label='Mức độ nghiêm trọng'>
-                      <Select placeholder='Chọn mức độ' size='large'>
-                        <Select.Option value='Mild'>
-                          <Tag color='green'>Nhẹ</Tag>
-                        </Select.Option>
-                        <Select.Option value='Moderate'>
-                          <Tag color='orange'>Trung bình</Tag>
-                        </Select.Option>
-                        <Select.Option value='Severe'>
-                          <Tag color='red'>Nặng</Tag>
-                        </Select.Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Form.Item
-                  name='description'
-                  label='Mô tả'
-                  rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-                >
-                  <TextArea rows={3} />
-                </Form.Item>
-
-                <Form.Item
-                  name='actionTaken'
-                  label='Biện pháp xử lý'
-                  rules={[{ required: true, message: 'Vui lòng nhập biện pháp xử lý!' }]}
-                >
-                  <TextArea rows={2} />
-                </Form.Item>
-              </Card>
-
-              {/* Medicine and Supplies Edit */}
-              <Card
-                title={
-                  <Space>
-                    <MedicineBoxOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thuốc và vật tư y tế</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Form.Item label='Thuốc sử dụng'>
-                      <Select
-                        mode='multiple'
-                        placeholder='Chọn thuốc'
-                        loading={loading}
-                        size='large'
-                        value={selectedMedicines.map((m) => m.id)}
-                        onChange={(ids: string[]) => {
-                          setSelectedMedicines((prev) => {
-                            return ids.map((id) => {
-                              const found = prev.find((m) => m.id === id)
-                              return { id, quantity: found?.quantity || 1 }
-                            })
-                          })
-                        }}
-                        options={medicines.map((medicine) => ({ value: medicine._id, label: medicine.name }))}
-                      />
-                      {selectedMedicines.length > 0 && (
-                        <div style={{ marginTop: 12 }}>
-                          {selectedMedicines.map((item) => {
-                            const med = medicines.find((m) => m._id === item.id)
-                            if (!med) return null
-                            return (
-                              <Card
-                                key={item.id}
-                                size='small'
-                                style={{ marginBottom: 8, backgroundColor: '#fafafa' }}
-                                bodyStyle={{ padding: '8px 12px' }}
-                              >
-                                <Row align='middle' justify='space-between'>
-                                  <Col flex='1'>
-                                    <Text strong>{med.name}</Text>
-                                  </Col>
-                                  <Col>
-                                    <Space align='center'>
-                                      <Text>Số lượng:</Text>
-                                      <InputNumber
-                                        size='small'
-                                        min={1}
-                                        value={item.quantity}
-                                        onChange={(val) => {
-                                          const newVal = Math.max(1, val || 1)
-                                          setSelectedMedicines((prev) =>
-                                            prev.map((m) => (m.id === item.id ? { ...m, quantity: newVal } : m))
-                                          )
-                                        }}
-                                        style={{ width: 80 }}
-                                      />
-                                      <Text type='secondary'>viên</Text>
-                                    </Space>
-                                  </Col>
-                                </Row>
-                              </Card>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item label='Vật tư y tế sử dụng'>
-                      <Select
-                        mode='multiple'
-                        placeholder='Chọn vật tư y tế'
-                        loading={loading}
-                        size='large'
-                        value={selectedSupplies.map((s) => s.id)}
-                        onChange={(ids: string[]) => {
-                          setSelectedSupplies((prev) => {
-                            return ids.map((id) => {
-                              const found = prev.find((s) => s.id === id)
-                              return { id, quantity: found?.quantity || 1 }
-                            })
-                          })
-                        }}
-                        options={medicalSupplies
-                          .filter((sup) => sup.quantity > 0)
-                          .map((supply) => ({ value: supply._id, label: supply.name }))}
-                      />
-                      {selectedSupplies.length > 0 && (
-                        <div style={{ marginTop: 12 }}>
-                          {selectedSupplies.map((item) => {
-                            const sup = medicalSupplies.find((s) => String(s._id) === String(item.id))
-                            if (!sup) return null
-                            return (
-                              <Card
-                                key={item.id}
-                                size='small'
-                                style={{ marginBottom: 8, backgroundColor: '#fafafa' }}
-                                bodyStyle={{ padding: '8px 12px' }}
-                              >
-                                <Row align='middle' justify='space-between'>
-                                  <Col flex='1'>
-                                    <Text strong>{sup.name}</Text>
-                                  </Col>
-                                  <Col>
-                                    <Space align='center'>
-                                      <Text>Số lượng:</Text>
-                                      <InputNumber
-                                        size='small'
-                                        min={1}
-                                        value={item.quantity}
-                                        onChange={(val) => {
-                                          const newVal = Math.max(1, val || 1)
-                                          setSelectedSupplies((prev) =>
-                                            prev.map((s) => (s.id === item.id ? { ...s, quantity: newVal } : s))
-                                          )
-                                        }}
-                                        style={{ width: 80 }}
-                                      />
-                                      <Text type='secondary'>{sup.unit || 'thiết bị'}</Text>
-                                    </Space>
-                                  </Col>
-                                </Row>
-                              </Card>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Card>
-
-              {/* Time and Additional Info Edit */}
-              <Card
-                title={
-                  <Space>
-                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thông tin thời gian</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Form.Item
-                      name='leaveTime'
-                      label={
-                        <Space>
-                          <Text>Thời gian xảy ra sự kiện</Text>
-                          <Tooltip title='Chỉ được chọn trong vòng 7 ngày gần đây, từ 7:00 đến 17:00'>
-                            <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                          </Tooltip>
-                        </Space>
-                      }
-                      rules={[
-                        {
-                          required: false,
-                          validator: (_, value) => {
-                            if (!value) return Promise.resolve()
-                            const now = new Date()
-                            const selected = value.toDate ? value.toDate() : value
-                            const diff = now.getTime() - selected.getTime()
-                            const sevenDays = 7 * 24 * 60 * 60 * 1000
-
-                            if (selected > now) {
-                              return Promise.reject('Không được chọn ngày trong tương lai!')
-                            }
-                            if (diff > sevenDays) {
-                              return Promise.reject('Chỉ được chọn trong vòng 7 ngày trở lại đây!')
-                            }
-
-                            const hour = selected.getHours()
-                            if (hour < 7 || hour > 17 || (hour === 17 && selected.getMinutes() > 0)) {
-                              return Promise.reject('Chỉ được chọn thời gian từ 7:00 đến 17:00!')
-                            }
-                            return Promise.resolve()
-                          }
-                        }
-                      ]}
+                      <Row justify='space-between' align='middle'>
+                        <Col flex='1'>
+                          <Text strong>{medicineNames[item.medicineId] || 'Đang tải...'}</Text>
+                        </Col>
+                        <Col>
+                          <Tag color='blue'>{item.quantity} viên</Tag>
+                        </Col>
+                      </Row>
+                    </Card>
+                  ))
+                ) : (
+                  <Text type='secondary'>Không có thuốc nào được sử dụng</Text>
+                )}
+              </Col>
+              <Col span={12}>
+                <Text strong style={{ display: 'block', marginBottom: '12px' }}>
+                  Vật tư y tế đã sử dụng:
+                </Text>
+                {medicalEvent.medicalSuppliesUsed && medicalEvent.medicalSuppliesUsed.length > 0 ? (
+                  medicalEvent.medicalSuppliesUsed.map((item, index) => (
+                    <Card
+                      key={index}
+                      size='small'
+                      style={{ marginBottom: '8px', backgroundColor: '#f6ffed' }}
+                      bodyStyle={{ padding: '8px 12px' }}
                     >
-                      <DatePicker
-                        showTime
-                        style={{ width: '100%' }}
-                        size='large'
-                        placeholder='Chọn thời gian xảy ra sự kiện'
-                        disabledDate={(current) => {
-                          const now = new Date()
-                          const sevenDaysAgo = new Date(
-                            now.getFullYear(),
-                            now.getMonth(),
-                            now.getDate() - 7,
-                            0,
-                            0,
-                            0,
-                            0
-                          )
-                          return current && (current.toDate() > now || current.toDate() < sevenDaysAgo)
-                        }}
-                      />
-                    </Form.Item>
-                    <Alert
-                      message='Lưu ý về thời gian'
-                      description='Chỉ được chọn thời gian trong vòng 7 ngày gần đây và trong giờ học (7:00 - 17:00)'
-                      type='info'
-                      showIcon
-                      icon={<WarningOutlined />}
-                      style={{ marginTop: 8 }}
-                    />
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item name='pickedUpBy' label='Người đón'>
-                      <Input size='large' placeholder='Nhập tên người đón' />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                      <Row justify='space-between' align='middle'>
+                        <Col flex='1'>
+                          <Text strong>{supplyNames[item.supplyId] || 'Đang tải...'}</Text>
+                        </Col>
+                        <Col>
+                          <Tag color='green'>{item.quantity} thiết bị</Tag>
+                        </Col>
+                      </Row>
+                    </Card>
+                  ))
+                ) : (
+                  <Text type='secondary'>Không có vật tư nào được sử dụng</Text>
+                )}
+              </Col>
+            </Row>
+          </Card>
 
-                <Form.Item name='notes' label='Ghi chú'>
-                  <TextArea rows={2} placeholder='Nhập ghi chú thêm' />
-                </Form.Item>
-              </Card>
+          {/* 4. Parent Contact Status Card */}
+          <Card
+            title={
+              <Space>
+                <PhoneOutlined style={{ color: '#1890ff' }} />
+                <Text strong>4. Liên hệ phụ huynh</Text>
+              </Space>
+            }
+            size='small'
+            style={{ marginBottom: '16px' }}
+          >
+            <Descriptions bordered column={2} size='small'>
+              <Descriptions.Item label='Trạng thái liên hệ'>
+                <Badge
+                  status={parentContactStatusColors[medicalEvent.parentContactStatus || 'not_contacted'] as 'default' | 'processing' | 'success'}
+                  text={parentContactStatusVN[medicalEvent.parentContactStatus || 'not_contacted'] || 'Không xác định'}
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label='Thời gian liên hệ'>
+                <Text>
+                  {medicalEvent.parentContactedAt
+                    ? dayjs(medicalEvent.parentContactedAt).format('DD/MM/YYYY HH:mm')
+                    : 'Chưa liên hệ'
+                  }
+                </Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
 
-              {/* New Fields for Edit */}
-              <Card
-                title={
-                  <Space>
-                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Thông tin bổ sung</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={24}>
-                  <Col span={12}>
-                    <Form.Item label="Tình trạng ban đầu" name="initialCondition">
-                      <Input placeholder="Nhập tình trạng ban đầu của học sinh" disabled={!isEditing} />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item label="Sơ cứu ban đầu" name="firstAid">
-                      <Input placeholder="Nhập biện pháp sơ cứu ban đầu (nếu có)" disabled={!isEditing} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                {/* Danh sách thao tác xử lý */}
-                <Form.Item label="Các thao tác xử lý">
-                  <Button type="dashed" onClick={() => isEditing && setActions([...actions, { time: new Date().toISOString(), description: '' }])} icon={<PlusOutlined />} disabled={!isEditing}>Thêm thao tác</Button>
-                  {actions.map((action, idx) => (
-                    <Space key={idx} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                      <DatePicker
-                        showTime
-                        value={action.time ? dayjs(action.time) : undefined}
-                        onChange={date => {
-                          if (!isEditing) return
-                          const newActions = [...actions]
-                          newActions[idx].time = date ? date.toISOString() : ''
-                          setActions(newActions)
-                        }}
-                        disabled={!isEditing}
-                      />
-                      <Input
-                        placeholder="Mô tả thao tác"
-                        value={action.description}
-                        onChange={e => {
-                          if (!isEditing) return
-                          const newActions = [...actions]
-                          newActions[idx].description = e.target.value
-                          setActions(newActions)
-                        }}
-                        disabled={!isEditing}
-                      />
-                      <Input
-                        placeholder="Người thực hiện (tùy chọn)"
-                        value={action.performedBy}
-                        onChange={e => {
-                          if (!isEditing) return
-                          const newActions = [...actions]
-                          newActions[idx].performedBy = e.target.value
-                          setActions(newActions)
-                        }}
-                        disabled={!isEditing}
-                      />
-                      {isEditing && <Button danger icon={<CloseOutlined />} onClick={() => setActions(actions.filter((_, i) => i !== idx))} />}
-                    </Space>
-                  ))}
-                </Form.Item>
-                <Form.Item label="Trạng thái liên hệ phụ huynh">
-                  <Select
-                    options={parentContactStatusOptions}
-                    value={parentContactStatus}
-                    onChange={setParentContactStatus}
-                    placeholder="Chọn trạng thái liên hệ phụ huynh"
-                    allowClear
-                    disabled={!isEditing}
-                  />
-                </Form.Item>
-                <Form.Item label="Thời gian liên hệ phụ huynh">
-                  <DatePicker
-                    showTime
-                    value={parentContactedAt ? dayjs(parentContactedAt) : undefined}
-                    onChange={date => isEditing && setParentContactedAt(date ? date.toISOString() : undefined)}
-                    placeholder="Chọn thời gian liên hệ phụ huynh"
-                    style={{ width: '100%' }}
-                    disabled={!isEditing}
-                  />
-                </Form.Item>
-              </Card>
+          {/* 5. Time and Additional Information Card */}
+          <Card
+            title={
+              <Space>
+                <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                <Text strong>5. Thời gian và thông tin bổ sung</Text>
+              </Space>
+            }
+            size='small'
+            style={{ marginBottom: '16px' }}
+          >
+            <Descriptions bordered column={3} size='small'>
+              <Descriptions.Item label='Phương thức ra về'>
+                <Tag color='orange'>{leaveMethodVN[medicalEvent.leaveMethod] || 'Không xác định'}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label='Thời gian xảy ra'>
+                <Text>
+                  {medicalEvent.leaveTime
+                    ? dayjs(medicalEvent.leaveTime).format('DD/MM/YYYY HH:mm')
+                    : 'Không có thông tin'
+                  }
+                </Text>
+              </Descriptions.Item>
+              <Descriptions.Item label='Người đón'>
+                <Text>{medicalEvent.pickedUpBy || 'Không có thông tin'}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label='Ghi chú' span={3}>
+                <Text>{medicalEvent.notes || 'Không có ghi chú'}</Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
 
-              {/* Images Edit */}
-              <Card
-                title={
-                  <Space>
-                    <CameraOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Ảnh minh họa</Text>
-                  </Space>
-                }
-                size='small'
-                style={{ marginBottom: '24px' }}
-              >
-                <Form.Item name='images' label='Tải ảnh lên'>
-                  <Upload
-                    listType='picture-card'
-                    customRequest={async (options) => {
-                      const { file, onSuccess, onError } = options as any
-                      const url = await handleUploadFile(file as File, 'image')
-                      if (url) {
-                        setImageUrls((prev) => {
-                          const newArr = [...prev, url]
-                          editForm.setFieldsValue({ images: newArr })
-                          return newArr
-                        })
-                        if (onSuccess) onSuccess('ok')
-                      } else {
-                        if (onError) onError(new Error('Upload failed'))
-                      }
-                    }}
-                    fileList={imageUrls.map((url, idx) => ({
-                      uid: url,
-                      name: `Ảnh ${idx + 1}`,
-                      status: 'done',
-                      url
-                    }))}
-                    onRemove={(file) => {
-                      setImageUrls((prev) => {
-                        const newArr = prev.filter((url) => url !== file.url)
-                        editForm.setFieldsValue({ images: newArr })
-                        return newArr
-                      })
-                      return true
-                    }}
-                    accept='image/*'
-                    multiple
+          {/* 6. Actions Timeline Card */}
+          {actions && actions.length > 0 && (
+            <Card
+              title={
+                <Space>
+                  <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                  <Text strong>6. Lịch sử thao tác</Text>
+                </Space>
+              }
+              size='small'
+              style={{ marginBottom: '16px' }}
+            >
+              <Timeline>
+                {actions.map((action, index) => (
+                  <Timeline.Item
+                    key={index}
+                    dot={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
                   >
-                    {imageUrls.length >= 8 ? null : (
-                      <div>
-                        <PlusOutlined />
-                        <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
-                      </div>
-                    )}
-                  </Upload>
-                </Form.Item>
-              </Card>
-
-              {/* Action Buttons */}
-              <Card size='small'>
-                <Row justify='center'>
-                  <Col>
-                    <Space size='large'>
-                      <Button
-                        type='primary'
-                        htmlType='submit'
-                        loading={editLoading}
-                        size='large'
-                        icon={<SaveOutlined />}
-                      >
-                        Lưu thay đổi
-                      </Button>
-                      <Button onClick={() => setIsEditing(false)} size='large' icon={<CloseOutlined />}>
-                        Hủy chỉnh sửa
-                      </Button>
+                    <Space direction='vertical' size={4}>
+                      <Text strong>
+                        {dayjs(action.time).format('DD/MM/YYYY HH:mm')}
+                      </Text>
+                      <Text>{action.description}</Text>
+                      {action.performedBy && (
+                        <Text type='secondary'>
+                          Thực hiện bởi: {action.performedBy}
+                        </Text>
+                      )}
                     </Space>
-                  </Col>
-                </Row>
-              </Card>
-            </Form>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
+            </Card>
           )}
+
+          {/* 7. Images Card */}
+          {medicalEvent.images && medicalEvent.images.length > 0 && (
+            <Card
+              title={
+                <Space>
+                  <CameraOutlined style={{ color: '#1890ff' }} />
+                  <Text strong>7. Ảnh minh họa</Text>
+                </Space>
+              }
+              size='small'
+              style={{ marginBottom: '16px' }}
+            >
+              <Image.PreviewGroup>
+                <Row gutter={[8, 8]}>
+                  {medicalEvent.images.map((image, index) => (
+                    <Col key={index} span={6}>
+                      <Image
+                        src={image}
+                        alt={`Ảnh ${index + 1}`}
+                        style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </Image.PreviewGroup>
+            </Card>
+          )}
+
+          {/* Action Buttons */}
+          <Card size='small'>
+            <Row justify='center'>
+              <Col>
+                <Space size='large'>
+                  <Button
+                    type='primary'
+                    icon={<EditOutlined />}
+                    onClick={handleEdit}
+                    size='large'
+                  >
+                    Chỉnh sửa
+                  </Button>
+                  <Button onClick={onClose} size='large'>
+                    Đóng
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+        </div>
+      ) : (
+        /* Edit Mode */
+        <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+          <Form form={editForm} layout='vertical' onFinish={handleEditSubmit}>
+            {/* 1. Event Information */}
+            <Card
+              title={
+                <Space>
+                  <FileTextOutlined style={{ color: '#1890ff' }} />
+                  <Text strong>1. Thông tin sự kiện</Text>
+                </Space>
+              }
+              size='small'
+              style={{ marginBottom: '16px' }}
+            >
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item name='eventName' label='Tên sự kiện'>
+                    <Input />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name='status' label='Trạng thái'>
+                    <Select>
+                      <Select.Option value={MedicalEventStatus.TREATED}>Đã xử lý</Select.Option>
+                      <Select.Option value={MedicalEventStatus.MONITORING}>Theo dõi</Select.Option>
+                      <Select.Option value={MedicalEventStatus.TRANSFERRED}>Chuyển viện</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item name='description' label='Mô tả'>
+                <TextArea rows={3} />
+              </Form.Item>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item name='initialCondition' label='Tình trạng ban đầu'>
+                    <TextArea rows={3} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name='firstAid' label='Sơ cứu ban đầu'>
+                    <TextArea rows={3} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item name='actionTaken' label='Biện pháp xử lý'>
+                <TextArea rows={3} />
+              </Form.Item>
+            </Card>
+
+            {/* 2. Parent Contact Information */}
+            <Card
+              title={
+                <Space>
+                  <PhoneOutlined style={{ color: '#1890ff' }} />
+                  <Text strong>2. Liên hệ phụ huynh</Text>
+                </Space>
+              }
+              size='small'
+              style={{ marginBottom: '16px' }}
+            >
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item label='Trạng thái liên hệ'>
+                    <Select
+                      value={parentContactStatus}
+                      onChange={setParentContactStatus}
+                      placeholder='Chọn trạng thái'
+                    >
+                      {parentContactStatusOptions.map((option) => (
+                        <Select.Option key={option.value} value={option.value}>
+                          {option.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label='Thời gian liên hệ'>
+                    <DatePicker
+                      showTime
+                      format='DD/MM/YYYY HH:mm'
+                      value={parentContactedAt ? dayjs(parentContactedAt) : null}
+                      onChange={(date) => {
+                        if (date) {
+                          setParentContactedAt(date.toISOString())
+                        } else {
+                          setParentContactedAt(undefined)
+                        }
+                      }}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* 3. Additional Information */}
+            <Card
+              title={
+                <Space>
+                  <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                  <Text strong>3. Thời gian và thông tin bổ sung</Text>
+                </Space>
+              }
+              size='small'
+              style={{ marginBottom: '16px' }}
+            >
+              <Row gutter={24}>
+                <Col span={8}>
+                  <Form.Item name='leaveMethod' label='Phương thức ra về'>
+                    <Select>
+                      <Select.Option value={LeaveMethod.NONE}>Không rời khỏi</Select.Option>
+                      <Select.Option value={LeaveMethod.PARENT_PICKUP}>Phụ huynh đón</Select.Option>
+                      <Select.Option value={LeaveMethod.HOSPITAL_TRANSFER}>Chuyển viện</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name='leaveTime' label='Thời gian xảy ra'>
+                    <DatePicker
+                      showTime
+                      format='DD/MM/YYYY HH:mm'
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name='pickedUpBy' label='Người đón'>
+                    <Input placeholder='Nhập tên người đón (nếu có)' />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item name='notes' label='Ghi chú'>
+                <TextArea rows={3} />
+              </Form.Item>
+            </Card>
+
+            {/* Action Buttons */}
+            <Card size='small'>
+              <Row justify='center'>
+                <Col>
+                  <Space size='large'>
+                    <Button
+                      type='primary'
+                      htmlType='submit'
+                      icon={<SaveOutlined />}
+                      loading={editLoading}
+                      size='large'
+                    >
+                      Lưu thay đổi
+                    </Button>
+                    <Button
+                      onClick={() => setIsEditing(false)}
+                      size='large'
+                    >
+                      Hủy
+                    </Button>
+                  </Space>
+                </Col>
+              </Row>
+            </Card>
+          </Form>
         </div>
       )}
     </Modal>

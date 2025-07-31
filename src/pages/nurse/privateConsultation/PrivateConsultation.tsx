@@ -67,8 +67,9 @@ function PrivateConsultation() {
     setLoading(true)
     try {
       const res = await appointmentApi.search({ pageNum: 1, pageSize: 50, schoolNurseId: user.id })
-      console.log('data', res)
-      setAppointments(res)
+      if (res) {
+        setAppointments(res)
+      }
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -89,7 +90,7 @@ function PrivateConsultation() {
   }, [user])
 
   // Filter appointments
-  const filteredAppointments = appointments.filter((item) => {
+  const filteredAppointments = appointments?.filter((item) => {
     const dateMatch = !selectedDate || dayjs(item.appointmentTime).isSame(selectedDate, 'day')
     const statusMatch = !statusFilter || item.status === statusFilter
     return dateMatch && statusMatch
@@ -321,100 +322,100 @@ function PrivateConsultation() {
     <div style={{ padding: '20px', minHeight: '100vh' }}>
       {/* Header */}
       <Card>
-      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
-        <Row justify='space-between' align='middle'>
-          <Col>
-            <Title level={3} style={{ color: 'white', margin: 0 }}>
-              <MedicineBoxOutlined style={{ marginRight: 12 }} />
-              Quản lý tư vấn sức khỏe riêng
-            </Title>
-            <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Theo dõi và xử lý các yêu cầu tư vấn từ phụ huynh</Text>
-          </Col>
-        </Row>
-      </Card>
-      <Card className='mt-6'>
-        {/* Header with stats */}
-        <div style={{ marginBottom: 24 }} >
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
           <Row justify='space-between' align='middle'>
             <Col>
-              <Space size='large'>
-                <Badge count={statusCounts.pending || 0} color='orange'>
-                  <Tag color='orange'>Chờ duyệt</Tag>
-                </Badge>
-                <Badge count={statusCounts.approved || 0} color='blue'>
-                  <Tag color='blue'>Đã xác nhận</Tag>
-                </Badge>
-                <Badge count={statusCounts.done || 0} color='green'>
-                  <Tag color='green'>Hoàn thành</Tag>
-                </Badge>
-                <Badge count={statusCounts.cancelled || 0} color='red'>
-                  <Tag color='red'>Đã hủy</Tag>
-                </Badge>
-              </Space>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Filters */}
-        <Card size='small' style={{ marginBottom: 16, background: '#fafafa' }}>
-          <Row gutter={16} align='middle'>
-            <Col>
-              <Space>
-                <FilterOutlined />
-                <Text strong>Bộ lọc:</Text>
-              </Space>
-            </Col>
-            <Col>
-              <DatePicker
-                placeholder='Chọn ngày'
-                value={selectedDate}
-                onChange={setSelectedDate}
-                allowClear
-                format='DD/MM/YYYY'
-              />
-            </Col>
-            <Col>
-              <Select
-                placeholder='Trạng thái'
-                value={statusFilter}
-                onChange={setStatusFilter}
-                allowClear
-                style={{ width: 150 }}
-              >
-                <Option value='pending'>Chờ duyệt</Option>
-                <Option value='approved'>Đã xác nhận</Option>
-                <Option value='done'>Hoàn thành</Option>
-                <Option value='cancelled'>Đã hủy</Option>
-                <Option value='rejected'>Từ chối</Option>
-              </Select>
-            </Col>
-            <Col>
-              <Text type='secondary'>
-                Hiển thị {filteredAppointments.length}/{appointments.length} lịch hẹn
-              </Text>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <MedicineBoxOutlined style={{ marginRight: 12 }} />
+                Quản lý tư vấn sức khỏe riêng
+              </Title>
+              <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Theo dõi và xử lý các yêu cầu tư vấn từ phụ huynh</Text>
             </Col>
           </Row>
         </Card>
+        <Card className='mt-6'>
+          {/* Header with stats */}
+          <div style={{ marginBottom: 24 }} >
+            <Row justify='space-between' align='middle'>
+              <Col>
+                <Space size='large'>
+                  <Badge count={statusCounts.pending || 0} color='orange'>
+                    <Tag color='orange'>Chờ duyệt</Tag>
+                  </Badge>
+                  <Badge count={statusCounts.approved || 0} color='blue'>
+                    <Tag color='blue'>Đã xác nhận</Tag>
+                  </Badge>
+                  <Badge count={statusCounts.done || 0} color='green'>
+                    <Tag color='green'>Hoàn thành</Tag>
+                  </Badge>
+                  <Badge count={statusCounts.cancelled || 0} color='red'>
+                    <Tag color='red'>Đã hủy</Tag>
+                  </Badge>
+                </Space>
+              </Col>
+            </Row>
+          </div>
 
-        {/* Table */}
-        <Table
-          columns={columns}
-          dataSource={filteredAppointments}
-          rowKey='_id'
-          loading={loading || updating}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`
-          }}
-          locale={{
-            emptyText: <Empty description='Không có lịch hẹn nào' />
-          }}
-          scroll={{ x: 800 }}
-        />
+          {/* Filters */}
+          <Card size='small' style={{ marginBottom: 16, background: '#fafafa' }}>
+            <Row gutter={16} align='middle'>
+              <Col>
+                <Space>
+                  <FilterOutlined />
+                  <Text strong>Bộ lọc:</Text>
+                </Space>
+              </Col>
+              <Col>
+                <DatePicker
+                  placeholder='Chọn ngày'
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  allowClear
+                  format='DD/MM/YYYY'
+                />
+              </Col>
+              <Col>
+                <Select
+                  placeholder='Trạng thái'
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  allowClear
+                  style={{ width: 150 }}
+                >
+                  <Option value='pending'>Chờ duyệt</Option>
+                  <Option value='approved'>Đã xác nhận</Option>
+                  <Option value='done'>Hoàn thành</Option>
+                  <Option value='cancelled'>Đã hủy</Option>
+                  <Option value='rejected'>Từ chối</Option>
+                </Select>
+              </Col>
+              <Col>
+                <Text type='secondary'>
+                  Hiển thị {filteredAppointments.length}/{appointments.length} lịch hẹn
+                </Text>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* Table */}
+          <Table
+            columns={columns}
+            dataSource={filteredAppointments}
+            rowKey='_id'
+            loading={loading || updating}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`
+            }}
+            locale={{
+              emptyText: <Empty description='Không có lịch hẹn nào' />
+            }}
+            scroll={{ x: 800 }}
+          />
         </Card>
-        </Card>
+      </Card>
 
       {/* Detail Modal */}
       <Modal

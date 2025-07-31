@@ -102,32 +102,27 @@ export interface MedicalEvent {
   _id: string
   studentId: string
   parentId: string
-  studentIdCode: string
   schoolNurseId: string
   eventName: string
   description?: string
+  initialCondition?: string
+  firstAid?: string
   actionTaken?: string
-  medicinesId?: string[]
-  medicalSuppliesId?: string[]
-  severityLevel?: SeverityLevel
+  actions?: ActionLog[]
+  medicinesUsed?: MedicineUsage[]
+  medicalSuppliesUsed?: MedicalSupplyUsage[]
   status?: MedicalEventStatus
   leaveMethod?: LeaveMethod
   leaveTime?: string
   pickedUpBy?: string
+  parentContactStatus?: ParentContactStatus
+  parentContactedAt?: string
   images?: string[]
   notes?: string
   isDeleted?: boolean
   createdAt?: string
   updatedAt?: string
-  // cập nhật các trường mới
-  initialCondition?: string
-  firstAid?: string
-  actions?: ActionLog[]
-  medicinesUsed?: MedicineUsage[]
-  medicalSuppliesUsed?: MedicalSupplyUsage[]
-  parentContactStatus?: ParentContactStatus
-  parentContactedAt?: string
-  // các trường cũ giữ nguyên
+  // Virtual fields from backend
   student?: Student
   parent?: User
   schoolNurse?: User
@@ -160,7 +155,6 @@ export interface CreateMedicalEventRequest {
   actions?: ActionLog[]
   medicinesUsed?: MedicineUsage[]
   medicalSuppliesUsed?: MedicalSupplyUsage[]
-  severityLevel?: SeverityLevel
   status?: MedicalEventStatus
   parentContactStatus?: ParentContactStatus
   parentContactedAt?: string

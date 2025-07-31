@@ -1,41 +1,42 @@
 'use client'
 
-import type React from 'react'
-import { useEffect, useState } from 'react'
 import {
-  PlusOutlined,
-  SearchOutlined,
-  FilterOutlined,
-  ReloadOutlined,
-  ExclamationCircleOutlined,
-  EyeOutlined,
-  DeleteOutlined,
-  MedicineBoxOutlined,
-  UserOutlined,
   AlertOutlined,
   CalendarOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  MedicineBoxOutlined,
+  PhoneOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  UserOutlined
 } from '@ant-design/icons'
 import {
+  Badge,
   Button,
   Card,
+  Col,
+  DatePicker,
+  Divider,
+  Input,
   message,
+  Modal,
+  Row,
+  Select,
   Space,
   Table,
-  Typography,
-  Modal,
-  Input,
   Tag,
   Tooltip,
-  Divider,
-  Row,
-  Col,
-  Select,
-  DatePicker,
-  Badge
+  Typography
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import type React from 'react'
+import { useEffect, useState } from 'react'
 import { type MedicalEvent, medicalEventApi } from '../../../api/medicalEvent.api'
 import CreateMedicalEventForm from './Create'
 import Detail from './Detail'
@@ -47,29 +48,41 @@ const { RangePicker } = DatePicker
 const { Option } = Select
 
 // Thêm hàm chuyển đổi enum sang tiếng Việt
-const severityLevelVN: Record<string, string> = {
-  Mild: 'Nhẹ',
-  Moderate: 'Trung bình',
-  Severe: 'Nặng'
-}
-
 const statusVN: Record<string, string> = {
   treated: 'Đã xử lý',
   monitoring: 'Theo dõi',
   transferred: 'Chuyển viện'
 }
 
-// Thêm màu sắc cho các trạng thái
-const severityColors: Record<string, string> = {
-  Mild: 'green',
-  Moderate: 'orange',
-  Severe: 'red'
+const parentContactStatusVN: Record<string, string> = {
+  not_contacted: 'Chưa liên hệ',
+  contacting: 'Đang liên hệ',
+  contacted: 'Đã liên hệ'
 }
 
+const leaveMethodVN: Record<string, string> = {
+  none: 'Không ra về',
+  parent_pickup: 'Phụ huynh đón',
+  hospital_transfer: 'Chuyển viện'
+}
+
+// Thêm màu sắc cho các trạng thái
 const statusColors: Record<string, string> = {
   treated: 'success',
   monitoring: 'processing',
   transferred: 'warning'
+}
+
+const parentContactColors: Record<string, string> = {
+  not_contacted: 'default',
+  contacting: 'processing',
+  contacted: 'success'
+}
+
+const leaveMethodColors: Record<string, string> = {
+  none: 'default',
+  parent_pickup: 'blue',
+  hospital_transfer: 'orange'
 }
 
 const MedicalReport: React.FC = () => {
@@ -83,6 +96,8 @@ const MedicalReport: React.FC = () => {
   const [searchText, setSearchText] = useState('')
   const [timeFilter, setTimeFilter] = useState<string>('all')
   const [eventNameFilter, setEventNameFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [parentContactFilter, setParentContactFilter] = useState<string>('all')
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
 
   const fetchMedicalEvents = async () => {
@@ -159,16 +174,16 @@ const MedicalReport: React.FC = () => {
       )
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
+      title: 'Tình trạng ban đầu',
+      dataIndex: 'initialCondition',
+      key: 'initialCondition',
       ellipsis: {
         showTitle: false
       },
       render: (text: string) => (
         <Tooltip placement='topLeft' title={text}>
-          <Text ellipsis style={{ maxWidth: 200 }}>
-            {text}
+          <Text ellipsis style={{ maxWidth: 150 }}>
+            {text || 'Chưa có thông tin'}
           </Text>
         </Tooltip>
       )
@@ -182,35 +197,35 @@ const MedicalReport: React.FC = () => {
       },
       render: (text: string) => (
         <Tooltip placement='topLeft' title={text}>
-          <Text ellipsis style={{ maxWidth: 200 }}>
-            {text}
+          <Text ellipsis style={{ maxWidth: 150 }}>
+            {text || 'Chưa có thông tin'}
           </Text>
         </Tooltip>
       )
     },
     {
-      title: 'Mức độ nghiêm trọng',
-      dataIndex: 'severityLevel',
-      key: 'severityLevel',
-      render: (severityLevel: string) => (
-        <Tag color={severityColors[severityLevel]} style={{ fontWeight: 'bold' }}>
-          {severityLevelVN[severityLevel] || 'Không xác định'}
-        </Tag>
+      title: 'Liên hệ phụ huynh',
+      dataIndex: 'parentContactStatus',
+      key: 'parentContactStatus',
+      render: (status: string) => (
+        <Badge
+          status={parentContactColors[status] as 'default' | 'processing' | 'success'}
+          text={parentContactStatusVN[status] || 'Không xác định'}
+        />
       ),
-      sorter: (a: MedicalEvent, b: MedicalEvent) => {
-        const severityOrder = { Mild: 1, Moderate: 2, Severe: 3 }
-        return (
-          (severityOrder[a.severityLevel as keyof typeof severityOrder] || 0) -
-          (severityOrder[b.severityLevel as keyof typeof severityOrder] || 0)
-        )
-      }
+      filters: [
+        { text: 'Chưa liên hệ', value: 'not_contacted' },
+        { text: 'Đang liên hệ', value: 'contacting' },
+        { text: 'Đã liên hệ', value: 'contacted' }
+      ],
+      onFilter: (value, record) => record.parentContactStatus === value
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Badge status={statusColors[status] as any} text={statusVN[status] || 'Không xác định'} />
+        <Badge status={statusColors[status] as 'success' | 'processing' | 'warning'} text={statusVN[status] || 'Không xác định'} />
       ),
       filters: [
         { text: 'Đã xử lý', value: 'treated' },
@@ -218,6 +233,16 @@ const MedicalReport: React.FC = () => {
         { text: 'Chuyển viện', value: 'transferred' }
       ],
       onFilter: (value, record) => record.status === value
+    },
+    {
+      title: 'Phương thức ra về',
+      dataIndex: 'leaveMethod',
+      key: 'leaveMethod',
+      render: (method: string) => (
+        <Tag color={leaveMethodColors[method]} style={{ fontWeight: 'bold' }}>
+          {leaveMethodVN[method] || 'Không xác định'}
+        </Tag>
+      )
     },
     {
       title: 'Thao tác',
@@ -302,6 +327,18 @@ const MedicalReport: React.FC = () => {
     return events.filter((event) => event.eventName === eventNameFilter)
   }
 
+  // Lọc theo trạng thái
+  const filterByStatus = (events: MedicalEvent[]) => {
+    if (statusFilter === 'all') return events
+    return events.filter((event) => event.status === statusFilter)
+  }
+
+  // Lọc theo trạng thái liên hệ phụ huynh
+  const filterByParentContact = (events: MedicalEvent[]) => {
+    if (parentContactFilter === 'all') return events
+    return events.filter((event) => event.parentContactStatus === parentContactFilter)
+  }
+
   // Lọc theo tìm kiếm
   const filterBySearch = (events: MedicalEvent[]) => {
     if (!searchText) return events
@@ -309,13 +346,22 @@ const MedicalReport: React.FC = () => {
       (item) =>
         item.eventName?.toLowerCase().includes(searchText.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.student?.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.actionTaken?.toLowerCase().includes(searchText.toLowerCase())
+        item.initialCondition?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.actionTaken?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.student?.fullName?.toLowerCase().includes(searchText.toLowerCase())
     )
   }
 
   // Áp dụng tất cả các bộ lọc
-  const filteredEvents = filterBySearch(filterByEventName(filterByTime(medicalEvents)))
+  const filteredEvents = filterBySearch(
+    filterByParentContact(
+      filterByStatus(
+        filterByEventName(
+          filterByTime(medicalEvents)
+        )
+      )
+    )
+  )
 
   // Lấy danh sách tên sự kiện duy nhất
   const uniqueEventNames = Array.from(new Set(medicalEvents.map((event) => event.eventName))).filter(Boolean)
@@ -349,6 +395,8 @@ const MedicalReport: React.FC = () => {
     setSearchText('')
     setTimeFilter('all')
     setEventNameFilter('all')
+    setStatusFilter('all')
+    setParentContactFilter('all')
     setDateRange(null)
   }
 
@@ -378,7 +426,6 @@ const MedicalReport: React.FC = () => {
               </Col>
             </Row>
           </Card>
-
 
           <Divider style={{ margin: '16px 0' }} />
 
@@ -486,6 +533,34 @@ const MedicalReport: React.FC = () => {
                       {eventName}
                     </Option>
                   ))}
+                </Select>
+              </Col>
+              <Col xs={24} sm={6} md={4}>
+                <Select
+                  style={{ width: '100%' }}
+                  placeholder='Trạng thái'
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  suffixIcon={<FilterOutlined />}
+                >
+                  <Option value='all'>Tất cả trạng thái</Option>
+                  <Option value='treated'>Đã xử lý</Option>
+                  <Option value='monitoring'>Theo dõi</Option>
+                  <Option value='transferred'>Chuyển viện</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={6} md={4}>
+                <Select
+                  style={{ width: '100%' }}
+                  placeholder='Liên hệ phụ huynh'
+                  value={parentContactFilter}
+                  onChange={setParentContactFilter}
+                  suffixIcon={<PhoneOutlined />}
+                >
+                  <Option value='all'>Tất cả</Option>
+                  <Option value='not_contacted'>Chưa liên hệ</Option>
+                  <Option value='contacting'>Đang liên hệ</Option>
+                  <Option value='contacted'>Đã liên hệ</Option>
                 </Select>
               </Col>
               <Col>
