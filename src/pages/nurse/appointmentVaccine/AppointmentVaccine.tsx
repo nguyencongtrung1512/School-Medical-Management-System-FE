@@ -218,13 +218,13 @@ const AppointmentVaccine: React.FC = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      render: (_: unknown, record: PopulatedVaccineAppointment) => record.student?.fullName || record.studentId
+      render: (_: unknown, record: PopulatedVaccineAppointment) => record.student?.fullName
     },
     {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedVaccineAppointment) => record.event?.title || record.eventId
+      render: (_: unknown, record: PopulatedVaccineAppointment) => record?.event?.title
     },
     {
       title: 'Trạng thái',
@@ -288,250 +288,250 @@ const AppointmentVaccine: React.FC = () => {
   return (
     <div className='p-6'>
       <Card>
-      <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
-        <Row justify='space-between' align='middle'>
-          <Col>
-            <Title level={3} style={{ color: 'white', margin: 0 }}>
-              <CheckCircleOutlined style={{ marginRight: 12 }} />
-              Quản lý lịch hẹn tiêm chủng
-            </Title>
-          </Col>
-        </Row>
-      </Card>
-      <Card className='shadow-sm mt-6'>
-        <Row justify='space-between' align='middle' className='mb-4'>
-          <Col>
-            <Space>
-              <Button type='primary' onClick={handleOpenCreate}>
-                Tạo kết quả
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
-                Làm mới
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-        <Row gutter={[16, 16]} className='mb-4'>
-          <Col xs={24} md={12}>
-            <Search
-              placeholder='Tìm kiếm theo học sinh, sự kiện...'
-              allowClear
-              enterButton={<SearchOutlined />}
-              onSearch={(value) => setSearchKeyword(value)}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </Col>
-          <Col xs={24} md={12}>
-            <Select
-              placeholder='Lọc theo trạng thái'
-              allowClear
-              style={{ width: '100%' }}
-              onChange={(value) => setStatusFilter(value)}
-            >
-              {statusOptions.map((s) => (
-                <Option key={s.value} value={s.value}>
-                  <Space>
-                    {s.icon}
-                    {s.label}
-                  </Space>
-                </Option>
-              ))}
-            </Select>
-          </Col>
-        </Row>
-        <Table
-          columns={columns}
-          dataSource={filteredAppointments}
-          rowKey='_id'
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: totalItems,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`,
-            onChange: handleTableChange
-          }}
-          scroll={{ x: 800 }}
-        />
-        <Modal
-          title={
-            modalType === 'check'
-              ? 'Đánh dấu đã tiêm'
-              : modalType === 'post'
-                ? 'Xác nhận sau tiêm'
-                : 'Kết quả tiêm chủng'
-          }
-          open={isDetailModalVisible}
-          onCancel={() => setIsDetailModalVisible(false)}
-          footer={
-            modalType === 'check'
-              ? [
-                <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                  Hủy
-                </Button>,
-                <Button key='save' type='primary' onClick={handleCheck}>
-                  Lưu
+        <Card style={{ background: 'linear-gradient(135deg, #06b6d4 100%)' }}>
+          <Row justify='space-between' align='middle'>
+            <Col>
+              <Title level={3} style={{ color: 'white', margin: 0 }}>
+                <CheckCircleOutlined style={{ marginRight: 12 }} />
+                Quản lý lịch hẹn tiêm chủng
+              </Title>
+            </Col>
+          </Row>
+        </Card>
+        <Card className='shadow-sm mt-6'>
+          <Row justify='space-between' align='middle' className='mb-4'>
+            <Col>
+              <Space>
+                <Button type='primary' onClick={handleOpenCreate}>
+                  Tạo kết quả
                 </Button>
-              ]
-              : modalType === 'post'
+                <Button icon={<ReloadOutlined />} onClick={fetchAppointments} loading={loading}>
+                  Làm mới
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+          <Row gutter={[16, 16]} className='mb-4'>
+            <Col xs={24} md={12}>
+              <Search
+                placeholder='Tìm kiếm theo học sinh, sự kiện...'
+                allowClear
+                enterButton={<SearchOutlined />}
+                onSearch={(value) => setSearchKeyword(value)}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Select
+                placeholder='Lọc theo trạng thái'
+                allowClear
+                style={{ width: '100%' }}
+                onChange={(value) => setStatusFilter(value)}
+              >
+                {statusOptions.map((s) => (
+                  <Option key={s.value} value={s.value}>
+                    <Space>
+                      {s.icon}
+                      {s.label}
+                    </Space>
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+          </Row>
+          <Table
+            columns={columns}
+            dataSource={filteredAppointments}
+            rowKey='_id'
+            loading={loading}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalItems,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} lịch hẹn`,
+              onChange: handleTableChange
+            }}
+            scroll={{ x: 800 }}
+          />
+          <Modal
+            title={
+              modalType === 'check'
+                ? 'Đánh dấu đã tiêm'
+                : modalType === 'post'
+                  ? 'Xác nhận sau tiêm'
+                  : 'Kết quả tiêm chủng'
+            }
+            open={isDetailModalVisible}
+            onCancel={() => setIsDetailModalVisible(false)}
+            footer={
+              modalType === 'check'
                 ? [
                   <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
                     Hủy
                   </Button>,
-                  <Button key='save' type='primary' onClick={handlePost}>
+                  <Button key='save' type='primary' onClick={handleCheck}>
                     Lưu
                   </Button>
                 ]
-                : [
-                  <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                    Đóng
-                  </Button>
-                ]
-          }
-          width={600}
-        >
-          {selected && modalType === 'check' && (
-            <Form form={checkForm} layout='vertical'>
-              <Form.Item name='bloodPressure' label='Huyết áp'>
-                <Input placeholder='Nhập huyết áp' />
-              </Form.Item>
+                : modalType === 'post'
+                  ? [
+                    <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                      Hủy
+                    </Button>,
+                    <Button key='save' type='primary' onClick={handlePost}>
+                      Lưu
+                    </Button>
+                  ]
+                  : [
+                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                      Đóng
+                    </Button>
+                  ]
+            }
+            width={600}
+          >
+            {selected && modalType === 'check' && (
+              <Form form={checkForm} layout='vertical'>
+                <Form.Item name='bloodPressure' label='Huyết áp'>
+                  <Input placeholder='Nhập huyết áp' />
+                </Form.Item>
+                <Form.Item
+                  name='isEligible'
+                  label='Đủ điều kiện tiêm'
+                  rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
+                >
+                  <Select>
+                    <Option value={true}>Có</Option>
+                    <Option value={false}>Không</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item name='reasonIfIneligible' label='Lý do nếu không đủ điều kiện'>
+                  <Input placeholder='Nhập lý do' />
+                </Form.Item>
+                <Form.Item name='notes' label='Ghi chú'>
+                  <Input.TextArea rows={2} maxLength={300} />
+                </Form.Item>
+                <Form.Item
+                  name='vaccinatedAt'
+                  label='Thời gian tiêm'
+                  rules={[{ required: true, message: 'Chọn thời gian tiêm' }]}
+                >
+                  <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
+                </Form.Item>
+              </Form>
+            )}
+            {selected && modalType === 'post' && (
+              <Form form={postForm} layout='vertical'>
+                <Form.Item
+                  name='postVaccinationStatus'
+                  label='Tình trạng sau tiêm'
+                  rules={[{ required: true, message: 'Chọn tình trạng' }]}
+                >
+                  <Select>
+                    <Option value={PostVaccinationStatus.NotChecked}>Chưa kiểm tra</Option>
+                    <Option value={PostVaccinationStatus.Healthy}>Bình thường, khỏe mạnh</Option>
+                    <Option value={PostVaccinationStatus.MildReaction}>Phản ứng nhẹ</Option>
+                    <Option value={PostVaccinationStatus.SevereReaction}>Phản ứng nghiêm trọng</Option>
+                    <Option value={PostVaccinationStatus.Other}>Khác</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item name='postVaccinationNotes' label='Ghi chú sau tiêm'>
+                  <Input.TextArea rows={3} maxLength={500} />
+                </Form.Item>
+              </Form>
+            )}
+            {selected && modalType === 'view' && (
+              <Descriptions bordered column={1} size='small'>
+                <Descriptions.Item label='Học sinh'>{selected.student?.fullName || selected.studentId}</Descriptions.Item>
+                <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
+                <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
+                <Descriptions.Item label='Ngày tiêm'>
+                  {selected.vaccinatedAt ? formatDateTime(selected.vaccinatedAt) : '-'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Đủ điều kiện tiêm'>{selected.isEligible ? 'Có' : 'Không'}</Descriptions.Item>
+                <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
+                  {selected.reasonIfIneligible || '-'}
+                </Descriptions.Item>
+                <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Tình trạng sau tiêm'>
+                  {postVaccinationStatusLabels[selected.postVaccinationStatus || 'not_checked']}
+                </Descriptions.Item>
+                <Descriptions.Item label='Ghi chú sau tiêm'>{selected.postVaccinationNotes || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
+              </Descriptions>
+            )}
+          </Modal>
+          <Modal
+            title='Tạo kết quả sau tiêm'
+            open={createModalVisible}
+            onCancel={() => setCreateModalVisible(false)}
+            footer={[
+              <Button key='cancel' onClick={() => setCreateModalVisible(false)}>
+                Hủy
+              </Button>,
+              <Button key='save' type='primary' onClick={handleCreateResult}>
+                Lưu kết quả
+              </Button>
+            ]}
+            width={500}
+          >
+            <Form form={createForm} layout='vertical'>
               <Form.Item
-                name='isEligible'
-                label='Đủ điều kiện tiêm'
-                rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
+                name='appointmentId'
+                label='Chọn lịch hẹn tiêm'
+                rules={[{ required: true, message: 'Vui lòng chọn lịch hẹn' }]}
               >
-                <Select>
-                  <Option value={true}>Có</Option>
-                  <Option value={false}>Không</Option>
+                <Select
+                  showSearch
+                  placeholder='Chọn lịch hẹn tiêm chưa có kết quả'
+                  filterOption={(input, option) =>
+                    (typeof option?.children === 'string' ? option.children : String(option?.children))
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {appointments
+                    .filter((a) => !a.postVaccinationStatus)
+                    .map((a) => (
+                      <Option key={a._id} value={a._id}>
+                        {a.student?.fullName || a.studentId} - {a.event?.title || a.eventId}
+                      </Option>
+                    ))}
                 </Select>
               </Form.Item>
-              <Form.Item name='reasonIfIneligible' label='Lý do nếu không đủ điều kiện'>
-                <Input placeholder='Nhập lý do' />
-              </Form.Item>
-              <Form.Item name='notes' label='Ghi chú'>
-                <Input.TextArea rows={2} maxLength={300} />
-              </Form.Item>
-              <Form.Item
-                name='vaccinatedAt'
-                label='Thời gian tiêm'
-                rules={[{ required: true, message: 'Chọn thời gian tiêm' }]}
-              >
-                <DatePicker showTime format='DD/MM/YYYY HH:mm' className='w-full' />
-              </Form.Item>
-            </Form>
-          )}
-          {selected && modalType === 'post' && (
-            <Form form={postForm} layout='vertical'>
               <Form.Item
                 name='postVaccinationStatus'
                 label='Tình trạng sau tiêm'
-                rules={[{ required: true, message: 'Chọn tình trạng' }]}
+                rules={[{ required: true, message: 'Vui lòng chọn tình trạng sau tiêm' }]}
               >
                 <Select>
-                  <Option value={PostVaccinationStatus.NotChecked}>Chưa kiểm tra</Option>
-                  <Option value={PostVaccinationStatus.Healthy}>Bình thường, khỏe mạnh</Option>
-                  <Option value={PostVaccinationStatus.MildReaction}>Phản ứng nhẹ</Option>
-                  <Option value={PostVaccinationStatus.SevereReaction}>Phản ứng nghiêm trọng</Option>
-                  <Option value={PostVaccinationStatus.Other}>Khác</Option>
+                  <Option value={PostVaccinationStatus.NotChecked}>
+                    {postVaccinationStatusLabels[PostVaccinationStatus.NotChecked]}
+                  </Option>
+                  <Option value={PostVaccinationStatus.Healthy}>
+                    {postVaccinationStatusLabels[PostVaccinationStatus.Healthy]}
+                  </Option>
+                  <Option value={PostVaccinationStatus.MildReaction}>
+                    {postVaccinationStatusLabels[PostVaccinationStatus.MildReaction]}
+                  </Option>
+                  <Option value={PostVaccinationStatus.SevereReaction}>
+                    {postVaccinationStatusLabels[PostVaccinationStatus.SevereReaction]}
+                  </Option>
+                  <Option value={PostVaccinationStatus.Other}>
+                    {postVaccinationStatusLabels[PostVaccinationStatus.Other]}
+                  </Option>
                 </Select>
               </Form.Item>
               <Form.Item name='postVaccinationNotes' label='Ghi chú sau tiêm'>
                 <Input.TextArea rows={3} maxLength={500} />
               </Form.Item>
             </Form>
-          )}
-          {selected && modalType === 'view' && (
-            <Descriptions bordered column={1} size='small'>
-              <Descriptions.Item label='Học sinh'>{selected.student?.fullName || selected.studentId}</Descriptions.Item>
-              <Descriptions.Item label='Sự kiện'>{selected.event?.title || selected.eventId}</Descriptions.Item>
-              <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
-              <Descriptions.Item label='Ngày tiêm'>
-                {selected.vaccinatedAt ? formatDateTime(selected.vaccinatedAt) : '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Đủ điều kiện tiêm'>{selected.isEligible ? 'Có' : 'Không'}</Descriptions.Item>
-              <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
-                {selected.reasonIfIneligible || '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Tình trạng sau tiêm'>
-                {postVaccinationStatusLabels[selected.postVaccinationStatus || 'not_checked']}
-              </Descriptions.Item>
-              <Descriptions.Item label='Ghi chú sau tiêm'>{selected.postVaccinationNotes || '-'}</Descriptions.Item>
-              <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
-            </Descriptions>
-          )}
-        </Modal>
-        <Modal
-          title='Tạo kết quả sau tiêm'
-          open={createModalVisible}
-          onCancel={() => setCreateModalVisible(false)}
-          footer={[
-            <Button key='cancel' onClick={() => setCreateModalVisible(false)}>
-              Hủy
-            </Button>,
-            <Button key='save' type='primary' onClick={handleCreateResult}>
-              Lưu kết quả
-            </Button>
-          ]}
-          width={500}
-        >
-          <Form form={createForm} layout='vertical'>
-            <Form.Item
-              name='appointmentId'
-              label='Chọn lịch hẹn tiêm'
-              rules={[{ required: true, message: 'Vui lòng chọn lịch hẹn' }]}
-            >
-              <Select
-                showSearch
-                placeholder='Chọn lịch hẹn tiêm chưa có kết quả'
-                filterOption={(input, option) =>
-                  (typeof option?.children === 'string' ? option.children : String(option?.children))
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-              >
-                {appointments
-                  .filter((a) => !a.postVaccinationStatus)
-                  .map((a) => (
-                    <Option key={a._id} value={a._id}>
-                      {a.student?.fullName || a.studentId} - {a.event?.title || a.eventId}
-                    </Option>
-                  ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name='postVaccinationStatus'
-              label='Tình trạng sau tiêm'
-              rules={[{ required: true, message: 'Vui lòng chọn tình trạng sau tiêm' }]}
-            >
-              <Select>
-                <Option value={PostVaccinationStatus.NotChecked}>
-                  {postVaccinationStatusLabels[PostVaccinationStatus.NotChecked]}
-                </Option>
-                <Option value={PostVaccinationStatus.Healthy}>
-                  {postVaccinationStatusLabels[PostVaccinationStatus.Healthy]}
-                </Option>
-                <Option value={PostVaccinationStatus.MildReaction}>
-                  {postVaccinationStatusLabels[PostVaccinationStatus.MildReaction]}
-                </Option>
-                <Option value={PostVaccinationStatus.SevereReaction}>
-                  {postVaccinationStatusLabels[PostVaccinationStatus.SevereReaction]}
-                </Option>
-                <Option value={PostVaccinationStatus.Other}>
-                  {postVaccinationStatusLabels[PostVaccinationStatus.Other]}
-                </Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name='postVaccinationNotes' label='Ghi chú sau tiêm'>
-              <Input.TextArea rows={3} maxLength={500} />
-            </Form.Item>
-          </Form>
-        </Modal>
+          </Modal>
         </Card>
-        </Card>
+      </Card>
     </div>
   )
 }
