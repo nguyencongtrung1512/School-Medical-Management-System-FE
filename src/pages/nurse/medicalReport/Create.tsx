@@ -518,7 +518,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
           style={{ marginBottom: '16px' }}
         >
           <Row gutter={24}>
-            <Col span={8}>
+            {/* <Col span={8}>
               <Form.Item name='severityLevel' label='Mức độ nghiêm trọng'>
                 <Select placeholder='Chọn mức độ' size='large'>
                   <Select.Option value={SeverityLevel.MILD}>
@@ -532,7 +532,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                   </Select.Option>
                 </Select>
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col span={8}>
               <Form.Item name='status' label='Trạng thái xử lý'>
                 <Select placeholder='Chọn trạng thái' size='large'>
