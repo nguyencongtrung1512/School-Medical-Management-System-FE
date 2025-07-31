@@ -67,7 +67,12 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   const [parentContactStatus, setParentContactStatus] = useState<ParentContactStatus | undefined>()
   const [parentContactedAt, setParentContactedAt] = useState<string | undefined>()
   const [leaveMethod, setLeaveMethod] = useState<LeaveMethod | undefined>()
-  const [parentInfo, setParentInfo] = useState<Array<{ fullName: string; email: string; phone: string; type: string }> | null>(null)
+  const [parentInfo, setParentInfo] = useState<Array<{
+    fullName: string
+    email: string
+    phone: string
+    type: string
+  }> | null>(null)
 
   useEffect(() => {
     fetchMedicinesAndSupplies()
@@ -127,29 +132,29 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   // Date restriction functions
   const disabledDate = (current: dayjs.Dayjs) => {
     if (!current) return false
-    
+
     const now = dayjs()
     const threeDaysAgo = now.subtract(3, 'day').startOf('day')
-    
+
     // Disable dates before 3 days ago or after today
     return current.isBefore(threeDaysAgo) || current.isAfter(now, 'day')
   }
 
   const disabledDateTime = (current: dayjs.Dayjs | null) => {
     if (!current) return {}
-    
+
     const now = dayjs()
     const isToday = current.isSame(now, 'day')
-    
+
     if (!isToday) {
       // For past dates, allow all hours and minutes
       return {}
     }
-    
+
     // For today, disable future hours and minutes
     const currentHour = now.hour()
     const currentMinute = now.minute()
-    
+
     return {
       disabledHours: () => {
         const hours = []
@@ -297,9 +302,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                       // parentInfos là mảng các phụ huynh
                       const parentInfos = res.data?.parentInfos || []
                       // Lọc ra các phụ huynh có đủ thông tin
-                      const validParents = parentInfos.filter(
-                        (p) => p.fullName && p.phone && p.email
-                      )
+                      const validParents = parentInfos.filter((p) => p.fullName && p.phone && p.email)
                       if (validParents.length > 0) {
                         setParentInfo(validParents)
                       } else {
@@ -359,20 +362,28 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
                         : selectedStudent.class || ''}
                     </Text>
                   </div>
-                  {parentInfo && parentInfo.length > 0 && parentInfo.map((parent, idx) => (
-                    <div key={idx} style={{ marginTop: 8 }}>
-                      <Text strong>{parent.type === 'father' ? 'Phụ huynh (Bố): ' : parent.type === 'mother' ? 'Phụ huynh (Mẹ): ' : 'Phụ huynh: '}</Text>
-                      <Text>{parent.fullName}</Text>
-                      <div>
-                        <Text strong>Email: </Text>
-                        <Text>{parent.email}</Text>
+                  {parentInfo &&
+                    parentInfo.length > 0 &&
+                    parentInfo.map((parent, idx) => (
+                      <div key={idx} style={{ marginTop: 8 }}>
+                        <Text strong>
+                          {parent.type === 'father'
+                            ? 'Phụ huynh (Bố): '
+                            : parent.type === 'mother'
+                              ? 'Phụ huynh (Mẹ): '
+                              : 'Phụ huynh: '}
+                        </Text>
+                        <Text>{parent.fullName}</Text>
+                        <div>
+                          <Text strong>Email: </Text>
+                          <Text>{parent.email}</Text>
+                        </div>
+                        <div>
+                          <Text strong>Điện thoại: </Text>
+                          <Text>{parent.phone}</Text>
+                        </div>
                       </div>
-                      <div>
-                        <Text strong>Điện thoại: </Text>
-                        <Text>{parent.phone}</Text>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </Space>
               </Card>
             </Col>
@@ -727,11 +738,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
           </Col>
           <Col span={8}>
             <Form.Item name='pickedUpBy' label='Người đón'>
-              <Input
-                placeholder='Nhập tên người đón (nếu có)'
-                size='large'
-                disabled={isPickedUpByDisabled}
-              />
+              <Input placeholder='Nhập tên người đón (nếu có)' size='large' disabled={isPickedUpByDisabled} />
             </Form.Item>
           </Col>
         </Row>

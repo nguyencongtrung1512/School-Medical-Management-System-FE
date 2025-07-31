@@ -730,7 +730,7 @@ const ReceiveMedicine: React.FC = () => {
                                     return (
                                       <img
                                         src={image}
-                                        alt="Ảnh xác nhận uống thuốc"
+                                        alt='Ảnh xác nhận uống thuốc'
                                         style={{
                                           maxWidth: 60,
                                           maxHeight: 60,
@@ -746,7 +746,7 @@ const ReceiveMedicine: React.FC = () => {
                                               <div style={{ textAlign: 'center' }}>
                                                 <img
                                                   src={image}
-                                                  alt="Ảnh xác nhận uống thuốc"
+                                                  alt='Ảnh xác nhận uống thuốc'
                                                   style={{
                                                     maxWidth: '100%',
                                                     maxHeight: '400px',

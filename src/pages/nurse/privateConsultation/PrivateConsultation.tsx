@@ -263,8 +263,8 @@ function PrivateConsultation() {
       setDoneNote('')
 
       // Cập nhật trực tiếp trong state thay vì reload
-      setAppointments(prev =>
-        prev.map(appt =>
+      setAppointments((prev) =>
+        prev.map((appt) =>
           appt._id === selectedAppointment._id
             ? { ...appt, status: ParentNurseAppointmentStatus.Done, note: doneNote || undefined }
             : appt
@@ -303,15 +303,15 @@ function PrivateConsultation() {
       setCancelNote('')
 
       // Cập nhật trực tiếp trong state
-      setAppointments(prev =>
-        prev.map(appt =>
+      setAppointments((prev) =>
+        prev.map((appt) =>
           appt._id === selectedAppointment._id
             ? {
-              ...appt,
-              status: ParentNurseAppointmentStatus.Cancelled,
-              cancellationReason: cancelReason.trim(),
-              note: cancelNote.trim()
-            }
+                ...appt,
+                status: ParentNurseAppointmentStatus.Cancelled,
+                cancellationReason: cancelReason.trim(),
+                note: cancelNote.trim()
+              }
             : appt
         )
       )

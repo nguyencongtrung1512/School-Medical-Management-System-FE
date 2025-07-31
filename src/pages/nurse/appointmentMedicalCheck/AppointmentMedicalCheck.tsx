@@ -34,8 +34,10 @@ import {
   AppointmentStatus,
   medicalCheckAppointmentApi,
   PostMedicalCheckStatus,
-  type MedicalCheckAppointment
+  type MedicalCheckAppointment,
+  type SearchMedicalCheckAppointmentDTO
 } from '../../../api/medicalCheckAppointment.api'
+import { medicalCheckEventApi, type MedicalCheckEvent } from '../../../api/medicalCheckEvent.api'
 
 const { Title } = Typography
 const { Search } = Input
@@ -75,19 +77,57 @@ const AppointmentMedicalCheck: React.FC = () => {
   const [modalType, setModalType] = useState<'check' | 'view' | null>(null)
   const [checkForm] = Form.useForm()
 
+  // Thêm state cho filter
+  const [events, setEvents] = useState<MedicalCheckEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
+  const [schoolYearFilter, setSchoolYearFilter] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
   useEffect(() => {
     fetchAppointments()
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, selectedEventId, schoolYearFilter, statusFilter])
+
+  const fetchEvents = async () => {
+    setEventsLoading(true)
+    try {
+      const response = await medicalCheckEventApi.search({ pageSize: 100 })
+      const eventsData = response?.pageData || []
+      setEvents(eventsData)
+    } catch (error) {
+      console.error('Error fetching events:', error)
+      message.error('Không thể tải danh sách sự kiện')
+    } finally {
+      setEventsLoading(false)
+    }
+  }
 
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      const response = await medicalCheckAppointmentApi.search({ pageNum: currentPage, pageSize })
+      const searchParams: SearchMedicalCheckAppointmentDTO = {
+        pageNum: currentPage,
+        pageSize,
+        status: statusFilter,
+        eventId: selectedEventId,
+        schoolYear: schoolYearFilter
+      }
+
+      // Loại bỏ các giá trị undefined
+      const cleanParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([, value]) => value !== undefined)
+      ) as SearchMedicalCheckAppointmentDTO
+
+      const response = await medicalCheckAppointmentApi.search(cleanParams)
       const pageData = (response as unknown as { pageData: PopulatedMedicalCheckAppointment[] }).pageData || []
       const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
       setAppointments(pageData)
       setTotalItems(total)
-    } catch {
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
       message.error('Không thể tải danh sách lịch hẹn')
     } finally {
       setLoading(false)
@@ -97,6 +137,21 @@ const AppointmentMedicalCheck: React.FC = () => {
   const handleTableChange = (page: number, pageSize?: number) => {
     setCurrentPage(page)
     if (pageSize) setPageSize(pageSize)
+  }
+
+  const handleSearch = () => {
+    setCurrentPage(1)
+    // Không cần fetch lại vì searchKeyword được xử lý ở client-side
+  }
+
+  const handleResetFilters = () => {
+    setSearchKeyword('')
+    setStatusFilter(undefined)
+    setSelectedEventId(undefined)
+    setSchoolYearFilter(undefined)
+    setCurrentPage(1)
+    // Trigger fetch lại khi reset filters
+    fetchAppointments()
   }
 
   const formatDateTime = (dateValue: string | Date) => {
@@ -164,7 +219,6 @@ const AppointmentMedicalCheck: React.FC = () => {
     }
   }
 
-
   const columns: ColumnsType<PopulatedMedicalCheckAppointment> = [
     {
       title: 'Học sinh',
@@ -211,9 +265,7 @@ const AppointmentMedicalCheck: React.FC = () => {
           {(record.status === AppointmentStatus.Pending || record.status === AppointmentStatus.Checked) &&
             record.event?.eventDate &&
             !dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
-              <Tag color="orange">
-                Chưa tới ngày khám ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})
-              </Tag>
+              <Tag color='orange'>Chưa tới ngày khám ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})</Tag>
             )}
 
           {record.postMedicalCheckStatus && record.postMedicalCheckStatus !== PostMedicalCheckStatus.NotChecked && (
@@ -226,14 +278,17 @@ const AppointmentMedicalCheck: React.FC = () => {
     }
   ]
 
+  // Client-side search cho searchKeyword vì API có thể không hỗ trợ query parameter
   const filteredAppointments: PopulatedMedicalCheckAppointment[] = appointments.filter((item) => {
-    const matchesSearch = searchKeyword
-      ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+    if (!searchKeyword) return true
+    return (
+      (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
       (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase())
-      : true
-    const matchesStatus = statusFilter ? item.status === statusFilter : true
-    return matchesSearch && matchesStatus
+    )
   })
+
+  // Lấy danh sách năm học từ events
+  const schoolYears = [...new Set(events.map((event) => event.schoolYear))].sort().reverse()
 
   return (
     <div className='p-6'>
@@ -256,22 +311,30 @@ const AppointmentMedicalCheck: React.FC = () => {
               </Button>
             </Col>
           </Row>
+
+          {/* Bộ filter mới */}
           <Row gutter={[16, 16]} className='mb-4'>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Search
                 placeholder='Tìm kiếm học sinh, sự kiện...'
                 allowClear
                 enterButton={<SearchOutlined />}
-                onSearch={(value) => setSearchKeyword(value)}
+                value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
+                onSearch={handleSearch}
               />
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={4}>
               <Select
                 placeholder='Lọc theo trạng thái'
                 allowClear
                 style={{ width: '100%' }}
-                onChange={(value) => setStatusFilter(value)}
+                value={statusFilter}
+                onChange={(value) => {
+                  setStatusFilter(value)
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
               >
                 {statusOptions.map((s) => (
                   <Option key={s.value} value={s.value}>
@@ -283,7 +346,112 @@ const AppointmentMedicalCheck: React.FC = () => {
                 ))}
               </Select>
             </Col>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn năm học'
+                allowClear
+                style={{ width: '100%' }}
+                value={schoolYearFilter}
+                onChange={(value) => {
+                  setSchoolYearFilter(value)
+                  setSelectedEventId(undefined) // Reset event khi đổi năm học
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
+                loading={eventsLoading}
+              >
+                {schoolYears.map((year) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Select
+                placeholder='Chọn sự kiện'
+                allowClear
+                style={{ width: '100%' }}
+                value={selectedEventId}
+                onChange={(value) => {
+                  setSelectedEventId(value)
+                  setCurrentPage(1)
+                  fetchAppointments()
+                }}
+                loading={eventsLoading}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {events
+                  .filter((event) => !schoolYearFilter || event.schoolYear === schoolYearFilter)
+                  .map((event) => (
+                    <Option key={event._id} value={event._id}>
+                      {event.eventName} - {dayjs(event.eventDate).format('DD/MM/YYYY')}
+                    </Option>
+                  ))}
+              </Select>
+            </Col>
+            <Col xs={24} md={4}>
+              <Button onClick={handleResetFilters} style={{ width: '100%' }}>
+                Xóa bộ lọc
+              </Button>
+            </Col>
           </Row>
+
+          {/* Thông tin filter hiện tại */}
+          {(searchKeyword || statusFilter || selectedEventId || schoolYearFilter) && (
+            <Row className='mb-4'>
+              <Col span={24}>
+                <Space wrap>
+                  <span style={{ fontWeight: 'bold' }}>Bộ lọc hiện tại:</span>
+                  {searchKeyword && (
+                    <Tag closable onClose={() => setSearchKeyword('')}>
+                      Tìm kiếm: {searchKeyword}
+                    </Tag>
+                  )}
+                  {statusFilter && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setStatusFilter(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Trạng thái: {statusOptions.find((s) => s.value === statusFilter)?.label}
+                    </Tag>
+                  )}
+                  {schoolYearFilter && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSchoolYearFilter(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Năm học: {schoolYearFilter}
+                    </Tag>
+                  )}
+                  {selectedEventId && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSelectedEventId(undefined)
+                        setCurrentPage(1)
+                        fetchAppointments()
+                      }}
+                    >
+                      Sự kiện: {events.find((e) => e._id === selectedEventId)?.eventName}
+                    </Tag>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+          )}
+
           <Table
             columns={columns}
             dataSource={filteredAppointments}
@@ -301,28 +469,24 @@ const AppointmentMedicalCheck: React.FC = () => {
             scroll={{ x: 1000 }}
           />
           <Modal
-            title={
-              modalType === 'check'
-                ? 'Đánh dấu đã khám'
-                : 'Kết quả khám sức khỏe'
-            }
+            title={modalType === 'check' ? 'Đánh dấu đã khám' : 'Kết quả khám sức khỏe'}
             open={isDetailModalVisible}
             onCancel={() => setIsDetailModalVisible(false)}
             footer={
               modalType === 'check'
                 ? [
-                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                    Hủy
-                  </Button>,
-                  <Button key='save' type='primary' onClick={handleCheck}>
-                    Lưu
-                  </Button>
-                ]
+                    <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                      Hủy
+                    </Button>,
+                    <Button key='save' type='primary' onClick={handleCheck}>
+                      Lưu
+                    </Button>
+                  ]
                 : [
-                  <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                    Đóng
-                  </Button>
-                ]
+                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                      Đóng
+                    </Button>
+                  ]
             }
             width={600}
           >
@@ -475,7 +639,11 @@ const AppointmentMedicalCheck: React.FC = () => {
                 <Form.Item
                   name='checkedAt'
                   label='Thời gian khám'
-                  extra={selected?.event?.eventDate ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}` : undefined}
+                  extra={
+                    selected?.event?.eventDate
+                      ? `Ngày sự kiện: ${dayjs(selected.event.eventDate).format('DD/MM/YYYY')}`
+                      : undefined
+                  }
                   rules={[
                     { required: true, message: 'Chọn thời gian khám' },
                     () => ({
