@@ -39,7 +39,13 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { deleteUserAPI, getUserByIdAPI, searchUsersAPI, updateUserPermissionAPI } from '../../../api/user.api'
+import {
+  deleteUserAPI,
+  getUserByIdAPI,
+  searchUsersAPI,
+  updateUserPermissionAPI,
+  updateUserIsDeletedAPI
+} from '../../../api/user.api'
 import Detail from './Detail'
 import RegisterNurse from './registerNurse'
 import Update from './Update'
@@ -80,7 +86,6 @@ const UserList: React.FC = () => {
       total: 0
     }
   })
-  const [searchRole, setSearchRole] = useState<string | undefined>(undefined)
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isDetailVisible, setIsDetailVisible] = useState(false)
@@ -88,10 +93,11 @@ const UserList: React.FC = () => {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showRegisterNurseModal, setShowRegisterNurseModal] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<boolean>(false) // Mặc định là Đang hoạt động
 
   useEffect(() => {
     fetchUsers()
-  }, [searchRole, JSON.stringify(tableParams)])
+  }, [statusFilter, JSON.stringify(tableParams)])
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -100,7 +106,8 @@ const UserList: React.FC = () => {
         tableParams.pagination?.current || 1,
         tableParams.pagination?.pageSize || 10,
         searchKeyword,
-        searchRole
+        undefined, // Không truyền searchRole nữa
+        statusFilter
       )
       // Dữ liệu trả về dạng { pageData, total }
       const data = res.pageData || res.data?.data?.pageData || []
@@ -335,18 +342,20 @@ const UserList: React.FC = () => {
 
   const handleDeleteUser = async (user: User) => {
     Modal.confirm({
-      title: 'Xác nhận khóa người dùng',
-      content: 'Bạn có chắc chắn muốn khóa người dùng này?',
-      okText: 'khóa',
-      okType: 'danger',
+      title: user.isDeleted ? 'Xác nhận mở khóa người dùng' : 'Xác nhận khóa người dùng',
+      content: user.isDeleted
+        ? 'Bạn có chắc chắn muốn mở khóa người dùng này?'
+        : 'Bạn có chắc chắn muốn khóa người dùng này?',
+      okText: user.isDeleted ? 'Mở khóa' : 'Khóa',
+      okType: user.isDeleted ? 'primary' : 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          await deleteUserAPI(user._id)
-          toast.success('Đã khóa người dùng thành công!')
+          await updateUserIsDeletedAPI(user._id, !user.isDeleted)
+          toast.success(user.isDeleted ? 'Đã mở khóa người dùng thành công!' : 'Đã khóa người dùng thành công!')
           fetchUsers()
         } catch {
-          console.log('khóa người dùng thất bại!')
+          toast.error(user.isDeleted ? 'Mở khóa người dùng thất bại!' : 'Khóa người dùng thất bại!')
         }
       }
     })
@@ -438,16 +447,20 @@ const UserList: React.FC = () => {
             </Col>
             <Col xs={24} sm={12} md={4}>
               <Select
-                placeholder='Lọc theo vai trò'
-                allowClear
+                placeholder='Lọc theo trạng thái'
+                allowClear={false}
                 size='large'
                 style={{ width: '100%' }}
-                value={searchRole}
-                onChange={setSearchRole}
+                value={statusFilter}
+                onChange={setStatusFilter}
                 suffixIcon={<FilterOutlined />}
               >
-                <Option value='school-nurse'>Y tá trường</Option>
-                <Option value='parent'>Phụ huynh</Option>
+                <Option value={false} style={{ color: 'green', fontWeight: 'bold' }}>
+                  Đang hoạt động
+                </Option>
+                <Option value={true} style={{ color: 'red', fontWeight: 'bold' }}>
+                  Ngưng hoạt động
+                </Option>
               </Select>
             </Col>
             <Col xs={24} sm={24} md={12}>
