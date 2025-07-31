@@ -4,7 +4,8 @@ export enum RegistrationStatus {
   Pending = 'pending',
   Approved = 'approved',
   Cancelled = 'cancelled',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
+  Expired = 'expired'
 }
 
 export interface VaccineRegistration {
@@ -29,11 +30,13 @@ export interface CreateVaccineRegistrationDTO {
   parentId: string
   studentId: string
   eventId: string
-  note?: string
-  cancellationReason?: string
   status?: RegistrationStatus
+  cancellationReason?: string
+  note?: string
   schoolYear: string
 }
+
+export type UpdateVaccineRegistrationDTO = Partial<CreateVaccineRegistrationDTO>
 
 export interface UpdateRegistrationStatusDTO {
   status: RegistrationStatus
@@ -48,6 +51,7 @@ export interface SearchVaccineRegistrationParams {
   studentId?: string
   eventId?: string
   status?: RegistrationStatus
+  isDeleted?: string
 }
 
 export const vaccineRegistrationApi = {
@@ -61,7 +65,7 @@ export const vaccineRegistrationApi = {
   getById: (id: string) => {
     return axiosInstance.get(`/vaccine-registration/${id}`)
   },
-  update: (id: string, data: CreateVaccineRegistrationDTO) => {
+  update: (id: string, data: UpdateVaccineRegistrationDTO) => {
     return axiosInstance.put(`/vaccine-registration/${id}`, data)
   },
   delete: (id: string) => {

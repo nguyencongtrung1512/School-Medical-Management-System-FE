@@ -43,14 +43,16 @@ const statusOptions = [
   { value: RegistrationStatus.Pending, label: 'Chờ duyệt', icon: <ClockCircleOutlined /> },
   { value: RegistrationStatus.Approved, label: 'Đã duyệt', icon: <CheckCircleOutlined /> },
   { value: RegistrationStatus.Rejected, label: 'Từ chối', icon: <StopOutlined /> },
-  { value: RegistrationStatus.Cancelled, label: 'Đã hủy', icon: <StopOutlined /> }
+  { value: RegistrationStatus.Cancelled, label: 'Đã hủy', icon: <StopOutlined /> },
+  { value: RegistrationStatus.Expired, label: 'Hết hạn', icon: <StopOutlined /> }
 ]
 
 const statusLabels: Record<string, string> = {
   pending: 'Chờ duyệt',
   approved: 'Đã duyệt',
   rejected: 'Từ chối',
-  cancelled: 'Đã hủy'
+  cancelled: 'Đã hủy',
+  expired: 'Hết hạn'
 }
 
 interface PopulatedMedicalCheckRegistration extends MedicalCheckRegistration {
@@ -230,8 +232,8 @@ const RegisterMedicalCheck: React.FC = () => {
   const filteredRegistrations: PopulatedMedicalCheckRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus

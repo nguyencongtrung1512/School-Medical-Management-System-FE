@@ -4,7 +4,8 @@ export enum RegistrationStatus {
   Pending = 'pending',
   Approved = 'approved',
   Cancelled = 'cancelled',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
+  Expired = 'expired'
 }
 
 export interface MedicalCheckRegistration {
@@ -33,10 +34,7 @@ export interface CreateMedicalCheckRegistrationDTO {
   schoolYear: string
 }
 
-export interface UpdateMedicalCheckRegistrationDTO extends Partial<CreateMedicalCheckRegistrationDTO> {
-  status?: RegistrationStatus
-  cancellationReason?: string
-}
+export type UpdateMedicalCheckRegistrationDTO = Partial<CreateMedicalCheckRegistrationDTO>
 
 export interface UpdateRegistrationStatusDTO {
   status: RegistrationStatus
@@ -51,6 +49,7 @@ export interface SearchMedicalCheckRegistrationParams {
   studentId?: string
   eventId?: string
   status?: RegistrationStatus
+  isDeleted?: string
 }
 
 export const medicalCheckRegistrationApi = {

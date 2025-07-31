@@ -174,7 +174,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error('Error fetching medical event:', error)
-      message.error('Không thể tải thông tin sự kiện y tế')
+      message.error('Không thể tải thông tin sự cố y tế')
     }
   }
 
@@ -201,13 +201,13 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       }
 
       await medicalEventApi.update(id, updateData)
-      message.success('Cập nhật sự kiện y tế thành công')
+      message.success('Cập nhật sự cố y tế thành công')
       setIsEditing(false)
       fetchMedicalEvent()
       onSuccess()
     } catch (error) {
       console.error('Error updating medical event:', error)
-      message.error('Không thể cập nhật sự kiện y tế')
+      message.error('Không thể cập nhật sự cố y tế')
     } finally {
       setEditLoading(false)
     }
@@ -215,7 +215,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
 
   if (!medicalEvent) {
     return (
-      <Modal title='Chi tiết sự kiện y tế' open={visible} onCancel={onClose} footer={null} width={1000} centered>
+      <Modal title='Chi tiết sự cố y tế' open={visible} onCancel={onClose} footer={null} width={1000} centered>
         <div style={{ textAlign: 'center', padding: '40px' }}>
           <Text>Đang tải thông tin...</Text>
         </div>
@@ -228,7 +228,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
       title={
         <Space>
           <FileTextOutlined style={{ color: '#1890ff' }} />
-          <Text strong>Chi tiết sự kiện y tế</Text>
+          <Text strong>Chi tiết sự cố y tế</Text>
         </Space>
       }
       open={visible}
@@ -292,14 +292,14 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
             title={
               <Space>
                 <FileTextOutlined style={{ color: '#1890ff' }} />
-                <Text strong>2. Thông tin sự kiện</Text>
+                <Text strong>2. Thông tin sự cố</Text>
               </Space>
             }
             size='small'
             style={{ marginBottom: '16px' }}
           >
             <Descriptions bordered column={2} size='small'>
-              <Descriptions.Item label='Tên sự kiện' span={2}>
+              <Descriptions.Item label='Tên sự cố' span={2}>
                 <Tag color='blue' style={{ fontSize: '14px' }}>
                   {medicalEvent.eventName}
                 </Tag>
@@ -408,9 +408,9 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
                 <Badge
                   status={
                     parentContactStatusColors[medicalEvent.parentContactStatus || 'not_contacted'] as
-                      | 'default'
-                      | 'processing'
-                      | 'success'
+                    | 'default'
+                    | 'processing'
+                    | 'success'
                   }
                   text={parentContactStatusVN[medicalEvent.parentContactStatus || 'not_contacted'] || 'Không xác định'}
                 />
@@ -535,7 +535,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
               title={
                 <Space>
                   <FileTextOutlined style={{ color: '#1890ff' }} />
-                  <Text strong>1. Thông tin sự kiện</Text>
+                  <Text strong>1. Thông tin sự cố</Text>
                 </Space>
               }
               size='small'
@@ -543,7 +543,7 @@ const Detail: React.FC<DetailProps> = ({ id, visible, onClose, onSuccess }) => {
             >
               <Row gutter={24}>
                 <Col span={12}>
-                  <Form.Item name='eventName' label='Tên sự kiện'>
+                  <Form.Item name='eventName' label='Tên sự cố'>
                     <Input />
                   </Form.Item>
                 </Col>

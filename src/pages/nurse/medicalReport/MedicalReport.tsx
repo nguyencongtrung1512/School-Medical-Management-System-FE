@@ -111,7 +111,7 @@ const MedicalReport: React.FC = () => {
       if (err.message) {
         message.error(err.message)
       } else {
-        message.error('Có lỗi xảy ra khi tải danh sách sự kiện y tế')
+        message.error('Có lỗi xảy ra khi tải danh sách sự cố y tế')
       }
     } finally {
       setLoading(false)
@@ -124,9 +124,9 @@ const MedicalReport: React.FC = () => {
 
   const showDeleteConfirm = (record: MedicalEvent) => {
     confirm({
-      title: 'Xác nhận xóa sự kiện y tế',
+      title: 'Xác nhận xóa sự cố y tế',
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc chắn muốn xóa sự kiện "${record.eventName}" không?`,
+      content: `Bạn có chắc chắn muốn xóa sự cố "${record.eventName}" không?`,
       okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
@@ -163,7 +163,7 @@ const MedicalReport: React.FC = () => {
       )
     },
     {
-      title: 'Tên sự kiện',
+      title: 'Tên sự cố',
       dataIndex: 'eventName',
       key: 'eventName',
       render: (text: string) => (
@@ -272,7 +272,7 @@ const MedicalReport: React.FC = () => {
   const handleCreateSuccess = () => {
     setIsCreateModalVisible(false)
     fetchMedicalEvents()
-    message.success('Tạo báo cáo sự kiện y tế thành công')
+    message.success('Tạo báo cáo sự cố y tế thành công')
   }
 
   const handleDetailSuccess = () => {
@@ -283,14 +283,14 @@ const MedicalReport: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await medicalEventApi.delete(id)
-      message.success('Xóa sự kiện thành công!')
+      message.success('Xóa sự cố thành công!')
       fetchMedicalEvents()
     } catch (error: unknown) {
       const err = error as { message?: string }
       if (err.message) {
         message.error(err.message)
       } else {
-        message.error('Không thể xóa sự kiện!')
+        message.error('Không thể xóa sự cố!')
       }
     }
   }
@@ -324,7 +324,7 @@ const MedicalReport: React.FC = () => {
     }
   }
 
-  // Lọc theo tên sự kiện
+  // Lọc theo tên sự cố
   const filterByEventName = (events: MedicalEvent[]) => {
     if (eventNameFilter === 'all') return events
     return events.filter((event) => event.eventName === eventNameFilter)
@@ -360,7 +360,7 @@ const MedicalReport: React.FC = () => {
     filterByParentContact(filterByStatus(filterByEventName(filterByTime(medicalEvents))))
   )
 
-  // Lấy danh sách tên sự kiện duy nhất
+  // Lấy danh sách tên sự cố duy nhất
   const uniqueEventNames = Array.from(new Set(medicalEvents.map((event) => event.eventName))).filter(Boolean)
 
   // Thống kê theo thời gian
@@ -435,7 +435,7 @@ const MedicalReport: React.FC = () => {
                 style={{ backgroundColor: '#e6f7ff', border: '1px solid #91d5ff' }}
               >
                 <Space direction='vertical' size={0}>
-                  <Text type='secondary'>Sự kiện hôm nay</Text>
+                  <Text type='secondary'>Sự cố hôm nay</Text>
                   <Text strong style={{ fontSize: '24px', color: '#1890ff' }}>
                     <ClockCircleOutlined style={{ marginRight: '8px' }} />
                     {getTodayEvents()}
@@ -450,7 +450,7 @@ const MedicalReport: React.FC = () => {
                 style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}
               >
                 <Space direction='vertical' size={0}>
-                  <Text type='secondary'>Sự kiện tuần này</Text>
+                  <Text type='secondary'>Sự cố tuần này</Text>
                   <Text strong style={{ fontSize: '24px', color: '#52c41a' }}>
                     <CalendarOutlined style={{ marginRight: '8px' }} />
                     {getWeekEvents()}
@@ -465,7 +465,7 @@ const MedicalReport: React.FC = () => {
                 style={{ backgroundColor: '#f9f0ff', border: '1px solid #d3adf7' }}
               >
                 <Space direction='vertical' size={0}>
-                  <Text type='secondary'>Tổng sự kiện</Text>
+                  <Text type='secondary'>Tổng sự cố</Text>
                   <Text strong style={{ fontSize: '24px', color: '#722ed1' }}>
                     <MedicineBoxOutlined style={{ marginRight: '8px' }} />
                     {medicalEvents.length}
@@ -480,7 +480,7 @@ const MedicalReport: React.FC = () => {
             <Row gutter={[16, 16]} align='middle'>
               <Col xs={24} sm={12} md={6}>
                 <Search
-                  placeholder='Tìm kiếm sự kiện, học sinh...'
+                  placeholder='Tìm kiếm sự cố, học sinh...'
                   allowClear
                   enterButton={<SearchOutlined />}
                   size='middle'
@@ -519,12 +519,12 @@ const MedicalReport: React.FC = () => {
               <Col xs={24} sm={6} md={4}>
                 <Select
                   style={{ width: '100%' }}
-                  placeholder='Tên sự kiện'
+                  placeholder='Tên sự cố'
                   value={eventNameFilter}
                   onChange={setEventNameFilter}
                   suffixIcon={<FilterOutlined />}
                 >
-                  <Option value='all'>Tất cả sự kiện</Option>
+                  <Option value='all'>Tất cả sự cố</Option>
                   {uniqueEventNames.map((eventName) => (
                     <Option key={eventName} value={eventName}>
                       {eventName}
@@ -585,7 +585,7 @@ const MedicalReport: React.FC = () => {
             pagination={{
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total) => `Tổng cộng ${total} sự kiện`,
+              showTotal: (total) => `Tổng cộng ${total} sự cố`,
               pageSize: 10
             }}
             bordered
@@ -595,7 +595,7 @@ const MedicalReport: React.FC = () => {
         </Space>
       </Card>
 
-      {/* Modal tạo sự kiện mới */}
+      {/* Modal tạo sự cố mới */}
       <Modal
         title={
           <Title level={4}>
@@ -614,7 +614,7 @@ const MedicalReport: React.FC = () => {
         <CreateMedicalEventForm onSuccess={handleCreateSuccess} />
       </Modal>
 
-      {/* Modal chi tiết sự kiện */}
+      {/* Modal chi tiết sự cố */}
       <Detail
         id={selectedEventId}
         visible={isDetailModalVisible}
