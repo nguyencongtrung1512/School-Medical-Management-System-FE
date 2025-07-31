@@ -132,7 +132,7 @@ const Sidebar: React.FC = () => {
           <FileTextOutlined className='text-lg' />
         </AnimatedIcon>
       ),
-      label: 'Báo cáo y tế'
+      label: 'Sự cố y tế'
     },
     {
       key: path.MEDICAL_SUPPLIES,
