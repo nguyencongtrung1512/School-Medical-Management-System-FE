@@ -199,7 +199,7 @@ const CreateMedicalEventForm: React.FC<CreateMedicalEventFormProps> = ({ onSucce
   }
 
   return (
-    <Form form={form} layout='vertical' onFinish={onFinish}>
+    <Form form={form} layout='vertical' onFinish={onFinish} className='max-h-[70vh] overflow-y-auto'>
       {/* 1. Student Information Section */}
       <Card
         title={

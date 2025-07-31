@@ -173,36 +173,36 @@ const MedicalReport: React.FC = () => {
         </Space>
       )
     },
-    {
-      title: 'Tình trạng ban đầu',
-      dataIndex: 'initialCondition',
-      key: 'initialCondition',
-      ellipsis: {
-        showTitle: false
-      },
-      render: (text: string) => (
-        <Tooltip placement='topLeft' title={text}>
-          <Text ellipsis style={{ maxWidth: 150 }}>
-            {text || 'Chưa có thông tin'}
-          </Text>
-        </Tooltip>
-      )
-    },
-    {
-      title: 'Biện pháp xử lý',
-      dataIndex: 'actionTaken',
-      key: 'actionTaken',
-      ellipsis: {
-        showTitle: false
-      },
-      render: (text: string) => (
-        <Tooltip placement='topLeft' title={text}>
-          <Text ellipsis style={{ maxWidth: 150 }}>
-            {text || 'Chưa có thông tin'}
-          </Text>
-        </Tooltip>
-      )
-    },
+    // {
+    //   title: 'Tình trạng ban đầu',
+    //   dataIndex: 'initialCondition',
+    //   key: 'initialCondition',
+    //   ellipsis: {
+    //     showTitle: false
+    //   },
+    //   render: (text: string) => (
+    //     <Tooltip placement='topLeft' title={text}>
+    //       <Text ellipsis style={{ maxWidth: 150 }}>
+    //         {text || 'Chưa có thông tin'}
+    //       </Text>
+    //     </Tooltip>
+    //   )
+    // },
+    // {
+    //   title: 'Biện pháp xử lý',
+    //   dataIndex: 'actionTaken',
+    //   key: 'actionTaken',
+    //   ellipsis: {
+    //     showTitle: false
+    //   },
+    //   render: (text: string) => (
+    //     <Tooltip placement='topLeft' title={text}>
+    //       <Text ellipsis style={{ maxWidth: 150 }}>
+    //         {text || 'Chưa có thông tin'}
+    //       </Text>
+    //     </Tooltip>
+    //   )
+    // },
     {
       title: 'Liên hệ phụ huynh',
       dataIndex: 'parentContactStatus',

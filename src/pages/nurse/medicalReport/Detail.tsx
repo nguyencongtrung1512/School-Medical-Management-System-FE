@@ -4,7 +4,6 @@ import {
   ClockCircleOutlined,
   EditOutlined,
   FileTextOutlined,
-  InfoCircleOutlined,
   MedicineBoxOutlined,
   PhoneOutlined,
   SaveOutlined,
