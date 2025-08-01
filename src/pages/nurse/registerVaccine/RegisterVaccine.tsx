@@ -211,19 +211,19 @@ const RegisterVaccine: React.FC = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      render: (_: unknown, record: PopulatedVaccineRegistration) => record.student?.fullName || record.studentId
+      render: (_: unknown, record: PopulatedVaccineRegistration) => record.student?.fullName || "-"
     },
     {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedVaccineRegistration) => record.event?.title || record.eventId
+      render: (_: unknown, record: PopulatedVaccineRegistration) => record.event?.title || "-"
     },
     {
       title: 'Phụ huynh',
       dataIndex: 'parent',
       key: 'parent',
-      render: (_: unknown, record: PopulatedVaccineRegistration) => record.parent?.fullName || record.parentId
+      render: (_: unknown, record: PopulatedVaccineRegistration) => record.parent?.fullName || "-"
     },
     {
       title: 'Trạng thái',
@@ -277,8 +277,8 @@ const RegisterVaccine: React.FC = () => {
   const filteredRegistrations: PopulatedVaccineRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus

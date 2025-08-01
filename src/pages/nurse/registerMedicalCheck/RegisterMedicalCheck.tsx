@@ -166,19 +166,19 @@ const RegisterMedicalCheck: React.FC = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.student?.fullName || record.studentId
+      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.student?.fullName || "-"
     },
     {
       title: 'Sự kiện',
       dataIndex: 'event',
       key: 'event',
-      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.event?.eventName || record.eventId
+      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.event?.eventName || "-"
     },
     {
       title: 'Phụ huynh',
       dataIndex: 'parent',
       key: 'parent',
-      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.parent?.fullName || record.parentId
+      render: (_: unknown, record: PopulatedMedicalCheckRegistration) => record.parent?.fullName || "-"
     },
     {
       title: 'Trạng thái',
@@ -232,8 +232,8 @@ const RegisterMedicalCheck: React.FC = () => {
   const filteredRegistrations: PopulatedMedicalCheckRegistration[] = registrations.filter((item) => {
     const matchesSearch = searchKeyword
       ? (item.student?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
+      (item.event?.eventName || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      (item.parent?.fullName || '').toLowerCase().includes(searchKeyword.toLowerCase())
       : true
     const matchesStatus = statusFilter ? item.status === statusFilter : true
     return matchesSearch && matchesStatus

@@ -38,6 +38,7 @@ import {
   type VaccineEvent,
   type SearchVaccineEventDTO
 } from '../../../api/vaccineEvent.api'
+import { searchVaccineTypesAPI, type VaccineType } from '../../../api/vaccineType.api'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -56,6 +57,7 @@ const ResultsAfterVaccination: React.FC = () => {
   const [events, setEvents] = useState<VaccineEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined)
   const [schoolYearFilter, setSchoolYearFilter] = useState<string | undefined>(undefined)
+  const [vaccineTypes, setVaccineTypes] = useState<VaccineType[]>([])
 
   useEffect(() => {
     fetchVaccineEvents()
@@ -63,6 +65,10 @@ const ResultsAfterVaccination: React.FC = () => {
 
   useEffect(() => {
     fetchEvents()
+  }, [])
+
+  useEffect(() => {
+    fetchVaccineTypes()
   }, [])
 
   const fetchEvents = async () => {
@@ -111,6 +117,22 @@ const ResultsAfterVaccination: React.FC = () => {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchVaccineTypes = async () => {
+    try {
+      const response = await searchVaccineTypesAPI(1, 1000)
+      const pageData = (response as unknown as { pageData: VaccineType[] }).pageData || []
+      setVaccineTypes(pageData)
+    } catch (error: unknown) {
+      console.log('error', error)
+      const err = error as { message?: string }
+      if (err.message) {
+        message.error(err.message)
+      } else {
+        message.error('Không thể tải danh sách loại vaccine')
+      }
     }
   }
 
@@ -186,6 +208,11 @@ const ResultsAfterVaccination: React.FC = () => {
     setIsDetailModalVisible(true)
   }
 
+  const getVaccineTypeName = (vaccineTypeId: string) => {
+    const vaccineType = vaccineTypes.find((type) => type._id === vaccineTypeId)
+    return vaccineType ? vaccineType.name : `Vaccine ID: ${vaccineTypeId}`
+  }
+
   const columns: ColumnsType<VaccineEvent> = [
     {
       title: 'Sự kiện tiêm chủng',
@@ -195,9 +222,9 @@ const ResultsAfterVaccination: React.FC = () => {
           <Badge status={getStatusConfig(record.status).color as 'success' | 'error' | 'processing' | 'default'} />
           <div>
             <div className='font-medium text-gray-900'>{record.title}</div>
-            {/* <Text type='secondary' className='text-sm'>
-              {record.vaccineTypeId}
-            </Text> */}
+            <Text type='secondary' className='text-sm'>
+              {getVaccineTypeName(record.vaccineTypeId)}
+            </Text>
           </div>
         </Space>
       ),
@@ -308,9 +335,10 @@ const ResultsAfterVaccination: React.FC = () => {
   }
 
   const filteredEvents = vaccineEvents.filter((event) => {
+    const vaccineTypeName = getVaccineTypeName(event.vaccineTypeId)
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      vaccineTypeName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
       event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
@@ -389,7 +417,7 @@ const ResultsAfterVaccination: React.FC = () => {
           <Row gutter={[16, 16]} className='mb-4'>
             <Col xs={24} md={8}>
               <Search
-                placeholder='Tìm kiếm theo tên sự kiện, vaccine, địa điểm...'
+                placeholder='Tìm kiếm theo tên sự kiện, tên vaccine, địa điểm...'
                 allowClear
                 enterButton={<SearchOutlined />}
                 onSearch={handleSearch}
@@ -546,7 +574,7 @@ const ResultsAfterVaccination: React.FC = () => {
                   <Descriptions.Item label='Loại vaccine'>
                     <Space>
                       <MedicineBoxOutlined className='text-blue-500' />
-                      {selectedEvent.vaccineTypeId}
+                      {getVaccineTypeName(selectedEvent.vaccineTypeId)}
                     </Space>
                   </Descriptions.Item>
 
