@@ -204,9 +204,11 @@ const ReceiveMedicine: React.FC = () => {
       const parentName = request.parentInfo?.fullName?.toLowerCase() || ''
       const studentCode = request.studentId?.studentIdCode?.toLowerCase() || ''
 
-      if (!studentName.includes(searchLower) &&
+      if (
+        !studentName.includes(searchLower) &&
         !parentName.includes(searchLower) &&
-        !studentCode.includes(searchLower)) {
+        !studentCode.includes(searchLower)
+      ) {
         return false
       }
     }
@@ -217,16 +219,14 @@ const ReceiveMedicine: React.FC = () => {
         // Hoàn thành: approved và tất cả slot đều taken
         if (request.status !== 'approved') return false
         const allSlotsTaken = request.medicines.every((med) => {
-          return med.slotStatus && med.slotStatus.length > 0 &&
-            med.slotStatus.every((slot) => slot.status === 'taken')
+          return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
         })
         if (!allSlotsTaken) return false
       } else if (statusFilter === 'approved') {
         // Đã duyệt: approved nhưng chưa hoàn thành (còn slot chưa taken)
         if (request.status !== 'approved') return false
         const allSlotsTaken = request.medicines.every((med) => {
-          return med.slotStatus && med.slotStatus.length > 0 &&
-            med.slotStatus.every((slot) => slot.status === 'taken')
+          return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
         })
         if (allSlotsTaken) return false // Nếu đã hoàn thành thì không hiển thị trong "Đã duyệt"
       } else {
@@ -259,8 +259,7 @@ const ReceiveMedicine: React.FC = () => {
       // Đã duyệt nhưng chưa hoàn thành (còn slot chưa taken)
       if (r.status !== 'approved') return false
       const allSlotsTaken = r.medicines.every((med) => {
-        return med.slotStatus && med.slotStatus.length > 0 &&
-          med.slotStatus.every((slot) => slot.status === 'taken')
+        return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
       })
       return !allSlotsTaken
     }).length,
@@ -268,8 +267,7 @@ const ReceiveMedicine: React.FC = () => {
       // Hoàn thành: approved và tất cả slot đều taken
       if (r.status !== 'approved') return false
       const allSlotsTaken = r.medicines.every((med) => {
-        return med.slotStatus && med.slotStatus.length > 0 &&
-          med.slotStatus.every((slot) => slot.status === 'taken')
+        return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
       })
       return allSlotsTaken
     }).length,
@@ -324,8 +322,9 @@ const ReceiveMedicine: React.FC = () => {
         // Kiểm tra nếu status là approved và tất cả slotStatus đều là taken
         if (status === 'approved') {
           const allSlotsTaken = record.medicines.every((med) => {
-            return med.slotStatus && med.slotStatus.length > 0 &&
-              med.slotStatus.every((slot) => slot.status === 'taken')
+            return (
+              med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+            )
           })
 
           if (allSlotsTaken) {
@@ -510,9 +509,9 @@ const ReceiveMedicine: React.FC = () => {
     if (!selectedSlot) return
     setSlotLoading(true)
     try {
-      const updatedData = await updateMedicineSlotStatus(selectedSubmissionId, {
+      const response = await updateMedicineSlotStatus(selectedSubmissionId, {
         medicineDetailId: selectedSlot.medicineDetailId,
-        shift: selectedSlot.shift, // Changed from time to shift
+        shift: selectedSlot.shift,
         status: 'taken',
         note: slotNote,
         image: slotImage
@@ -524,20 +523,23 @@ const ReceiveMedicine: React.FC = () => {
       setSlotNote('')
       setSlotImage('')
 
-      // Cập nhật selectedRequest với data mới
-      if (selectedRequest && updatedData) {
+      // Cập nhật selectedRequest trực tiếp từ response
+      if (selectedRequest && response) {
         try {
-          // Populate student and parent info
+          // Xử lý response có thể có cấu trúc khác nhau
+          const responseData = (response as any).data || (response as MedicineSubmissionData)
+
+          // Populate student và parent info nếu cần
           const [studentResponse, parentResponse] = await Promise.all([
-            getStudentByIdAPI(updatedData?.data?.studentId),
-            getUserByIdAPI(updatedData?.data?.parentId)
+            getStudentByIdAPI(responseData.studentId),
+            getUserByIdAPI(responseData.parentId)
           ])
 
-          const updatedSelectedRequest = {
-            ...updatedData,
+          const updatedSelectedRequest: PopulatedMedicineSubmissionData = {
+            ...responseData,
             studentId: studentResponse.data,
             parentInfo: parentResponse.data,
-            medicines: updatedData.medicines.map((med) => ({
+            medicines: (responseData.medicines || []).map((med: MedicineDetail) => ({
               ...med,
               _id: med._id || '',
               createdAt: med.createdAt || '',
@@ -547,22 +549,23 @@ const ReceiveMedicine: React.FC = () => {
 
           setSelectedRequest(updatedSelectedRequest)
         } catch (error) {
-          console.error('Error populating updated data:', error)
+          console.error('Error updating selected request:', error)
           // Fallback: refresh the main list
           setCurrentPage((prev) => prev)
         }
       }
 
       // Cập nhật danh sách chính
-      if (updatedData) {
+      if (response) {
+        const responseData = (response as any).data || (response as MedicineSubmissionData)
         setMedicineRequests((prevRequests) => {
           return prevRequests.map((req) => {
             if (req._id === selectedSubmissionId) {
               return {
-                ...updatedData,
+                ...responseData,
                 studentId: req.studentId, // Giữ nguyên thông tin đã populate
                 parentInfo: req.parentInfo, // Giữ nguyên thông tin đã populate
-                medicines: updatedData.medicines.map((med) => ({
+                medicines: (responseData.medicines || []).map((med: MedicineDetail) => ({
                   ...med,
                   _id: med._id || '',
                   createdAt: med.createdAt || '',
@@ -624,7 +627,6 @@ const ReceiveMedicine: React.FC = () => {
         if (selectedRequest) {
           try {
             const detailRes = await getMedicineSubmissionById(selectedRequest._id)
-            console.log('detailRes', detailRes)
             if (!detailRes.studentId || !detailRes.parentId) {
               throw new Error('Missing student or parent ID')
             }
@@ -771,11 +773,7 @@ const ReceiveMedicine: React.FC = () => {
                 />
               </Col>
               <Col xs={24} md={4}>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={handleResetFilters}
-                  style={{ width: '100%' }}
-                >
+                <Button icon={<ReloadOutlined />} onClick={handleResetFilters} style={{ width: '100%' }}>
                   Xóa bộ lọc
                 </Button>
               </Col>
@@ -793,26 +791,17 @@ const ReceiveMedicine: React.FC = () => {
                       </Tag>
                     )}
                     {statusFilter && (
-                      <Tag
-                        closable
-                        onClose={() => setStatusFilter(undefined)}
-                      >
+                      <Tag closable onClose={() => setStatusFilter(undefined)}>
                         Trạng thái: {statusOptions.find((s) => s.value === statusFilter)?.label}
                       </Tag>
                     )}
                     {shiftFilter && (
-                      <Tag
-                        closable
-                        onClose={() => setShiftFilter(undefined)}
-                      >
+                      <Tag closable onClose={() => setShiftFilter(undefined)}>
                         Ca gửi: {shiftOptions.find((s) => s.value === shiftFilter)?.label}
                       </Tag>
                     )}
                     {dateFilter && (
-                      <Tag
-                        closable
-                        onClose={() => setDateFilter(null)}
-                      >
+                      <Tag closable onClose={() => setDateFilter(null)}>
                         Ngày tạo: {dateFilter.format('DD/MM/YYYY')}
                       </Tag>
                     )}

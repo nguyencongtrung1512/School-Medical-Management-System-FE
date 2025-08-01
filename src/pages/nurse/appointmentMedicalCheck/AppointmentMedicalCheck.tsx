@@ -487,18 +487,18 @@ const AppointmentMedicalCheck: React.FC = () => {
             footer={
               modalType === 'check'
                 ? [
-                  <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
-                    Hủy
-                  </Button>,
-                  <Button key='save' type='primary' onClick={handleCheck}>
-                    Lưu
-                  </Button>
-                ]
+                    <Button key='cancel' onClick={() => setIsDetailModalVisible(false)}>
+                      Hủy
+                    </Button>,
+                    <Button key='save' type='primary' onClick={handleCheck}>
+                      Lưu
+                    </Button>
+                  ]
                 : [
-                  <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
-                    Đóng
-                  </Button>
-                ]
+                    <Button key='close' onClick={() => setIsDetailModalVisible(false)}>
+                      Đóng
+                    </Button>
+                  ]
             }
             width={600}
           >
@@ -704,9 +704,7 @@ const AppointmentMedicalCheck: React.FC = () => {
                   <Form.Item
                     name='reasonIfUnhealthy'
                     label='Lý do nếu không đủ điều kiện'
-                    rules={[
-                      { required: true, message: 'Vui lòng nhập lý do khi không đủ điều kiện' }
-                    ]}
+                    rules={[{ required: true, message: 'Vui lòng nhập lý do khi không đủ điều kiện' }]}
                   >
                     <Input.TextArea
                       rows={3}
