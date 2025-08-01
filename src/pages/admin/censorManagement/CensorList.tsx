@@ -385,32 +385,35 @@ const CensorList: React.FC = () => {
                   </Menu.Item>
                 )}
 
-                <Menu.Item
-                  key='delete'
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={async (e) => {
-                    e.domEvent.stopPropagation()
-                    Modal.confirm({
-                      title: 'Xác nhận xóa sự kiện',
-                      content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
-                      okText: 'Xóa',
-                      okType: 'danger',
-                      cancelText: 'Hủy',
-                      onOk: async () => {
-                        try {
-                          await vaccineEventApi.delete(record._id)
-                          message.success('Xóa sự kiện thành công!')
-                          fetchVaccineEvents()
-                        } catch {
-                          message.error('Không thể xóa sự kiện!')
+                {/* Chỉ hiển thị nút xóa khi chưa hết hạn đăng ký */}
+                {record.endRegistrationDate && dayjs(record.endRegistrationDate).isAfter(dayjs()) && (
+                  <Menu.Item
+                    key='delete'
+                    icon={<DeleteOutlined />}
+                    danger
+                    onClick={async (e) => {
+                      e.domEvent.stopPropagation()
+                      Modal.confirm({
+                        title: 'Xác nhận xóa sự kiện',
+                        content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
+                        okText: 'Xóa',
+                        okType: 'danger',
+                        cancelText: 'Hủy',
+                        onOk: async () => {
+                          try {
+                            await vaccineEventApi.delete(record._id)
+                            message.success('Xóa sự kiện thành công!')
+                            fetchVaccineEvents()
+                          } catch {
+                            message.error('Không thể xóa sự kiện!')
+                          }
                         }
-                      }
-                    })
-                  }}
-                >
-                  Xóa sự kiện
-                </Menu.Item>
+                      })
+                    }}
+                  >
+                    Xóa sự kiện
+                  </Menu.Item>
+                )}
               </>
             )}
             {record.status === VaccineEventStatus.Completed && (
