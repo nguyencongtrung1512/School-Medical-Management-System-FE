@@ -1,4 +1,4 @@
-import { DeleteOutlined, InboxOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import { DeleteOutlined, InboxOutlined, MedicineBoxOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import {
   Button,
   Card,
@@ -13,7 +13,9 @@ import {
   Table,
   Tag,
   Typography,
-  Upload
+  Upload,
+  Select,
+  DatePicker
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useEffect, useState } from 'react'
@@ -29,8 +31,11 @@ import {
 import { getStudentByIdAPI, StudentProfile } from '../../../api/student.api'
 import { getUserByIdAPI, Profile } from '../../../api/user.api'
 import { handleUploadFile } from '../../../utils/upload'
+import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
+const { Search } = Input
+const { Option } = Select
 
 interface PopulatedMedicineSubmissionData {
   parentId: string
@@ -82,6 +87,27 @@ const ReceiveMedicine: React.FC = () => {
   })
   const [rejectReason, setRejectReason] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
+
+  // Filter states
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
+  const [shiftFilter, setShiftFilter] = useState<string | undefined>(undefined)
+  const [dateFilter, setDateFilter] = useState<dayjs.Dayjs | null>(null)
+
+  // Filter options
+  const statusOptions = [
+    { value: 'pending', label: 'Chờ duyệt' },
+    { value: 'approved', label: 'Đã duyệt' },
+    { value: 'rejected', label: 'Từ chối' },
+    { value: 'completed', label: 'Hoàn thành' }
+  ]
+
+  const shiftOptions = [
+    { value: 'morning', label: 'Sáng' },
+    { value: 'noon', label: 'Trưa' },
+    { value: 'afternoon', label: 'Chiều' },
+    { value: 'evening', label: 'Tối' }
+  ]
 
   useEffect(() => {
     const fetchMedicineRequests = async () => {
@@ -156,6 +182,98 @@ const ReceiveMedicine: React.FC = () => {
     }
   }
 
+  // Filter functions
+  const handleSearch = () => {
+    setCurrentPage(1)
+  }
+
+  const handleResetFilters = () => {
+    setSearchKeyword('')
+    setStatusFilter(undefined)
+    setShiftFilter(undefined)
+    setDateFilter(null)
+    setCurrentPage(1)
+  }
+
+  // Filter data based on current filters
+  const filteredMedicineRequests = medicineRequests.filter((request) => {
+    // Search filter
+    if (searchKeyword) {
+      const searchLower = searchKeyword.toLowerCase()
+      const studentName = request.studentId?.fullName?.toLowerCase() || ''
+      const parentName = request.parentInfo?.fullName?.toLowerCase() || ''
+      const studentCode = request.studentId?.studentIdCode?.toLowerCase() || ''
+
+      if (
+        !studentName.includes(searchLower) &&
+        !parentName.includes(searchLower) &&
+        !studentCode.includes(searchLower)
+      ) {
+        return false
+      }
+    }
+
+    // Status filter - cập nhật logic để phù hợp với hiển thị trạng thái mới
+    if (statusFilter) {
+      if (statusFilter === 'completed') {
+        // Hoàn thành: approved và tất cả slot đều taken
+        if (request.status !== 'approved') return false
+        const allSlotsTaken = request.medicines.every((med) => {
+          return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+        })
+        if (!allSlotsTaken) return false
+      } else if (statusFilter === 'approved') {
+        // Đã duyệt: approved nhưng chưa hoàn thành (còn slot chưa taken)
+        if (request.status !== 'approved') return false
+        const allSlotsTaken = request.medicines.every((med) => {
+          return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+        })
+        if (allSlotsTaken) return false // Nếu đã hoàn thành thì không hiển thị trong "Đã duyệt"
+      } else {
+        // Các trạng thái khác: pending, rejected
+        if (request.status !== statusFilter) return false
+      }
+    }
+
+    // Shift filter
+    if (shiftFilter && request.shiftSendMedicine !== shiftFilter) {
+      return false
+    }
+
+    // Date filter
+    if (dateFilter) {
+      const requestDate = dayjs(request.createdAt)
+      if (!requestDate.isSame(dateFilter, 'day')) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  // Thống kê dựa trên dữ liệu đã lọc
+  const stats = {
+    total: filteredMedicineRequests.length,
+    pending: filteredMedicineRequests.filter((r) => r.status === 'pending').length,
+    approved: filteredMedicineRequests.filter((r) => {
+      // Đã duyệt nhưng chưa hoàn thành (còn slot chưa taken)
+      if (r.status !== 'approved') return false
+      const allSlotsTaken = r.medicines.every((med) => {
+        return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+      })
+      return !allSlotsTaken
+    }).length,
+    completed: filteredMedicineRequests.filter((r) => {
+      // Hoàn thành: approved và tất cả slot đều taken
+      if (r.status !== 'approved') return false
+      const allSlotsTaken = r.medicines.every((med) => {
+        return med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+      })
+      return allSlotsTaken
+    }).length,
+    rejected: filteredMedicineRequests.filter((r) => r.status === 'rejected').length
+  }
+
   const columns: ColumnsType<PopulatedMedicineSubmissionData> = [
     {
       title: 'Học sinh',
@@ -186,10 +304,34 @@ const ReceiveMedicine: React.FC = () => {
       render: (shift: string) => SHIFT_LABELS[shift] || shift
     },
     {
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (createdAt: string) => {
+        if (!createdAt) return '-'
+        return dayjs(createdAt).format('DD/MM/YYYY HH:mm')
+      },
+      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+      defaultSortOrder: 'descend'
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
+      render: (status: string, record: PopulatedMedicineSubmissionData) => {
+        // Kiểm tra nếu status là approved và tất cả slotStatus đều là taken
+        if (status === 'approved') {
+          const allSlotsTaken = record.medicines.every((med) => {
+            return (
+              med.slotStatus && med.slotStatus.length > 0 && med.slotStatus.every((slot) => slot.status === 'taken')
+            )
+          })
+
+          if (allSlotsTaken) {
+            return <Tag color='purple'>Hoàn thành</Tag>
+          }
+        }
+
         const statusConfig = {
           pending: { color: 'blue', text: 'Chờ duyệt' },
           approved: { color: 'green', text: 'Đã duyệt' },
@@ -260,15 +402,6 @@ const ReceiveMedicine: React.FC = () => {
         message.error('Có lỗi xảy ra khi cập nhật trạng thái!')
       }
     }
-  }
-
-  // Thống kê
-  const stats = {
-    total: medicineRequests.length,
-    pending: medicineRequests.filter((r) => r.status === 'pending').length,
-    approved: medicineRequests.filter((r) => r.status === 'approved').length,
-    completed: medicineRequests.filter((r) => r.status === 'completed').length,
-    rejected: medicineRequests.filter((r) => r.status === 'rejected').length
   }
 
   // Table columns for slots inside each medicine submission
@@ -376,9 +509,9 @@ const ReceiveMedicine: React.FC = () => {
     if (!selectedSlot) return
     setSlotLoading(true)
     try {
-      const updatedData = await updateMedicineSlotStatus(selectedSubmissionId, {
+      const response = await updateMedicineSlotStatus(selectedSubmissionId, {
         medicineDetailId: selectedSlot.medicineDetailId,
-        shift: selectedSlot.shift, // Changed from time to shift
+        shift: selectedSlot.shift,
         status: 'taken',
         note: slotNote,
         image: slotImage
@@ -390,20 +523,23 @@ const ReceiveMedicine: React.FC = () => {
       setSlotNote('')
       setSlotImage('')
 
-      // Cập nhật selectedRequest với data mới
-      if (selectedRequest && updatedData) {
+      // Cập nhật selectedRequest trực tiếp từ response
+      if (selectedRequest && response) {
         try {
-          // Populate student and parent info
+          // Xử lý response có thể có cấu trúc khác nhau
+          const responseData = (response as any).data || (response as MedicineSubmissionData)
+
+          // Populate student và parent info nếu cần
           const [studentResponse, parentResponse] = await Promise.all([
-            getStudentByIdAPI(updatedData?.data?.studentId),
-            getUserByIdAPI(updatedData?.data?.parentId)
+            getStudentByIdAPI(responseData.studentId),
+            getUserByIdAPI(responseData.parentId)
           ])
 
-          const updatedSelectedRequest = {
-            ...updatedData,
+          const updatedSelectedRequest: PopulatedMedicineSubmissionData = {
+            ...responseData,
             studentId: studentResponse.data,
             parentInfo: parentResponse.data,
-            medicines: updatedData.medicines.map((med) => ({
+            medicines: (responseData.medicines || []).map((med: MedicineDetail) => ({
               ...med,
               _id: med._id || '',
               createdAt: med.createdAt || '',
@@ -413,22 +549,23 @@ const ReceiveMedicine: React.FC = () => {
 
           setSelectedRequest(updatedSelectedRequest)
         } catch (error) {
-          console.error('Error populating updated data:', error)
+          console.error('Error updating selected request:', error)
           // Fallback: refresh the main list
           setCurrentPage((prev) => prev)
         }
       }
 
       // Cập nhật danh sách chính
-      if (updatedData) {
+      if (response) {
+        const responseData = (response as any).data || (response as MedicineSubmissionData)
         setMedicineRequests((prevRequests) => {
           return prevRequests.map((req) => {
             if (req._id === selectedSubmissionId) {
               return {
-                ...updatedData,
+                ...responseData,
                 studentId: req.studentId, // Giữ nguyên thông tin đã populate
                 parentInfo: req.parentInfo, // Giữ nguyên thông tin đã populate
-                medicines: updatedData.medicines.map((med) => ({
+                medicines: (responseData.medicines || []).map((med: MedicineDetail) => ({
                   ...med,
                   _id: med._id || '',
                   createdAt: med.createdAt || '',
@@ -490,7 +627,6 @@ const ReceiveMedicine: React.FC = () => {
         if (selectedRequest) {
           try {
             const detailRes = await getMedicineSubmissionById(selectedRequest._id)
-            console.log('detailRes', detailRes)
             if (!detailRes.studentId || !detailRes.parentId) {
               throw new Error('Missing student or parent ID')
             }
@@ -575,10 +711,110 @@ const ReceiveMedicine: React.FC = () => {
             </Col>
           </Row>
 
+          {/* Bộ lọc */}
+          <Card className='shadow-sm'>
+            <Row gutter={[16, 16]} className='mb-4'>
+              <Col xs={24} md={8}>
+                <Search
+                  placeholder='Tìm kiếm theo tên học sinh, phụ huynh, mã số...'
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onSearch={handleSearch}
+                />
+              </Col>
+              <Col xs={24} md={4}>
+                <Select
+                  placeholder='Lọc theo trạng thái'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={statusFilter}
+                  onChange={(value) => {
+                    setStatusFilter(value)
+                    setCurrentPage(1)
+                  }}
+                >
+                  {statusOptions.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col xs={24} md={4}>
+                <Select
+                  placeholder='Lọc theo ca gửi'
+                  allowClear
+                  style={{ width: '100%' }}
+                  value={shiftFilter}
+                  onChange={(value) => {
+                    setShiftFilter(value)
+                    setCurrentPage(1)
+                  }}
+                >
+                  {shiftOptions.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col xs={24} md={4}>
+                <DatePicker
+                  placeholder='Lọc theo ngày tạo'
+                  style={{ width: '100%' }}
+                  value={dateFilter}
+                  onChange={(date) => {
+                    setDateFilter(date)
+                    setCurrentPage(1)
+                  }}
+                  format='DD/MM/YYYY'
+                />
+              </Col>
+              <Col xs={24} md={4}>
+                <Button icon={<ReloadOutlined />} onClick={handleResetFilters} style={{ width: '100%' }}>
+                  Xóa bộ lọc
+                </Button>
+              </Col>
+            </Row>
+
+            {/* Thông tin filter hiện tại */}
+            {(searchKeyword || statusFilter || shiftFilter || dateFilter) && (
+              <Row className='mb-4'>
+                <Col span={24}>
+                  <Space wrap>
+                    <span style={{ fontWeight: 'bold' }}>Bộ lọc hiện tại:</span>
+                    {searchKeyword && (
+                      <Tag closable onClose={() => setSearchKeyword('')}>
+                        Tìm kiếm: {searchKeyword}
+                      </Tag>
+                    )}
+                    {statusFilter && (
+                      <Tag closable onClose={() => setStatusFilter(undefined)}>
+                        Trạng thái: {statusOptions.find((s) => s.value === statusFilter)?.label}
+                      </Tag>
+                    )}
+                    {shiftFilter && (
+                      <Tag closable onClose={() => setShiftFilter(undefined)}>
+                        Ca gửi: {shiftOptions.find((s) => s.value === shiftFilter)?.label}
+                      </Tag>
+                    )}
+                    {dateFilter && (
+                      <Tag closable onClose={() => setDateFilter(null)}>
+                        Ngày tạo: {dateFilter.format('DD/MM/YYYY')}
+                      </Tag>
+                    )}
+                  </Space>
+                </Col>
+              </Row>
+            )}
+          </Card>
+
           {/* Bảng danh sách */}
           <Table
             columns={columns}
-            dataSource={medicineRequests}
+            dataSource={filteredMedicineRequests}
             rowKey='_id'
             pagination={{
               current: currentPage,

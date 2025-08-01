@@ -33,7 +33,6 @@ import React, { useEffect, useState } from 'react'
 import {
   AppointmentStatus,
   medicalCheckAppointmentApi,
-  PostMedicalCheckStatus,
   type MedicalCheckAppointment,
   type SearchMedicalCheckAppointmentDTO
 } from '../../../api/medicalCheckAppointment.api'
@@ -50,14 +49,6 @@ const statusOptions = [
   { value: AppointmentStatus.Cancelled, label: 'Đã hủy', icon: <StopOutlined /> },
   { value: AppointmentStatus.MedicalChecked, label: 'Đã khám sức khỏe', icon: <CheckCircleOutlined /> }
 ]
-
-const postMedicalCheckStatusLabels: Record<string, string> = {
-  not_checked: 'Chưa đánh giá',
-  healthy: 'Bình thường, khỏe mạnh',
-  need_follow_up: 'Cần theo dõi thêm',
-  sick: 'Phát hiện bệnh',
-  other: 'Khác'
-}
 
 interface PopulatedMedicalCheckAppointment extends MedicalCheckAppointment {
   student?: { _id: string; fullName?: string; avatar?: string }
@@ -76,6 +67,7 @@ const AppointmentMedicalCheck: React.FC = () => {
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'check' | 'view' | null>(null)
   const [checkForm] = Form.useForm()
+  const [isHealthy, setIsHealthy] = useState<boolean | undefined>(undefined)
 
   // Thêm state cho filter
   const [events, setEvents] = useState<MedicalCheckEvent[]>([])
@@ -122,8 +114,8 @@ const AppointmentMedicalCheck: React.FC = () => {
       ) as SearchMedicalCheckAppointmentDTO
 
       const response = await medicalCheckAppointmentApi.search(cleanParams)
-      const pageData = (response as unknown as { pageData: PopulatedMedicalCheckAppointment[] }).pageData || []
-      const total = (response as unknown as { pageInfo?: { totalItems: number } }).pageInfo?.totalItems || 0
+      const pageData = response?.pageData || []
+      const total = response?.pageInfo?.totalItems || 0
       setAppointments(pageData)
       setTotalItems(total)
     } catch (error) {
@@ -169,19 +161,45 @@ const AppointmentMedicalCheck: React.FC = () => {
   const handleOpenCheck = (record: PopulatedMedicalCheckAppointment) => {
     setSelected(record)
     setModalType('check')
+    setIsHealthy(record.isHealthy)
     checkForm.setFieldsValue({
       height: record.height,
       weight: record.weight,
+      bmi: record.bmi,
       visionLeft: record.visionLeft,
       visionRight: record.visionRight,
       bloodPressure: record.bloodPressure,
       heartRate: record.heartRate,
+      dentalHealth: record.dentalHealth,
+      entHealth: record.entHealth,
+      skinCondition: record.skinCondition,
       isHealthy: record.isHealthy,
       reasonIfUnhealthy: record.reasonIfUnhealthy,
       notes: record.notes,
-      checkedAt: record.checkedAt ? dayjs(record.checkedAt) : dayjs()
+      medicalCheckedAt: record.medicalCheckedAt ? dayjs(record.medicalCheckedAt) : dayjs()
     })
     setIsDetailModalVisible(true)
+  }
+
+  // Hàm tính BMI tự động
+  const calculateBMI = (height: number, weight: number): number | null => {
+    if (!height || !weight || height <= 0 || weight <= 0) return null
+    const heightInMeters = height / 100 // Chuyển từ cm sang m
+    const bmi = weight / (heightInMeters * heightInMeters)
+    return Math.round(bmi * 10) / 10 // Làm tròn đến 1 chữ số thập phân
+  }
+
+  // Hàm xử lý khi chiều cao hoặc cân nặng thay đổi
+  const handleHeightWeightChange = () => {
+    const height = checkForm.getFieldValue('height')
+    const weight = checkForm.getFieldValue('weight')
+
+    if (height && weight) {
+      const bmi = calculateBMI(height, weight)
+      if (bmi !== null) {
+        checkForm.setFieldsValue({ bmi })
+      }
+    }
   }
 
   const handleOpenView = (record: PopulatedMedicalCheckAppointment) => {
@@ -198,7 +216,7 @@ const AppointmentMedicalCheck: React.FC = () => {
 
       const submitData = {
         ...values,
-        checkedAt: values.checkedAt ? values.checkedAt.toDate() : undefined
+        medicalCheckedAt: values.medicalCheckedAt ? values.medicalCheckedAt.toDate() : undefined
       }
       console.log('📤 Dữ liệu gửi đi:', submitData)
 
@@ -242,8 +260,8 @@ const AppointmentMedicalCheck: React.FC = () => {
     },
     {
       title: 'Ngày khám',
-      dataIndex: 'checkedAt',
-      key: 'checkedAt',
+      dataIndex: 'medicalCheckedAt',
+      key: 'medicalCheckedAt',
       render: (_: unknown, record: PopulatedMedicalCheckAppointment) => formatDateTime(record.medicalCheckedAt || '')
     },
     {
@@ -267,12 +285,6 @@ const AppointmentMedicalCheck: React.FC = () => {
             !dayjs().isSameOrAfter(dayjs(record.event.eventDate), 'day') && (
               <Tag color='orange'>Chưa tới ngày khám ({dayjs(record.event.eventDate).format('DD/MM/YYYY')})</Tag>
             )}
-
-          {record.postMedicalCheckStatus && record.postMedicalCheckStatus !== PostMedicalCheckStatus.NotChecked && (
-            <Button type='text' icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>
-              Xem kết quả
-            </Button>
-          )}
         </Space>
       )
     }
@@ -511,7 +523,13 @@ const AppointmentMedicalCheck: React.FC = () => {
                     }
                   ]}
                 >
-                  <Input type='number' placeholder='Nhập chiều cao' min={50} max={250} />
+                  <Input
+                    type='number'
+                    placeholder='Nhập chiều cao'
+                    min={50}
+                    max={250}
+                    onChange={handleHeightWeightChange}
+                  />
                 </Form.Item>
                 <Form.Item
                   name='weight'
@@ -532,7 +550,43 @@ const AppointmentMedicalCheck: React.FC = () => {
                     }
                   ]}
                 >
-                  <Input type='number' placeholder='Nhập cân nặng' min={20} max={100} step={0.1} />
+                  <Input
+                    type='number'
+                    placeholder='Nhập cân nặng'
+                    min={20}
+                    max={100}
+                    step={0.1}
+                    onChange={handleHeightWeightChange}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name='bmi'
+                  label='BMI (Tự động tính)'
+                  rules={[
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve()
+                        const numValue = Number(value)
+                        if (isNaN(numValue)) {
+                          return Promise.reject(new Error('BMI phải là số'))
+                        }
+                        if (numValue < 10 || numValue > 50) {
+                          return Promise.reject(new Error('BMI phải từ 10-50'))
+                        }
+                        return Promise.resolve()
+                      }
+                    }
+                  ]}
+                >
+                  <Input
+                    type='number'
+                    placeholder='Tự động tính từ chiều cao và cân nặng'
+                    min={10}
+                    max={50}
+                    step={0.1}
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5' }}
+                  />
                 </Form.Item>
                 <Form.Item
                   name='visionLeft'
@@ -608,36 +662,62 @@ const AppointmentMedicalCheck: React.FC = () => {
                   <Input type='number' placeholder='Nhập nhịp tim' min={40} max={200} />
                 </Form.Item>
                 <Form.Item
+                  name='dentalHealth'
+                  label='Tình trạng răng miệng'
+                  rules={[{ required: true, message: 'Vui lòng nhập tình trạng răng miệng' }]}
+                >
+                  <Input.TextArea rows={2} placeholder='Nhập tình trạng răng miệng' maxLength={200} />
+                </Form.Item>
+                <Form.Item
+                  name='entHealth'
+                  label='Tình trạng tai mũi họng'
+                  rules={[{ required: true, message: 'Vui lòng nhập tình trạng tai mũi họng' }]}
+                >
+                  <Input.TextArea rows={2} placeholder='Nhập tình trạng tai mũi họng' maxLength={200} />
+                </Form.Item>
+                <Form.Item
+                  name='skinCondition'
+                  label='Tình trạng da liễu'
+                  rules={[{ required: true, message: 'Vui lòng nhập tình trạng da liễu' }]}
+                >
+                  <Input.TextArea rows={2} placeholder='Nhập tình trạng da liễu' maxLength={200} />
+                </Form.Item>
+                <Form.Item
                   name='isHealthy'
                   label='Đủ điều kiện khám'
                   rules={[{ required: true, message: 'Chọn đủ điều kiện' }]}
                 >
-                  <Select>
+                  <Select
+                    value={isHealthy}
+                    onChange={(value) => {
+                      setIsHealthy(value)
+                      if (value === true) {
+                        checkForm.setFieldsValue({ reasonIfUnhealthy: '' })
+                      }
+                    }}
+                  >
                     <Option value={true}>Có</Option>
                     <Option value={false}>Không</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item
-                  name='reasonIfUnhealthy'
-                  label='Lý do nếu không đủ điều kiện'
-                  rules={[
-                    ({ getFieldValue }) => ({
-                      validator(_, value) {
-                        if (getFieldValue('isHealthy') === false && !value) {
-                          return Promise.reject(new Error('Vui lòng nhập lý do khi không đủ điều kiện'))
-                        }
-                        return Promise.resolve()
-                      }
-                    })
-                  ]}
-                >
-                  <Input placeholder='Nhập lý do' />
-                </Form.Item>
+                {isHealthy === false && (
+                  <Form.Item
+                    name='reasonIfUnhealthy'
+                    label='Lý do nếu không đủ điều kiện'
+                    rules={[{ required: true, message: 'Vui lòng nhập lý do khi không đủ điều kiện' }]}
+                  >
+                    <Input.TextArea
+                      rows={3}
+                      placeholder='Nhập lý do không đủ điều kiện khám sức khỏe'
+                      maxLength={500}
+                    />
+                  </Form.Item>
+                )}
                 <Form.Item name='notes' label='Ghi chú'>
                   <Input.TextArea rows={2} maxLength={300} />
                 </Form.Item>
                 <Form.Item
-                  name='checkedAt'
+                  name='medicalCheckedAt'
                   label='Thời gian khám'
                   extra={
                     selected?.event?.eventDate
@@ -696,19 +776,19 @@ const AppointmentMedicalCheck: React.FC = () => {
                 <Descriptions.Item label='Trạng thái'>{getStatusTag(selected.status)}</Descriptions.Item>
                 <Descriptions.Item label='Chiều cao'>{selected.height || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Cân nặng'>{selected.weight || '-'}</Descriptions.Item>
+                <Descriptions.Item label='BMI'>{selected.bmi || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Thị lực trái'>{selected.visionLeft || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Thị lực phải'>{selected.visionRight || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Huyết áp'>{selected.bloodPressure || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Nhịp tim'>{selected.heartRate || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Tình trạng răng miệng'>{selected.dentalHealth || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Tình trạng tai mũi họng'>{selected.entHealth || '-'}</Descriptions.Item>
+                <Descriptions.Item label='Tình trạng da liễu'>{selected.skinCondition || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Đủ điều kiện khám'>{selected.isHealthy ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label='Lý do nếu không đủ điều kiện'>
                   {selected.reasonIfUnhealthy || '-'}
                 </Descriptions.Item>
                 <Descriptions.Item label='Ghi chú'>{selected.notes || '-'}</Descriptions.Item>
-                <Descriptions.Item label='Tình trạng sau khám'>
-                  {postMedicalCheckStatusLabels[selected.postMedicalCheckStatus || 'not_checked']}
-                </Descriptions.Item>
-                <Descriptions.Item label='Ghi chú sau khám'>{selected.postMedicalCheckNotes || '-'}</Descriptions.Item>
                 <Descriptions.Item label='Năm học'>{selected.schoolYear}</Descriptions.Item>
               </Descriptions>
             )}
