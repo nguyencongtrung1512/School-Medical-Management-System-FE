@@ -30,10 +30,7 @@ import {
   Table,
   Tag,
   Tooltip,
-  Typography,
-  Form,
-  Select,
-  Descriptions
+  Typography
 } from 'antd'
 import type React from 'react'
 import { useEffect, useState } from 'react'
@@ -52,15 +49,16 @@ interface Student {
   fullName: string
   studentIdCode: string
   studentCode: string
-  gender: string
-  dob: string
-  classId: string
-  avatar: string
-  position: number
+  gender?: string
+  dob?: string
+  classId?: string
+  avatar?: string
+  position?: number
   parentName?: string
   parentPhone?: string
   isDeleted?: boolean
   status: 'active' | 'graduated' | 'transferred' | 'reserved'
+  class?: string | { name?: string }
 }
 
 interface Classroom {
@@ -79,11 +77,12 @@ const StudentList: React.FC = () => {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     fetchClassData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classId])
+  }, [classId, refreshKey])
 
   const fetchClassData = async () => {
     if (!classId) return
@@ -128,11 +127,23 @@ const StudentList: React.FC = () => {
   }
 
   const handleStudentUpdated = async (updatedStudentId: string) => {
-    setLoadingDetail(true)
     try {
+      // Cập nhật lại thông tin chi tiết học sinh trước
+      setLoadingDetail(true)
       const res = await getStudentByIdAPI(updatedStudentId)
       setStudentDetail(res.data)
-      await fetchClassData() // Thêm dòng này để cập nhật lại danh sách
+
+      // Sau đó cập nhật lại danh sách học sinh
+      await fetchClassData()
+
+      // Force refresh danh sách
+      setRefreshKey(prev => prev + 1)
+
+      // Đóng modal sau khi cập nhật xong
+      setTimeout(() => {
+        setIsDetailModalVisible(false)
+      }, 1000)
+
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -177,8 +188,8 @@ const StudentList: React.FC = () => {
     const data = studentList.map((s) => ({
       'Họ tên': s.fullName,
       'Mã SV': s.studentIdCode,
-      'Giới tính': s.gender === 'male' ? 'Nam' : 'Nữ',
-      'Ngày sinh': formatDate(s.dob)
+      'Giới tính': s.gender === 'male' ? 'Nam' : s.gender === 'female' ? 'Nữ' : 'Khác',
+      'Ngày sinh': s.dob ? formatDate(s.dob) : 'Chưa cập nhật'
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
@@ -225,9 +236,9 @@ const StudentList: React.FC = () => {
       dataIndex: 'dob',
       key: 'dob',
       width: 140,
-      render: (dob: string) => (
+      render: (dob: string | undefined) => (
         <div className='text-center'>
-          <div className='text-sm font-medium'>{formatDate(dob)}</div>
+          <div className='text-sm font-medium'>{dob ? formatDate(dob) : 'Chưa cập nhật'}</div>
         </div>
       )
     },
@@ -482,7 +493,7 @@ const StudentList: React.FC = () => {
         onOk={handleCreateOk}
       />
 
-      <style jsx global>{`
+      <style>{`
         .custom-table .ant-table-thead > tr > th {
           background-color: #fafafa;
           font-weight: 600;

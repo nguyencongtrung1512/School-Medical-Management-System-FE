@@ -21,10 +21,34 @@ import { formatDate } from '../../../utils/utils'
 
 const { Title } = Typography
 
+interface Student {
+  _id: string
+  fullName: string
+  studentIdCode?: string
+  studentCode?: string
+  gender?: string
+  dob?: string
+  classId?: string
+  avatar?: string
+  position?: number
+  parentName?: string
+  parentPhone?: string
+  isDeleted?: boolean
+  status: 'active' | 'graduated' | 'transferred' | 'reserved'
+  class?: string | { name?: string }
+  parentInfos?: Array<{
+    _id: string
+    fullName: string
+    type: string
+    email: string
+    phone: string
+  }>
+}
+
 interface StudentDetailProps {
   open: boolean
   onCancel: () => void
-  student: any
+  student: Student | null
   loading: boolean
   onUpdated?: (updatedStudentId: string) => void
 }
@@ -85,6 +109,8 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
   }, [student, isEdit, form])
 
   const handleSave = async () => {
+    if (!student) return
+
     try {
       setSaving(true)
       const values = await form.validateFields()
@@ -95,7 +121,10 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
       })
       message.success('Cập nhật học sinh thành công')
       setIsEdit(false)
-      if (onUpdated && student) onUpdated(student._id)
+      // Gọi callback để cập nhật lại danh sách
+      if (onUpdated) {
+        onUpdated(student._id)
+      }
     } catch (error: unknown) {
       console.log('error', error)
       const err = error as { message?: string }
@@ -189,7 +218,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
           ) : (
             <>
               <Descriptions bordered column={2}>
-                <Descriptions.Item label='Ngày sinh'>{formatDate(student.dob)}</Descriptions.Item>
+                <Descriptions.Item label='Ngày sinh'>{student.dob ? formatDate(student.dob) : 'Chưa cập nhật'}</Descriptions.Item>
                 <Descriptions.Item label='Giới tính'>
                   {student.gender === 'male' ? 'Nam' : student.gender === 'female' ? 'Nữ' : 'Khác'}
                 </Descriptions.Item>
@@ -205,7 +234,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ open, onCancel, student, 
                 <Descriptions.Item label='Phụ huynh'>
                   {Array.isArray(student.parentInfos) && student.parentInfos.length > 0 ? (
                     <ul style={{ paddingLeft: 16, margin: 0 }}>
-                      {student.parentInfos.map((parent: any) => (
+                      {student.parentInfos.map((parent) => (
                         <li key={parent._id}>
                           <b>{parent.fullName}</b>
                           {parent.type === 'father'
