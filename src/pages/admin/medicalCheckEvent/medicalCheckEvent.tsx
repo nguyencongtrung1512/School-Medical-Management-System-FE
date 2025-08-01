@@ -39,7 +39,6 @@ import {
   Typography,
   Menu,
   Select,
-  DatePicker,
   Form
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -322,38 +321,41 @@ const MedicalCheckEvent: React.FC = () => {
                   </Menu.Item>
                 )}
 
-                <Menu.Item
-                  key='delete'
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={async (e) => {
-                    e.domEvent.stopPropagation()
-                    Modal.confirm({
-                      title: 'Xác nhận xóa sự kiện',
-                      content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
-                      okText: 'Xóa',
-                      okType: 'danger',
-                      cancelText: 'Hủy',
-                      onOk: async () => {
-                        try {
-                          await medicalCheckEventApi.delete(record._id)
-                          message.success('Xóa sự kiện thành công!')
-                          fetchEvents()
-                        } catch (error: unknown) {
-                          console.log('error', error)
-                          const err = error as { message?: string }
-                          if (err.message) {
-                            message.error(err.message)
-                          } else {
-                            message.error('Không thể xóa sự kiện!')
+                {/* Chỉ hiển thị nút xóa khi chưa hết hạn đăng ký */}
+                {record.endRegistrationDate && dayjs(record.endRegistrationDate).isAfter(dayjs()) && (
+                  <Menu.Item
+                    key='delete'
+                    icon={<DeleteOutlined />}
+                    danger
+                    onClick={async (e) => {
+                      e.domEvent.stopPropagation()
+                      Modal.confirm({
+                        title: 'Xác nhận xóa sự kiện',
+                        content: 'Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác.',
+                        okText: 'Xóa',
+                        okType: 'danger',
+                        cancelText: 'Hủy',
+                        onOk: async () => {
+                          try {
+                            await medicalCheckEventApi.delete(record._id)
+                            message.success('Xóa sự kiện thành công!')
+                            fetchEvents()
+                          } catch (error: unknown) {
+                            console.log('error', error)
+                            const err = error as { message?: string }
+                            if (err.message) {
+                              message.error(err.message)
+                            } else {
+                              message.error('Không thể xóa sự kiện!')
+                            }
                           }
                         }
-                      }
-                    })
-                  }}
-                >
-                  Xóa sự kiện
-                </Menu.Item>
+                      })
+                    }}
+                  >
+                    Xóa sự kiện
+                  </Menu.Item>
+                )}
               </>
             )}
             {record.status === EventStatus.Completed && (
@@ -662,46 +664,46 @@ const MedicalCheckEvent: React.FC = () => {
         footer={
           selectedEvent?.status === EventStatus.Ongoing
             ? [
-                <Button key='cancel' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>,
-                <Button
-                  key='reject'
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => {
-                    Modal.confirm({
-                      title: 'Xác nhận hủy sự kiện',
-                      content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
-                      okText: 'Xác nhận',
-                      cancelText: 'Hủy',
-                      onOk: () => {
-                        handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
-                        setIsModalVisible(false)
-                      }
-                    })
-                  }}
-                >
-                  Hủy sự kiện
-                </Button>,
-                <Button
-                  key='approve'
-                  type='primary'
-                  icon={<CheckOutlined />}
-                  onClick={() => {
-                    handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
-                    setIsModalVisible(false)
-                  }}
-                  disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
-                >
-                  Hoàn thành
-                </Button>
-              ]
+              <Button key='cancel' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>,
+              <Button
+                key='reject'
+                danger
+                icon={<CloseOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Xác nhận hủy sự kiện',
+                    content: `Bạn có chắc chắn muốn hủy sự kiện "${selectedEvent?.eventName || ''}"?`,
+                    okText: 'Xác nhận',
+                    cancelText: 'Hủy',
+                    onOk: () => {
+                      handleUpdateStatus(selectedEvent?._id || '', EventStatus.Cancelled)
+                      setIsModalVisible(false)
+                    }
+                  })
+                }}
+              >
+                Hủy sự kiện
+              </Button>,
+              <Button
+                key='approve'
+                type='primary'
+                icon={<CheckOutlined />}
+                onClick={() => {
+                  handleUpdateStatus(selectedEvent?._id || '', EventStatus.Completed)
+                  setIsModalVisible(false)
+                }}
+                disabled={selectedEvent && dayjs(selectedEvent.eventDate).isAfter(dayjs())}
+              >
+                Hoàn thành
+              </Button>
+            ]
             : [
-                <Button key='close' onClick={() => setIsModalVisible(false)}>
-                  Đóng
-                </Button>
-              ]
+              <Button key='close' onClick={() => setIsModalVisible(false)}>
+                Đóng
+              </Button>
+            ]
         }
       >
         {selectedEvent && (

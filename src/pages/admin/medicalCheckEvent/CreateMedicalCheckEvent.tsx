@@ -6,14 +6,13 @@ import {
   MedicineBoxOutlined,
   TeamOutlined
 } from '@ant-design/icons'
-import { Button, Card, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space, Typography } from 'antd'
+import { Button, Col, DatePicker, Divider, Form, Input, message, Row, Select, Space } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import React, { useEffect, useState } from 'react'
 import { getGradesAPI } from '../../../api/grade.api'
 import { EventStatus, medicalCheckEventApi, type CreateMedicalCheckEventDTO } from '../../../api/medicalCheckEvent.api'
 
 const { Option } = Select
-const { Title, Text } = Typography
 const { TextArea } = Input
 
 interface Grade {
@@ -60,11 +59,12 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
 
   useEffect(() => {
     fetchGrades()
-    // Tính năm học mặc định
+    // Tính năm học mặc định từ ngày 1/6
     const now = dayjs()
     const year = now.year()
     let schoolYearValue = ''
-    if (now.month() + 1 < 6) {
+    // Từ ngày 1/6 trở đi là năm học mới
+    if (now.isBefore(dayjs(`${year}-06-01`))) {
       schoolYearValue = `${year - 1}-${year}`
     } else {
       schoolYearValue = `${year}-${year + 1}`
@@ -106,11 +106,12 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
       await medicalCheckEventApi.create(data)
       message.success('Tạo sự kiện khám sức khỏe thành công')
       form.resetFields()
-      // Reset năm học về giá trị mặc định
+      // Reset năm học về giá trị mặc định từ ngày 1/6
       const now = dayjs()
       const year = now.year()
       let schoolYearValue = ''
-      if (now.month() + 1 < 6) {
+      // Từ ngày 1/6 trở đi là năm học mới
+      if (now.isBefore(dayjs(`${year}-06-01`))) {
         schoolYearValue = `${year - 1}-${year}`
       } else {
         schoolYearValue = `${year}-${year + 1}`
@@ -214,6 +215,7 @@ const CreateMedicalCheckEvent: React.FC<CreateMedicalCheckEventProps> = ({ onSuc
             >
               <Input
                 value={schoolYear}
+                disabled
                 onChange={(e) => setSchoolYear(e.target.value)}
                 placeholder='VD: 2023-2024'
                 className='rounded-lg'
