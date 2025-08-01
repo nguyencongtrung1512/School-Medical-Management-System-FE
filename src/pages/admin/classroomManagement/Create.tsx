@@ -1,5 +1,5 @@
 import { Form, Input, message, Modal } from 'antd'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { createClassAPI } from '../../../api/classes.api'
 
@@ -8,9 +8,33 @@ interface CreateClassProps {
   onCancel: () => void
   onOk: () => void
 }
+
 const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onOk }) => {
   const [form] = Form.useForm()
   const { gradeId } = useParams<{ gradeId: string }>()
+
+  // Function to calculate school year based on current date
+  const getCurrentSchoolYear = (): string => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1 // getMonth() returns 0-11
+
+    // If current month is June or later (month >= 6), use current year as start
+    // If current month is before June (month < 6), use previous year as start
+    const startYear = currentMonth >= 6 ? currentYear : currentYear - 1
+    const endYear = startYear + 1
+
+    return `${startYear}-${endYear}`
+  }
+
+  // Set default school year when modal opens
+  useEffect(() => {
+    if (isModalVisible) {
+      form.setFieldsValue({
+        schoolYear: getCurrentSchoolYear()
+      })
+    }
+  }, [isModalVisible, form])
 
   const handleOk = async () => {
     try {
@@ -57,7 +81,7 @@ const CreateClass: React.FC<CreateClassProps> = ({ isModalVisible, onCancel, onO
           <Input placeholder='Nhập tên lớp' />
         </Form.Item>
         <Form.Item name='schoolYear' label='Năm học' rules={[{ required: true, message: 'Vui lòng nhập năm học!' }]}>
-          <Input placeholder='2024-2025' />
+          <Input disabled />
         </Form.Item>
       </Form>
     </Modal>
