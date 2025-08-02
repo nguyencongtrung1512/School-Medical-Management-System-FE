@@ -9,14 +9,6 @@ export enum AppointmentStatus {
   MedicalChecked = 'medicalChecked'
 }
 
-export enum PostMedicalCheckStatus {
-  NotChecked = 'not_checked',
-  Healthy = 'healthy',
-  NeedFollowUp = 'need_follow_up',
-  Sick = 'sick',
-  Other = 'other'
-}
-
 export interface MedicalCheckAppointment {
   _id: string
   studentId: string
@@ -24,20 +16,21 @@ export interface MedicalCheckAppointment {
   checkedBy?: string
   height?: number
   weight?: number
+  bmi?: number
   visionLeft?: number
   visionRight?: number
   bloodPressure?: string
   heartRate?: number
+  dentalHealth?: string
+  entHealth?: string
+  skinCondition?: string
   notes?: string
   isHealthy: boolean
   reasonIfUnhealthy?: string
   isDeleted?: boolean
   status: AppointmentStatus
   schoolYear: string
-  checkedAt?: string
   medicalCheckedAt?: string
-  postMedicalCheckStatus?: PostMedicalCheckStatus
-  postMedicalCheckNotes?: string
   createdAt?: string
   updatedAt?: string
   student?: { _id: string; fullName?: string; avatar?: string }
@@ -47,17 +40,21 @@ export interface MedicalCheckAppointment {
 export interface CreateMedicalCheckAppointmentDTO {
   studentId: string
   eventId: string
-  checkedBy?: string
+  schoolYear: string
   height?: number
   weight?: number
+  bmi?: number
   visionLeft?: number
   visionRight?: number
   bloodPressure?: string
   heartRate?: number
+  dentalHealth?: string
+  entHealth?: string
+  skinCondition?: string
   notes?: string
   isHealthy: boolean
   reasonIfUnhealthy?: string
-  schoolYear: string
+  medicalCheckedAt?: Date
 }
 
 export interface UpdateMedicalCheckAppointmentDTO extends Partial<CreateMedicalCheckAppointmentDTO> {
@@ -65,17 +62,19 @@ export interface UpdateMedicalCheckAppointmentDTO extends Partial<CreateMedicalC
 }
 
 export interface CheckMedicalCheckAppointmentDTO {
+  height?: number
+  weight?: number
+  visionLeft?: number
+  visionRight?: number
   bloodPressure?: string
+  heartRate?: number
+  dentalHealth?: string
+  entHealth?: string
+  skinCondition?: string
   isHealthy: boolean
   reasonIfUnhealthy?: string
   notes?: string
-  checkedAt?: Date
   medicalCheckedAt?: Date
-}
-
-export interface UpdatePostMedicalCheckDTO {
-  postMedicalCheckStatus: PostMedicalCheckStatus
-  postMedicalCheckNotes?: string
 }
 
 export interface SearchMedicalCheckAppointmentDTO {
@@ -88,6 +87,7 @@ export interface SearchMedicalCheckAppointmentDTO {
   query?: string
   schoolYear?: string
   status?: AppointmentStatus
+  isDeleted?: string
 }
 
 export const medicalCheckAppointmentApi = {
