@@ -195,9 +195,9 @@ const ResultsAfterVaccination: React.FC = () => {
           <Badge status={getStatusConfig(record.status).color as 'success' | 'error' | 'processing' | 'default'} />
           <div>
             <div className='font-medium text-gray-900'>{record.title}</div>
-            <Text type='secondary' className='text-sm'>
+            {/* <Text type='secondary' className='text-sm'>
               {record.vaccineTypeId}
-            </Text>
+            </Text> */}
           </div>
         </Space>
       ),
@@ -310,8 +310,8 @@ const ResultsAfterVaccination: React.FC = () => {
   const filteredEvents = vaccineEvents.filter((event) => {
     const matchesSearch = searchKeyword
       ? event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchKeyword.toLowerCase())
+      event.vaccineTypeId.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchKeyword.toLowerCase())
       : true
 
     const matchesStatus = statusFilter ? event.status === statusFilter : true
